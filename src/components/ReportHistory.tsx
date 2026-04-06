@@ -180,6 +180,7 @@ const ReportHistory = ({ history, automatedHistory, onView, onRefresh }: ReportH
   const manualWeekly = history.filter(h => h.jobType === "weekly" || !h.jobType);
   const manualAudit = history.filter(h => h.jobType === "audit");
   const manualCompetitor = history.filter(h => h.jobType === "competitor");
+  const manualCustom = history.filter(h => h.jobType === "custom");
 
   const automatedWeekly = automatedHistory.filter(h => h.jobType === "weekly" || !h.jobType);
   const automatedCompetitor = automatedHistory.filter(h => h.jobType === "competitor");
@@ -287,7 +288,7 @@ const ReportHistory = ({ history, automatedHistory, onView, onRefresh }: ReportH
         <DateFilterBar />
 
         <TabsContent value="recent" className="animate-in fade-in duration-300">
-          <Accordion type="multiple" defaultValue={["audits", "weekly", "competitor"]} className="w-full space-y-4">
+          <Accordion type="multiple" defaultValue={["audits", "weekly", "competitor", "custom"]} className="w-full space-y-4">
             <AccordionItem value="audits" className="border-none bg-white/50 backdrop-blur-sm rounded-xl px-4 border border-brand-100/30 data-[state=open]:shadow-sm data-[state=open]:shadow-brand-500/[0.04] transition-all pb-1 border-l-2 border-l-brand-300">
               <AccordionTrigger className="text-sm font-semibold text-slate-700 hover:no-underline py-4">
                 Full Account Audits
@@ -326,6 +327,20 @@ const ReportHistory = ({ history, automatedHistory, onView, onRefresh }: ReportH
               <AccordionContent>
                 <div className="pt-1 pb-2">
                   {renderList(manualCompetitor, "No recent competitor analysis reports found.")}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="custom" className="border-none bg-white/50 backdrop-blur-sm rounded-xl px-4 border border-orange-100/30 data-[state=open]:shadow-sm data-[state=open]:shadow-orange-500/[0.04] transition-all pb-1 border-l-2 border-l-orange-400">
+              <AccordionTrigger className="text-sm font-semibold text-slate-700 hover:no-underline py-4">
+                Custom Reports
+                <span className="ml-2 text-xs font-normal text-orange-600 bg-orange-50 px-2 py-0.5 rounded-full border border-orange-100/50">
+                  {filterByDate(manualCustom).length}
+                </span>
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="pt-1 pb-2">
+                  {renderList(manualCustom, "No custom reports found.")}
                 </div>
               </AccordionContent>
             </AccordionItem>

@@ -4,11 +4,12 @@ import adLabLogo from "@/assets/ad-lab-logo.png";
 import customHero from "@/assets/custom_hero.png";
 import ReportForm from "@/components/ReportForm";
 import CompetitorReportForm from "@/components/CompetitorReportForm";
+import CustomReportForm from "@/components/CustomReportForm";
 import LoadingState from "@/components/LoadingState";
 import ReportViewer from "@/components/ReportViewer";
 import ReportHistory from "@/components/ReportHistory";
 import { useAuth } from "@/contexts/AuthContext";
-import { LogOut, Sparkles, FileText, Activity, ChevronDown, ChevronUp, BarChart3, CalendarCheck, Clock, Settings, User, Search } from "lucide-react";
+import { LogOut, Sparkles, FileText, Activity, ChevronDown, ChevronUp, BarChart3, CalendarCheck, Clock, Settings, User, Search, Code2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { initiateReport, pollForCompletion, generateJobId } from "@/lib/api";
 import {
@@ -19,13 +20,13 @@ import {
   ReportHistoryEntry
 } from "@/lib/report-history";
 
-type AppState = "dashboard" | "weekly_form" | "audit_form" | "competitor_form" | "loading" | "report";
+type AppState = "dashboard" | "weekly_form" | "audit_form" | "competitor_form" | "custom_form" | "loading" | "report";
 
 const Index = () => {
   const { signOut, user } = useAuth();
   const [state, setState] = useState<AppState>("dashboard");
   const [showReportTypes, setShowReportTypes] = useState(false);
-  const [currentReportType, setCurrentReportType] = useState<"weekly" | "audit" | "competitor">("weekly");
+  const [currentReportType, setCurrentReportType] = useState<"weekly" | "audit" | "competitor" | "custom">("weekly");
   const [clientName, setClientName] = useState("");
   const [reportHtml, setReportHtml] = useState("");
   const [currentJobId, setCurrentJobId] = useState<string | null>(null);
@@ -82,6 +83,30 @@ const Index = () => {
     });
   };
 
+  const handleCustomSubmit = async (data: { clientName: string; html: string }) => {
+    if (!user) return;
+    setClientName(data.clientName);
+    try {
+      const job_id = generateJobId();
+      await createReport({
+        jobId: job_id,
+        userId: user.id,
+        clientName: data.clientName,
+        googleAdsId: "N/A",
+        jobType: "custom",
+        dateRange: { start: "1970-01-01", end: "1970-01-01" },
+      });
+      await updateReport(job_id, { status: "complete", html: data.html });
+      await refreshHistory();
+      setReportHtml(data.html);
+      setCurrentJobId(job_id);
+      setState("report");
+      toast.success("Custom report saved successfully!");
+    } catch {
+      toast.error("Failed to save custom report. Please try again.");
+    }
+  };
+
   const handleSubmit = async (data: {
     clientName: string;
     googleAdsId: string;
@@ -114,7 +139,7 @@ const Index = () => {
         client_name: data.clientName,
         google_ads_id: data.googleAdsId,
         date_range: { start: data.startDate, end: data.endDate },
-        reportType: currentReportType,
+        reportType: currentReportType as "weekly" | "audit" | "competitor",
       });
 
       // Refresh history to show our new pending job
@@ -130,7 +155,7 @@ const Index = () => {
       pollRef.current = setInterval(async () => {
         attempts++;
         try {
-          const result = await pollForCompletion(job_id, currentReportType);
+          const result = await pollForCompletion(job_id, currentReportType as "weekly" | "audit" | "competitor");
 
           if (result.status === "complete" && result.html) {
             cleanup();
@@ -341,6 +366,19 @@ const Index = () => {
                 <h3 className="font-bold text-lg mb-1 relative z-10">Client Competitor Analysis</h3>
                 <p className="text-teal-200 text-sm opacity-80 relative z-10">Competitive landscape report</p>
               </button>
+
+              <button
+                onClick={() => {
+                  setCurrentReportType("custom");
+                  setState("custom_form");
+                }}
+                className="flex-1 group relative overflow-hidden bg-orange-600 hover:bg-orange-500 text-white rounded-2xl p-6 text-left transition-all duration-300 shadow-lg shadow-orange-600/20 hover:shadow-orange-500/30 hover:-translate-y-1"
+              >
+                <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 rounded-full bg-orange-400 blur-2xl opacity-20 group-hover:opacity-30 transition-opacity" />
+                <Code2 className="w-8 h-8 text-orange-100 mb-4 relative z-10" />
+                <h3 className="font-bold text-lg mb-1 relative z-10">Add Custom Report</h3>
+                <p className="text-orange-100 text-sm opacity-80 relative z-10">Paste & visualise HTML report</p>
+              </button>
             </div>
           )}
 
@@ -406,6 +444,25 @@ const Index = () => {
               </div>
               <CompetitorReportForm
                 onSubmit={handleCompetitorSubmit}
+                isLoading={false}
+                onBack={() => setState("dashboard")}
+              />
+            </div>
+          )}
+
+          {state === "custom_form" && (
+            <div className="max-w-xl mx-auto bg-white rounded-3xl p-8 shadow-xl shadow-slate-200/50 border border-slate-100">
+              <div className="flex items-center gap-3 mb-6 pb-6 border-b border-slate-100">
+                <div className="p-2.5 bg-orange-50 rounded-xl">
+                  <Code2 className="w-6 h-6 text-orange-600" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-slate-800">Add Custom Report</h2>
+                  <p className="text-sm text-slate-500">Paste HTML to visualise your report</p>
+                </div>
+              </div>
+              <CustomReportForm
+                onSubmit={handleCustomSubmit}
                 isLoading={false}
                 onBack={() => setState("dashboard")}
               />
