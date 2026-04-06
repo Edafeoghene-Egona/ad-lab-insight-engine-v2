@@ -471,6 +471,28 @@
   border-bottom: 1px solid hsl(286 79% 65% / 0.08);
 }
 
+/* ─── HERO TEXTURE ───────────────────────────────────── */
+.hero-texture {
+  background-image: radial-gradient(circle at 1px 1px, hsl(220 9% 80% / 0.35) 1px, transparent 0);
+  background-size: 28px 28px;
+}
+
+/* ─── FORM REVEAL ANIMATION ──────────────────────────── */
+@keyframes form-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.995);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-form-reveal {
+  animation: form-reveal 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
 /* ─── DASHBOARD HISTORY CARD ──────────────────────────── */
 .history-card {
   transition: all 0.2s ease;

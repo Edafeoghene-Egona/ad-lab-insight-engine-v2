@@ -9,7 +9,7 @@ import LoadingState from "@/components/LoadingState";
 import ReportViewer from "@/components/ReportViewer";
 import ReportHistory from "@/components/ReportHistory";
 import { useAuth } from "@/contexts/AuthContext";
-import { LogOut, Sparkles, FileText, Activity, ChevronDown, ChevronUp, BarChart3, CalendarCheck, Clock, Settings, User, Search, Code2 } from "lucide-react";
+import { LogOut, Sparkles, FileText, Activity, Search, Code2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { initiateReport, pollForCompletion, generateJobId } from "@/lib/api";
 import {
@@ -25,8 +25,7 @@ type AppState = "dashboard" | "weekly_form" | "audit_form" | "competitor_form" |
 const Index = () => {
   const { signOut, user } = useAuth();
   const [state, setState] = useState<AppState>("dashboard");
-  const [showReportTypes, setShowReportTypes] = useState(false);
-  const [currentReportType, setCurrentReportType] = useState<"weekly" | "audit" | "competitor" | "custom">("weekly");
+const [currentReportType, setCurrentReportType] = useState<"weekly" | "audit" | "competitor" | "custom">("weekly");
   const [clientName, setClientName] = useState("");
   const [reportHtml, setReportHtml] = useState("");
   const [currentJobId, setCurrentJobId] = useState<string | null>(null);
@@ -252,10 +251,6 @@ const Index = () => {
             Welcome back, <span className="font-semibold">{firstName}</span>
           </div>
 
-          <Button variant="ghost" size="icon" className="text-slate-500 hover:text-brand-600 hover:bg-brand-50 rounded-full transition-colors">
-            <Settings className="w-5 h-5" />
-          </Button>
-
           <Button
             variant="ghost"
             onClick={signOut}
@@ -268,10 +263,10 @@ const Index = () => {
       </nav>
 
       {/* Hero Section */}
-      <section className="relative pt-24 pb-32 md:pb-48 lg:min-h-[70vh] flex items-center">
+      <section className="relative pt-28 pb-16 md:pb-24 lg:min-h-[50vh] flex items-center">
         {/* Background Split */}
         <div className="absolute inset-0 flex">
-          <div className="w-full lg:w-[45%] bg-white relative z-10" />
+          <div className="w-full lg:w-[45%] bg-white hero-texture relative z-10" />
           {/* Right side image with gradient fade on the left edge */}
           <div className="hidden lg:block w-[55%] relative flex items-center justify-end p-8">
             <div className="absolute inset-y-0 left-0 bg-gradient-to-r from-white via-white/100 to-transparent z-10 w-48" />
@@ -294,15 +289,27 @@ const Index = () => {
             <h1 className="text-5xl md:text-7xl font-extrabold text-slate-900 leading-[1.1] mb-6 tracking-tight">
               Traffic <br /><span className="text-brand-600">Intelligence.</span>
             </h1>
-            <p className="text-lg md:text-xl text-slate-500 mb-10 max-w-lg leading-relaxed">
+            <p className="text-lg md:text-xl text-slate-500 mb-6 max-w-lg leading-relaxed">
               Generate in-depth, AI-powered traffic analysis and account audit reports for any client in minutes.
             </p>
+            <div className="flex flex-wrap gap-2">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-50 border border-slate-200/80 text-xs font-medium text-slate-600">
+                <Activity className="w-3 h-3 text-brand-500" /> Weekly Reports
+              </span>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-50 border border-slate-200/80 text-xs font-medium text-slate-600">
+                <FileText className="w-3 h-3 text-purple-500" /> Account Audits
+              </span>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-50 border border-slate-200/80 text-xs font-medium text-slate-600">
+                <Search className="w-3 h-3 text-teal-500" /> Competitor Analysis
+              </span>
+            </div>
           </div>
         </div>
       </section>
 
       {/* Floating Action Bar */}
-      <section className="relative z-30 max-w-6xl mx-auto px-6 md:px-12 -mt-24 md:-mt-32 mb-20">
+      {state === "dashboard" && (
+      <section className="relative z-30 max-w-6xl mx-auto px-6 md:px-12 -mt-10 md:-mt-16 mb-16">
         <div className="bg-white rounded-3xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] border border-slate-100 p-2 md:p-3 animate-slide-up flex flex-col md:flex-row items-stretch gap-3">
 
           {/* Stats Section inside Action Bar */}
@@ -363,7 +370,7 @@ const Index = () => {
               >
                 <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 rounded-full bg-teal-500 blur-2xl opacity-20 group-hover:opacity-30 transition-opacity" />
                 <Search className="w-8 h-8 text-teal-200 mb-4 relative z-10" />
-                <h3 className="font-bold text-lg mb-1 relative z-10">Client Competitor Analysis</h3>
+                <h3 className="font-bold text-lg mb-1 relative z-10">Competitor Analysis</h3>
                 <p className="text-teal-200 text-sm opacity-80 relative z-10">Competitive landscape report</p>
               </button>
 
@@ -376,7 +383,7 @@ const Index = () => {
               >
                 <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 rounded-full bg-orange-400 blur-2xl opacity-20 group-hover:opacity-30 transition-opacity" />
                 <Code2 className="w-8 h-8 text-orange-100 mb-4 relative z-10" />
-                <h3 className="font-bold text-lg mb-1 relative z-10">Add Custom Report</h3>
+                <h3 className="font-bold text-lg mb-1 relative z-10">Custom Report</h3>
                 <p className="text-orange-100 text-sm opacity-80 relative z-10">Paste & visualise HTML report</p>
               </button>
             </div>
@@ -384,12 +391,13 @@ const Index = () => {
 
         </div>
       </section>
+      )}
 
       {/* Main content area (Forms & History) */}
-      <main className="relative z-10 max-w-5xl mx-auto px-6 md:px-12 pb-24">
+      <main className={`relative z-10 max-w-5xl mx-auto px-6 md:px-12 pb-24${state !== "dashboard" ? " pt-12" : ""}`}>
 
         {/* Dynamic Forms Container */}
-        <div className="animate-slide-up">
+        <div className="animate-form-reveal">
           {state === "weekly_form" && (
             <div className="max-w-xl mx-auto bg-white rounded-3xl p-8 shadow-xl shadow-slate-200/50 border border-slate-100">
               <div className="flex items-center gap-3 mb-6 pb-6 border-b border-slate-100">
