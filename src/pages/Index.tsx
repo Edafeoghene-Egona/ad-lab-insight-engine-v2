@@ -20,11 +20,12 @@ import {
   ReportHistoryEntry
 } from "@/lib/report-history";
 
-type AppState = "dashboard" | "weekly_form" | "audit_form" | "competitor_form" | "custom_form" | "loading" | "report";
+type AppState = "dashboard" | "weekly_form" | "audit_form" | "competitor_form" | "custom_form" | "loading";
 
 const Index = () => {
   const { signOut, user } = useAuth();
   const [state, setState] = useState<AppState>("dashboard");
+  const [viewingReport, setViewingReport] = useState(false);
 const [currentReportType, setCurrentReportType] = useState<"weekly" | "audit" | "competitor" | "custom">("weekly");
   const [clientName, setClientName] = useState("");
   const [reportHtml, setReportHtml] = useState("");
@@ -36,6 +37,7 @@ const [currentReportType, setCurrentReportType] = useState<"weekly" | "audit" | 
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const currentJobIdRef = useRef<string | null>(null);
+  const savedScrollYRef = useRef(0);
 
   const refreshHistory = useCallback(async () => {
     const [data, autoData] = await Promise.all([
@@ -99,7 +101,9 @@ const [currentReportType, setCurrentReportType] = useState<"weekly" | "audit" | 
       await refreshHistory();
       setReportHtml(data.html);
       setCurrentJobId(job_id);
-      setState("report");
+      savedScrollYRef.current = window.scrollY;
+      setState("dashboard");
+      setViewingReport(true);
       toast.success("Custom report saved successfully!");
     } catch {
       toast.error("Failed to save custom report. Please try again.");
@@ -163,7 +167,9 @@ const [currentReportType, setCurrentReportType] = useState<"weekly" | "audit" | 
             setReportHtml(result.html);
             setCurrentJobId(job_id);
             await refreshHistory();
-            setState("report");
+            savedScrollYRef.current = 0;
+            setState("dashboard");
+            setViewingReport(true);
             toast.success("Report generated successfully!");
           } else if (result.status === "error") {
             cleanup();
@@ -199,16 +205,25 @@ const [currentReportType, setCurrentReportType] = useState<"weekly" | "audit" | 
     setReportHtml("");
     setClientName("");
     setCurrentJobId(null);
+    setViewingReport(false);
     setState("dashboard");
   };
 
   const handleViewHistory = (entry: ReportHistoryEntry) => {
     if (entry.html) {
+      savedScrollYRef.current = window.scrollY;
       setClientName(entry.clientName);
       setReportHtml(entry.html);
       setCurrentJobId(entry.jobId);
-      setState("report");
+      setViewingReport(true);
     }
+  };
+
+  const handleBack = () => {
+    setViewingReport(false);
+    requestAnimationFrame(() => {
+      window.scrollTo(0, savedScrollYRef.current);
+    });
   };
 
   const handleSaveReportHtml = async (html: string) => {
@@ -222,21 +237,20 @@ const [currentReportType, setCurrentReportType] = useState<"weekly" | "audit" | 
     return <LoadingState businessName={clientName} elapsedSeconds={elapsed} />;
   }
 
-  if (state === "report") {
-    return (
+  const firstName = user?.email?.split("@")[0] || "there";
+
+  return (
+    <>
+    {viewingReport && (
       <ReportViewer
         html={reportHtml}
         businessName={clientName}
         onNewReport={handleNewReport}
+        onBack={handleBack}
         onSaveHtml={handleSaveReportHtml}
       />
-    );
-  }
-
-  const firstName = user?.email?.split("@")[0] || "there";
-
-  return (
-    <div className="dashboard-page min-h-screen relative overflow-x-hidden bg-white selection:bg-brand-500/30">
+    )}
+    <div className="dashboard-page min-h-screen relative overflow-x-hidden bg-white selection:bg-brand-500/30" style={{ display: viewingReport ? 'none' : undefined }}>
 
       {/* Top Navigation */}
       <nav className="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-md border-b border-brand-100/50 py-4 px-6 md:px-12 flex items-center justify-between">
@@ -504,6 +518,7 @@ const [currentReportType, setCurrentReportType] = useState<"weekly" | "audit" | 
         </div>
       </footer>
     </div>
+    </>
   );
 };
 

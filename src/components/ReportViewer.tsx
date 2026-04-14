@@ -1,6 +1,6 @@
 import { useRef, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Download, PlusCircle, Share2, Loader2, Pencil, Save, X, Paintbrush, GripVertical } from "lucide-react";
+import { Download, PlusCircle, Share2, Loader2, Pencil, Save, X, Paintbrush, GripVertical, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useEditMode } from "./report-editor/useEditMode";
@@ -14,10 +14,11 @@ interface ReportViewerProps {
   html: string;
   businessName: string;
   onNewReport: () => void;
+  onBack?: () => void;
   onSaveHtml?: (html: string) => Promise<void>;
 }
 
-const ReportViewer = ({ html, businessName, onNewReport, onSaveHtml }: ReportViewerProps) => {
+const ReportViewer = ({ html, businessName, onNewReport, onBack, onSaveHtml }: ReportViewerProps) => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [sharing, setSharing] = useState(false);
   const [styleEditorOpen, setStyleEditorOpen] = useState(false);
@@ -155,9 +156,26 @@ const ReportViewer = ({ html, businessName, onNewReport, onSaveHtml }: ReportVie
     <div className="min-h-screen flex flex-col bg-background">
       {/* Toolbar */}
       <div className="bg-[#050505] border-b border-white/5 px-6 py-3 flex items-center justify-between">
-        <h2 className="font-display text-base font-semibold text-white/90 truncate">
-          Report: <span className="text-brand-400">{businessName}</span>
-        </h2>
+        <div className="flex items-center gap-3 min-w-0">
+          {onBack && (
+            <>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onBack}
+                className="text-slate-300 hover:text-white hover:bg-white/5 rounded-lg h-8 shrink-0"
+                title="Go back"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back
+              </Button>
+              <div className="w-px h-5 bg-white/10 shrink-0" />
+            </>
+          )}
+          <h2 className="font-display text-base font-semibold text-white/90 truncate">
+            Report: <span className="text-brand-400">{businessName}</span>
+          </h2>
+        </div>
         <div className="flex items-center gap-2">
           {editMode ? (
             <>
