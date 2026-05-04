@@ -11,6 +11,7 @@ export const CLIENT_NAMES = [
   "ecomflow",
   "elavoura",
   "everstridesocks",
+  "flown",
   "foladrop",
   "forus",
   "foyandco",
