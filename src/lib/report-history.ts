@@ -47,7 +47,7 @@ export async function getAutomatedReports(): Promise<ReportHistoryEntry[]> {
     .select("*")
     .eq("user_id", "d5cbc741-e8d9-43ee-9d90-32c409c3f40a")
     .order("created_at", { ascending: false })
-    .limit(50); // limit to recent 50 automated reports
+    .limit(75); // limit to recent 75 automated reports
 
   if (error || !data) return [];
 
