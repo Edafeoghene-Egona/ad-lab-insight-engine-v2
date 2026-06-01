@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { toast } from "sonner";
 import adLabLogo from "@/assets/ad-lab-logo.png";
-import customHero from "@/assets/custom_hero.png";
 import ReportForm from "@/components/ReportForm";
 import CompetitorReportForm from "@/components/CompetitorReportForm";
 import CustomReportForm from "@/components/CustomReportForm";
@@ -9,7 +8,7 @@ import LoadingState from "@/components/LoadingState";
 import ReportViewer from "@/components/ReportViewer";
 import ReportHistory from "@/components/ReportHistory";
 import { useAuth } from "@/contexts/AuthContext";
-import { LogOut, Sparkles, FileText, Activity, Search, Code2 } from "lucide-react";
+import { LogOut, FileText, Activity, Search, Code2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { initiateReport, pollForCompletion, generateJobId } from "@/lib/api";
 import {
@@ -250,177 +249,133 @@ const [currentReportType, setCurrentReportType] = useState<"weekly" | "audit" | 
         onSaveHtml={handleSaveReportHtml}
       />
     )}
-    <div className="dashboard-page min-h-screen relative overflow-x-hidden bg-white selection:bg-brand-500/30" style={{ display: viewingReport ? 'none' : undefined }}>
+    <div className="dashboard-page min-h-screen relative overflow-x-hidden selection:bg-primary/20" style={{ display: viewingReport ? 'none' : undefined }}>
 
       {/* Top Navigation */}
-      <nav className="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-md border-b border-brand-100/50 py-4 px-6 md:px-12 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <img src={adLabLogo} alt="Ad-Lab" className="h-8 rounded-lg shadow-sm" />
-          <span className="font-bold text-slate-800 tracking-tight hidden sm:block">Intelligence Platform</span>
-        </div>
-
-        <div className="flex items-center gap-4">
-          <div className="hidden md:flex items-center gap-2 px-4 py-1.5 rounded-full bg-brand-50 border border-brand-100 text-sm text-brand-700">
-            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 live-dot" />
-            Welcome back, <span className="font-semibold">{firstName}</span>
+      <nav className="fixed top-0 w-full z-50 bg-background/85 backdrop-blur-md border-b border-border">
+        <div className="max-w-[1200px] mx-auto px-6 md:px-10 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <img src={adLabLogo} alt="Ad-Lab" className="h-7 w-7 rounded-[4px] object-cover" />
+            <span className="type-eyebrow text-foreground hidden sm:block">Insight&nbsp;Engine</span>
           </div>
 
-          <Button
-            variant="ghost"
-            onClick={signOut}
-            className="text-slate-600 hover:text-red-600 hover:bg-red-50 group transition-all duration-300 rounded-full pl-3 pr-4"
-          >
-            <LogOut className="w-4 h-4 mr-2 group-hover:-translate-x-0.5 transition-transform" />
-            Sign Out
-          </Button>
+          <div className="flex items-center gap-5">
+            <div className="hidden md:flex items-center gap-2 text-foreground">
+              <span className="w-1.5 h-1.5 rounded-full bg-primary live-dot" />
+              <span className="type-eyebrow text-muted-foreground">{firstName}</span>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={signOut}
+              className="group border-border text-foreground hover:border-primary/60"
+            >
+              <LogOut className="w-3.5 h-3.5 mr-1.5 group-hover:-translate-x-0.5 transition-transform" />
+              Sign Out
+            </Button>
+          </div>
         </div>
       </nav>
 
       {/* Hero Section */}
-      <section className="relative pt-28 pb-16 md:pb-24 lg:min-h-[50vh] flex items-center">
-        {/* Background Split */}
-        <div className="absolute inset-0 flex">
-          <div className="w-full lg:w-[45%] bg-white hero-texture relative z-10" />
-          {/* Right side image with gradient fade on the left edge */}
-          <div className="hidden lg:block w-[55%] relative flex items-center justify-end p-8">
-            <div className="absolute inset-y-0 left-0 bg-gradient-to-r from-white via-white/100 to-transparent z-10 w-48" />
-            <img
-              src={customHero}
-              alt="Retro Data Intelligence"
-              className="w-full max-h-[75vh] object-contain object-right ml-auto relative z-0"
-            />
-            {/* Subtle overlay to fade the image slightly */}
-            <div className="absolute inset-0 bg-brand-900/5 mix-blend-overlay z-10 pointer-events-none" />
-          </div>
-        </div>
+      <section className="relative pt-16 blueprint-grid border-b border-border">
+        <div className="max-w-[1200px] mx-auto px-6 md:px-10 relative">
+          {/* corner ticks */}
+          <span className="bp-tick absolute left-6 md:left-10 top-12 w-2.5 h-2.5" />
+          <span className="micro-label absolute right-6 md:right-10 top-12">Ad-Lab / Traffic Intelligence — v2.0</span>
 
-        <div className="max-w-7xl mx-auto px-6 md:px-12 w-full relative z-20 flex flex-col lg:flex-row items-center">
-          {/* Left Content */}
-          <div className="w-full lg:w-[50%] animate-fade-in lg:pr-12">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-50 text-xs font-semibold text-brand-600 tracking-wide uppercase mb-6 border border-brand-100">
-              <Sparkles className="w-3.5 h-3.5" /> Data Engine v2.0
-            </div>
-            <h1 className="text-5xl md:text-7xl font-extrabold text-slate-900 leading-[1.1] mb-6 tracking-tight">
-              Traffic <br /><span className="text-brand-600">Intelligence.</span>
+          <div className="pt-24 pb-24 md:pt-28 md:pb-28 animate-reveal">
+            <span className="type-eyebrow text-primary block mb-7">[ Data Engine ]</span>
+            <h1 className="text-[clamp(3rem,9vw,7rem)] text-foreground mb-8 max-w-4xl">
+              Traffic<br />
+              <span className="text-primary">Intelligence</span>
             </h1>
-            <p className="text-lg md:text-xl text-slate-500 mb-6 max-w-lg leading-relaxed">
-              Generate in-depth, AI-powered traffic analysis and account audit reports for any client in minutes.
+            <p className="text-sm md:text-base text-muted-foreground max-w-md leading-relaxed tracking-[0.01em] mb-10">
+              In-depth, AI-powered traffic analysis and account audits for any client — generated in minutes.
             </p>
-            <div className="flex flex-wrap gap-2">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-50 border border-slate-200/80 text-xs font-medium text-slate-600">
-                <Activity className="w-3 h-3 text-brand-500" /> Weekly Reports
-              </span>
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-50 border border-slate-200/80 text-xs font-medium text-slate-600">
-                <FileText className="w-3 h-3 text-purple-500" /> Account Audits
-              </span>
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-50 border border-slate-200/80 text-xs font-medium text-slate-600">
-                <Search className="w-3 h-3 text-teal-500" /> Competitor Analysis
-              </span>
+            <div className="flex flex-wrap gap-x-8 gap-y-2 pt-8 border-t border-border max-w-2xl">
+              {["Weekly Reports", "Account Audits", "Competitor Analysis"].map((t, i) => (
+                <span key={t} className="type-eyebrow text-muted-foreground flex items-center gap-2">
+                  <span className="micro-label-accent micro-label">0{i + 1}</span> {t}
+                </span>
+              ))}
             </div>
           </div>
         </div>
       </section>
 
-      {/* Floating Action Bar */}
+      {/* Stats + Report Type Selection */}
       {state === "dashboard" && (
-      <section className="relative z-30 max-w-6xl mx-auto px-6 md:px-12 -mt-10 md:-mt-16 mb-16">
-        <div className="bg-white rounded-3xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] border border-slate-100 p-2 md:p-3 animate-slide-up flex flex-col md:flex-row items-stretch gap-3">
+      <section className="relative max-w-[1200px] mx-auto px-6 md:px-10 pt-16 md:pt-20">
 
-          {/* Stats Section inside Action Bar */}
-          {!historyLoading && (history.length > 0 || automatedHistory.length > 0) && (
-            <div className="flex-1 flex items-center justify-around bg-slate-50 rounded-2xl p-4 md:p-6 shadow-inner border border-slate-100/50">
-              <div className="text-center px-4">
-                <span className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-slate-400 block mb-1">Total Reports</span>
-                <p className="text-2xl md:text-3xl font-black text-slate-800">{stats.total}</p>
-              </div>
-              <div className="w-px h-12 bg-slate-200" />
-              <div className="text-center px-4">
-                <span className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-slate-400 block mb-1">This Week</span>
-                <p className="text-2xl md:text-3xl font-black text-brand-600">{stats.thisWeek}</p>
-              </div>
-              <div className="w-px h-12 bg-slate-200 hidden sm:block" />
-              <div className="text-center px-4 hidden sm:block">
-                <span className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-slate-400 block mb-1">Last Report</span>
-                <p className="text-lg md:text-xl font-bold text-slate-800 mt-1">{stats.lastReport}</p>
-              </div>
+        {/* Quick Stats — horizontal band */}
+        {!historyLoading && (history.length > 0 || automatedHistory.length > 0) && (
+          <div className="animate-slide-up grid grid-cols-3 border border-border bg-card rounded-[4px] mb-16 divide-x divide-border">
+            <div className="p-6 md:p-8 relative">
+              <span className="micro-label-lg text-muted-foreground block mb-3">001 / Total Reports</span>
+              <p className="text-3xl md:text-4xl text-foreground type-engineered">{stats.total}</p>
             </div>
-          )}
-
-          {/* Action Buttons Section */}
-          {state === "dashboard" && (
-            <div className="flex-[1.5] flex flex-col sm:flex-row gap-3">
-              <button
-                onClick={() => {
-                  setCurrentReportType("weekly");
-                  setState("weekly_form");
-                }}
-                className="flex-1 group relative overflow-hidden bg-brand-600 hover:bg-brand-700 text-white rounded-2xl p-6 text-left transition-all duration-300 shadow-lg shadow-brand-500/25 hover:shadow-brand-500/40 hover:-translate-y-1"
-              >
-                <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 rounded-full bg-brand-500 blur-2xl opacity-50 group-hover:bg-brand-400 transition-colors" />
-                <Activity className="w-8 h-8 text-brand-100 mb-4 relative z-10" />
-                <h3 className="font-bold text-lg mb-1 relative z-10">Weekly Report</h3>
-                <p className="text-brand-100 text-sm opacity-80 relative z-10">Standard performance metrics</p>
-              </button>
-
-              <button
-                onClick={() => {
-                  setCurrentReportType("audit");
-                  setState("audit_form");
-                }}
-                className="flex-1 group relative overflow-hidden bg-slate-900 hover:bg-slate-800 text-white rounded-2xl p-6 text-left transition-all duration-300 shadow-lg shadow-slate-900/20 hover:shadow-slate-900/30 hover:-translate-y-1"
-              >
-                <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 rounded-full bg-purple-500 blur-2xl opacity-20 group-hover:opacity-30 transition-opacity" />
-                <FileText className="w-8 h-8 text-purple-300 mb-4 relative z-10" />
-                <h3 className="font-bold text-lg mb-1 relative z-10">Account Audit</h3>
-                <p className="text-slate-400 text-sm relative z-10">Deep dive structure analysis</p>
-              </button>
-
-              <button
-                onClick={() => {
-                  setCurrentReportType("competitor");
-                  setState("competitor_form");
-                }}
-                className="flex-1 group relative overflow-hidden bg-teal-700 hover:bg-teal-600 text-white rounded-2xl p-6 text-left transition-all duration-300 shadow-lg shadow-teal-700/20 hover:shadow-teal-600/30 hover:-translate-y-1"
-              >
-                <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 rounded-full bg-teal-500 blur-2xl opacity-20 group-hover:opacity-30 transition-opacity" />
-                <Search className="w-8 h-8 text-teal-200 mb-4 relative z-10" />
-                <h3 className="font-bold text-lg mb-1 relative z-10">Competitor Analysis</h3>
-                <p className="text-teal-200 text-sm opacity-80 relative z-10">Competitive landscape report</p>
-              </button>
-
-              <button
-                onClick={() => {
-                  setCurrentReportType("custom");
-                  setState("custom_form");
-                }}
-                className="flex-1 group relative overflow-hidden bg-orange-600 hover:bg-orange-500 text-white rounded-2xl p-6 text-left transition-all duration-300 shadow-lg shadow-orange-600/20 hover:shadow-orange-500/30 hover:-translate-y-1"
-              >
-                <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 rounded-full bg-orange-400 blur-2xl opacity-20 group-hover:opacity-30 transition-opacity" />
-                <Code2 className="w-8 h-8 text-orange-100 mb-4 relative z-10" />
-                <h3 className="font-bold text-lg mb-1 relative z-10">Custom Report</h3>
-                <p className="text-orange-100 text-sm opacity-80 relative z-10">Paste & visualise HTML report</p>
-              </button>
+            <div className="p-6 md:p-8">
+              <span className="micro-label-lg text-muted-foreground block mb-3">002 / This Week</span>
+              <p className="text-3xl md:text-4xl text-primary type-engineered">{stats.thisWeek}</p>
             </div>
-          )}
+            <div className="p-6 md:p-8">
+              <span className="micro-label-lg text-muted-foreground block mb-3">003 / Last Report</span>
+              <p className="text-2xl md:text-3xl text-foreground type-engineered">{stats.lastReport}</p>
+            </div>
+          </div>
+        )}
 
+        {/* Section header */}
+        <div className="flex items-end justify-between mb-8">
+          <h2 className="text-2xl md:text-3xl text-foreground">Generate Report</h2>
+          <span className="micro-label hidden sm:block">select a vertical ↓</span>
+        </div>
+
+        {/* Report Type Selection */}
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-4">
+          {[
+            { key: "weekly", state: "weekly_form", icon: Activity, no: "01", title: "Weekly Report", desc: "Standard performance metrics" },
+            { key: "audit", state: "audit_form", icon: FileText, no: "02", title: "Account Audit", desc: "Deep-dive structure analysis" },
+            { key: "competitor", state: "competitor_form", icon: Search, no: "03", title: "Competitor Analysis", desc: "Competitive landscape report" },
+            { key: "custom", state: "custom_form", icon: Code2, no: "04", title: "Custom Report", desc: "Paste & visualise HTML report" },
+          ].map(({ key, state: target, icon: Icon, no, title, desc }) => (
+            <button
+              key={key}
+              onClick={() => {
+                setCurrentReportType(key as "weekly" | "audit" | "competitor" | "custom");
+                setState(target as AppState);
+              }}
+              className="report-type-card group relative p-6 text-left flex flex-col min-h-[180px]"
+            >
+              <div className="flex items-start justify-between mb-auto">
+                <Icon className="w-6 h-6 text-primary" strokeWidth={1.5} />
+                <span className="micro-label-lg text-muted-foreground/70 group-hover:text-primary transition-colors">{no}</span>
+              </div>
+              <h3 className="text-base text-foreground mb-2 mt-6">{title}</h3>
+              <p className="text-xs text-muted-foreground tracking-[0.02em] leading-relaxed normal-case">{desc}</p>
+              <span className="micro-label absolute bottom-3 right-4 opacity-0 group-hover:opacity-100 transition-opacity">open →</span>
+            </button>
+          ))}
         </div>
       </section>
       )}
 
       {/* Main content area (Forms & History) */}
-      <main className={`relative z-10 max-w-5xl mx-auto px-6 md:px-12 pb-24${state !== "dashboard" ? " pt-12" : ""}`}>
+      <main className={`relative z-10 max-w-[1200px] mx-auto px-6 md:px-10 pb-28${state !== "dashboard" ? " pt-24 md:pt-28" : " pt-20"}`}>
 
         {/* Dynamic Forms Container */}
         <div className="animate-form-reveal">
           {state === "weekly_form" && (
-            <div className="max-w-xl mx-auto bg-white rounded-3xl p-8 shadow-xl shadow-slate-200/50 border border-slate-100">
-              <div className="flex items-center gap-3 mb-6 pb-6 border-b border-slate-100">
-                <div className="p-2.5 bg-brand-50 rounded-xl">
-                  <Activity className="w-6 h-6 text-brand-600" />
+            <div className="max-w-xl mx-auto bg-card border border-border rounded-[4px] p-8 md:p-10 relative">
+              <span className="micro-label absolute top-4 right-5">form / weekly · 01</span>
+              <div className="flex items-center gap-4 mb-8 pb-6 border-b border-border">
+                <div className="p-3 border border-border rounded-[4px] text-primary">
+                  <Activity className="w-5 h-5" strokeWidth={1.5} />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-slate-800">Weekly Performance</h2>
-                  <p className="text-sm text-slate-500">Configure report parameters</p>
+                  <h2 className="text-lg text-foreground">Weekly Performance</h2>
+                  <p className="text-xs text-muted-foreground tracking-[0.04em] uppercase mt-1">Configure report parameters</p>
                 </div>
               </div>
               <ReportForm
@@ -433,14 +388,15 @@ const [currentReportType, setCurrentReportType] = useState<"weekly" | "audit" | 
           )}
 
           {state === "audit_form" && (
-            <div className="max-w-xl mx-auto bg-white rounded-3xl p-8 shadow-xl shadow-slate-200/50 border border-slate-100">
-              <div className="flex items-center gap-3 mb-6 pb-6 border-b border-slate-100">
-                <div className="p-2.5 bg-purple-50 rounded-xl">
-                  <FileText className="w-6 h-6 text-purple-600" />
+            <div className="max-w-xl mx-auto bg-card border border-border rounded-[4px] p-8 md:p-10 relative">
+              <span className="micro-label absolute top-4 right-5">form / audit · 02</span>
+              <div className="flex items-center gap-4 mb-8 pb-6 border-b border-border">
+                <div className="p-3 border border-border rounded-[4px] text-primary">
+                  <FileText className="w-5 h-5" strokeWidth={1.5} />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-slate-800">Full Account Audit</h2>
-                  <p className="text-sm text-slate-500">Configure audit parameters</p>
+                  <h2 className="text-lg text-foreground">Full Account Audit</h2>
+                  <p className="text-xs text-muted-foreground tracking-[0.04em] uppercase mt-1">Configure audit parameters</p>
                 </div>
               </div>
               <ReportForm
@@ -454,14 +410,15 @@ const [currentReportType, setCurrentReportType] = useState<"weekly" | "audit" | 
           )}
 
           {state === "competitor_form" && (
-            <div className="max-w-xl mx-auto bg-white rounded-3xl p-8 shadow-xl shadow-slate-200/50 border border-slate-100">
-              <div className="flex items-center gap-3 mb-6 pb-6 border-b border-slate-100">
-                <div className="p-2.5 bg-teal-50 rounded-xl">
-                  <Search className="w-6 h-6 text-teal-600" />
+            <div className="max-w-xl mx-auto bg-card border border-border rounded-[4px] p-8 md:p-10 relative">
+              <span className="micro-label absolute top-4 right-5">form / competitor · 03</span>
+              <div className="flex items-center gap-4 mb-8 pb-6 border-b border-border">
+                <div className="p-3 border border-border rounded-[4px] text-primary">
+                  <Search className="w-5 h-5" strokeWidth={1.5} />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-slate-800">Client Competitor Analysis</h2>
-                  <p className="text-sm text-slate-500">Select client to analyse</p>
+                  <h2 className="text-lg text-foreground">Client Competitor Analysis</h2>
+                  <p className="text-xs text-muted-foreground tracking-[0.04em] uppercase mt-1">Select client to analyse</p>
                 </div>
               </div>
               <CompetitorReportForm
@@ -473,14 +430,15 @@ const [currentReportType, setCurrentReportType] = useState<"weekly" | "audit" | 
           )}
 
           {state === "custom_form" && (
-            <div className="max-w-xl mx-auto bg-white rounded-3xl p-8 shadow-xl shadow-slate-200/50 border border-slate-100">
-              <div className="flex items-center gap-3 mb-6 pb-6 border-b border-slate-100">
-                <div className="p-2.5 bg-orange-50 rounded-xl">
-                  <Code2 className="w-6 h-6 text-orange-600" />
+            <div className="max-w-xl mx-auto bg-card border border-border rounded-[4px] p-8 md:p-10 relative">
+              <span className="micro-label absolute top-4 right-5">form / custom · 04</span>
+              <div className="flex items-center gap-4 mb-8 pb-6 border-b border-border">
+                <div className="p-3 border border-border rounded-[4px] text-primary">
+                  <Code2 className="w-5 h-5" strokeWidth={1.5} />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-slate-800">Add Custom Report</h2>
-                  <p className="text-sm text-slate-500">Paste HTML to visualise your report</p>
+                  <h2 className="text-lg text-foreground">Add Custom Report</h2>
+                  <p className="text-xs text-muted-foreground tracking-[0.04em] uppercase mt-1">Paste HTML to visualise your report</p>
                 </div>
               </div>
               <CustomReportForm
@@ -494,7 +452,7 @@ const [currentReportType, setCurrentReportType] = useState<"weekly" | "audit" | 
 
         {/* History Component */}
         {!historyLoading && state === "dashboard" && (
-          <div className="animate-slide-up mt-8">
+          <div className="animate-slide-up mt-20">
             <ReportHistory
               history={history}
               automatedHistory={automatedHistory}
@@ -506,15 +464,13 @@ const [currentReportType, setCurrentReportType] = useState<"weekly" | "audit" | 
       </main>
 
       {/* Footer */}
-      <footer className="bg-slate-50 border-t border-slate-200/60 pb-8 pt-12 mt-20">
-        <div className="max-w-6xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="flex items-center gap-2">
-            <img src={adLabLogo} alt="Ad-Lab" className="h-6 grayscale opacity-60" />
-            <span className="text-sm text-slate-400 font-medium">Traffic Intelligence</span>
+      <footer className="border-t border-border bg-card">
+        <div className="max-w-[1200px] mx-auto px-6 md:px-10 py-10 flex flex-col md:flex-row justify-between items-center gap-4">
+          <div className="flex items-center gap-2.5">
+            <img src={adLabLogo} alt="Ad-Lab" className="h-5 w-5 rounded-[4px] grayscale opacity-50" />
+            <span className="type-eyebrow text-muted-foreground">Insight Engine</span>
           </div>
-          <p className="text-sm text-slate-400">
-            © {new Date().getFullYear()} Ad-Lab. All rights reserved.
-          </p>
+          <span className="micro-label">© {new Date().getFullYear()} Ad-Lab — all rights reserved · internal tool</span>
         </div>
       </footer>
     </div>

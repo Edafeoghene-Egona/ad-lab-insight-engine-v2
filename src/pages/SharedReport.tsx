@@ -71,10 +71,10 @@ const SharedReport = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-4">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-          <p className="text-sm text-muted-foreground animate-pulse">Loading report...</p>
+      <div className="min-h-screen flex items-center justify-center bg-background blueprint-grid">
+        <div className="flex flex-col items-center gap-5">
+          <div className="animate-spin rounded-full h-7 w-7 border-2 border-border border-t-primary" />
+          <p className="type-eyebrow text-muted-foreground">Loading report</p>
         </div>
       </div>
     );
@@ -82,26 +82,27 @@ const SharedReport = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-background p-6 text-center">
-        <div className="bg-destructive/10 p-4 rounded-full mb-4">
-          <X className="w-8 h-8 text-destructive" />
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background blueprint-grid p-6 text-center">
+        <div className="border border-destructive/20 bg-destructive/5 p-3.5 rounded-[4px] mb-6 text-destructive">
+          <X className="w-7 h-7" strokeWidth={1.5} />
         </div>
-        <h1 className="text-xl font-semibold mb-2">Oops! Something went wrong</h1>
-        <p className="text-muted-foreground max-w-sm">{error}</p>
+        <h1 className="text-xl text-foreground mb-3">Something went wrong</h1>
+        <p className="text-xs text-muted-foreground tracking-[0.03em] uppercase max-w-sm leading-relaxed">{error}</p>
         <button
           onClick={() => window.location.reload()}
-          className="mt-6 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition"
+          className="mt-8 px-5 h-10 bg-primary text-primary-foreground rounded-[4px] text-xs font-semibold uppercase tracking-[0.12em] hover:bg-[hsl(286_79%_58%)] transition-colors"
         >
           Try Again
         </button>
+        <span className="micro-label mt-10">Ad-Lab — shared report</span>
       </div>
     );
   }
 
   if (!blobUrl) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <p className="text-muted-foreground">No report content available.</p>
+      <div className="min-h-screen flex items-center justify-center bg-background blueprint-grid">
+        <p className="type-eyebrow text-muted-foreground">No report content available</p>
       </div>
     );
   }

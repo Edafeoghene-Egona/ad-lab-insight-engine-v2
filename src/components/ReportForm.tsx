@@ -3,7 +3,6 @@ import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
@@ -48,147 +47,137 @@ const ReportForm = ({
   };
 
   return (
-    <Card className="border border-white/10 shadow-2xl bg-white rounded-2xl overflow-hidden">
-      <CardContent className="p-8 md:p-10">
-        <form onSubmit={handleSubmit} className="space-y-7">
-          <div className="space-y-2">
-            <Label htmlFor="clientName" className="text-xs font-bold uppercase tracking-widest text-slate-500">
-              <Building2 className="inline-block w-3.5 h-3.5 mr-1.5 -mt-0.5" />
-              Client Name
+    <form onSubmit={handleSubmit} className="space-y-7">
+      <div className="space-y-2.5">
+        <Label htmlFor="clientName" className="type-eyebrow text-muted-foreground flex items-center gap-1.5">
+          <Building2 className="w-3 h-3" /> Client Name
+        </Label>
+        {allowCustomClientName ? (
+          <Input
+            id="clientName"
+            type="text"
+            placeholder="Type client name…"
+            value={clientName}
+            onChange={(e) => setClientName(e.target.value)}
+            required
+          />
+        ) : (
+          <Select onValueChange={setClientName} value={clientName}>
+            <SelectTrigger className="h-11">
+              <SelectValue placeholder="Select a client" />
+            </SelectTrigger>
+            <SelectContent className="bg-popover z-50">
+              {CLIENT_NAMES.map((name) => (
+                <SelectItem key={name} value={name}>
+                  {name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+      </div>
+
+      <div className="space-y-2.5">
+        <Label htmlFor="googleAdsId" className="type-eyebrow text-muted-foreground flex items-center gap-1.5">
+          <Hash className="w-3 h-3" /> Google Ads ID
+        </Label>
+        <Input
+          id="googleAdsId"
+          type="text"
+          placeholder="e.g. 123-456-7890"
+          value={googleAdsId}
+          onChange={(e) => setGoogleAdsId(e.target.value)}
+          required
+          maxLength={255}
+        />
+      </div>
+
+      {showDates && (
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2.5">
+            <Label className="type-eyebrow text-muted-foreground flex items-center gap-1.5">
+              <CalendarIcon className="w-3 h-3" /> Start Date
             </Label>
-            {allowCustomClientName ? (
-              <Input
-                id="clientName"
-                type="text"
-                placeholder="Type client name..."
-                value={clientName}
-                onChange={(e) => setClientName(e.target.value)}
-                className="h-12 text-base border-slate-200 bg-slate-50 focus:bg-white focus:border-brand-500 focus:ring-brand-500/20 rounded-xl transition-all"
-                required
-              />
-            ) : (
-              <Select onValueChange={setClientName} value={clientName}>
-                <SelectTrigger className="h-12 text-base border-slate-200 bg-slate-50 focus:bg-white focus:border-brand-500 focus:ring-brand-500/20 rounded-xl transition-all">
-                  <SelectValue placeholder="Select a client" />
-                </SelectTrigger>
-                <SelectContent className="bg-popover z-50">
-                  {CLIENT_NAMES.map((name) => (
-                    <SelectItem key={name} value={name}>
-                      {name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  type="button"
+                  className={cn(
+                    "w-full h-11 justify-start text-left normal-case tracking-normal font-normal",
+                    !startDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {startDate ? format(startDate, "MMM d, yyyy") : <span>Pick a date</span>}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={startDate}
+                  onSelect={setStartDate}
+                  initialFocus
+                  className="p-3 pointer-events-auto"
+                />
+              </PopoverContent>
+            </Popover>
           </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="googleAdsId" className="text-xs font-bold uppercase tracking-widest text-slate-500">
-              <Hash className="inline-block w-3.5 h-3.5 mr-1.5 -mt-0.5" />
-              Google Ads ID
+          <div className="space-y-2.5">
+            <Label className="type-eyebrow text-muted-foreground flex items-center gap-1.5">
+              <CalendarIcon className="w-3 h-3" /> End Date
             </Label>
-            <Input
-              id="googleAdsId"
-              type="text"
-              placeholder="e.g. 123-456-7890"
-              value={googleAdsId}
-              onChange={(e) => setGoogleAdsId(e.target.value)}
-              className="h-12 text-base border-slate-200 bg-slate-50 focus:bg-white focus:border-brand-500 focus:ring-brand-500/20 rounded-xl transition-all"
-              required
-              maxLength={255}
-            />
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  type="button"
+                  className={cn(
+                    "w-full h-11 justify-start text-left normal-case tracking-normal font-normal",
+                    !endDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {endDate ? format(endDate, "MMM d, yyyy") : <span>Pick a date</span>}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={endDate}
+                  onSelect={setEndDate}
+                  disabled={(date) => startDate ? date < startDate : false}
+                  initialFocus
+                  className="p-3 pointer-events-auto"
+                />
+              </PopoverContent>
+            </Popover>
           </div>
+        </div>
+      )}
 
-          {showDates && (
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label className="text-xs font-bold uppercase tracking-widest text-slate-500">
-                  <CalendarIcon className="inline-block w-3.5 h-3.5 mr-1.5 -mt-0.5" />
-                  Start Date
-                </Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      type="button"
-                      className={cn(
-                        "w-full h-12 justify-start text-left font-normal border-slate-200 bg-slate-50 hover:bg-white rounded-xl transition-all",
-                        !startDate && "text-muted-foreground"
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {startDate ? format(startDate, "MMM d, yyyy") : <span>Pick a date</span>}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={startDate}
-                      onSelect={setStartDate}
-                      initialFocus
-                      className="p-3 pointer-events-auto"
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-              <div className="space-y-2">
-                <Label className="text-xs font-bold uppercase tracking-widest text-slate-500">
-                  <CalendarIcon className="inline-block w-3.5 h-3.5 mr-1.5 -mt-0.5" />
-                  End Date
-                </Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      type="button"
-                      className={cn(
-                        "w-full h-12 justify-start text-left font-normal border-slate-200 bg-slate-50 hover:bg-white rounded-xl transition-all",
-                        !endDate && "text-muted-foreground"
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {endDate ? format(endDate, "MMM d, yyyy") : <span>Pick a date</span>}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={endDate}
-                      onSelect={setEndDate}
-                      disabled={(date) => startDate ? date < startDate : false}
-                      initialFocus
-                      className="p-3 pointer-events-auto"
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-            </div>
-          )}
-
-          <div className="flex flex-col gap-3">
-            <Button
-              type="submit"
-              disabled={isLoading || !clientName.trim() || !googleAdsId.trim() || (showDates && (!startDate || !endDate))}
-              className="w-full h-14 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-500 hover:to-brand-400 text-white"
-            >
-              {submitLabel}
-              <ArrowRight className="ml-2 w-5 h-5" />
-            </Button>
-            {onBack && (
-              <Button
-                type="button"
-                variant="outline"
-                onClick={onBack}
-                disabled={isLoading}
-                className="w-full h-14 text-lg font-semibold rounded-xl text-slate-600 hover:text-slate-900 border-slate-200 hover:bg-slate-50 transition-all duration-300"
-              >
-                Back to Options
-              </Button>
-            )}
-          </div>
-        </form>
-      </CardContent>
-    </Card>
+      <div className="flex flex-col gap-3 pt-2">
+        <Button
+          type="submit"
+          disabled={isLoading || !clientName.trim() || !googleAdsId.trim() || (showDates && (!startDate || !endDate))}
+          className="w-full h-12"
+        >
+          {submitLabel}
+          <ArrowRight className="ml-2 w-4 h-4" />
+        </Button>
+        {onBack && (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onBack}
+            disabled={isLoading}
+            className="w-full h-12"
+          >
+            Back to Options
+          </Button>
+        )}
+      </div>
+    </form>
   );
 };
 

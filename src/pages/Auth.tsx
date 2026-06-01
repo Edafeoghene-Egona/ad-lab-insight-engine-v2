@@ -201,31 +201,31 @@ const Auth = () => {
             <div className="auth-orb auth-orb-2" />
             <div className="auth-orb auth-orb-3" />
 
-            <div className="w-full max-w-md relative z-10 animate-fade-in">
+            <div className="w-full max-w-md relative z-10 animate-reveal">
                 {/* Logo & branding */}
-                <div className="mb-8 text-center">
+                <div className="mb-10 text-center">
                     <img
                         src={adLabLogo}
                         alt="Ad-Lab"
-                        className="h-16 mx-auto mb-4 rounded-2xl shadow-2xl shadow-brand-500/20 ring-1 ring-black/5"
+                        className="h-12 w-12 mx-auto mb-5 rounded-[4px] object-cover border border-border"
                     />
-                    <p className="text-brand-600/80 text-sm tracking-widest uppercase font-medium">
-                        Intelligence Platform
+                    <p className="type-eyebrow text-primary">
+                        Insight Engine
                     </p>
                 </div>
 
-                {/* Glassmorphism card */}
-                <Card className="auth-card border-slate-200 shadow-xl shadow-brand-900/5 rounded-2xl overflow-hidden">
-                    <CardHeader className="space-y-1 pb-4 pt-8 px-8">
-                        <div className="flex items-center justify-center gap-2 mb-2">
-                            <div className="p-2 rounded-xl bg-brand-50 text-brand-600 ring-1 ring-brand-200">
+                {/* Auth card */}
+                <Card className="auth-card overflow-hidden">
+                    <CardHeader className="space-y-1.5 pb-5 pt-9 px-8">
+                        <div className="flex items-center justify-center gap-2 mb-3">
+                            <div className="p-2.5 rounded-[4px] border border-border text-primary">
                                 {getIcon()}
                             </div>
                         </div>
-                        <CardTitle className="text-2xl font-bold text-center text-slate-900">
+                        <CardTitle className="text-xl text-center text-foreground">
                             {getTitle()}
                         </CardTitle>
-                        <CardDescription className="text-center text-slate-500">
+                        <CardDescription className="text-center text-muted-foreground text-xs tracking-[0.04em] uppercase">
                             {getDescription()}
                         </CardDescription>
                     </CardHeader>
@@ -398,8 +398,8 @@ const Auth = () => {
                 </Card>
 
                 {/* Footer */}
-                <p className="text-center text-[11px] text-slate-500 mt-6 tracking-wider">
-                    © {new Date().getFullYear()} Ad-Lab · Internal Use Only
+                <p className="micro-label text-center mt-8">
+                    © {new Date().getFullYear()} Ad-Lab · internal use only
                 </p>
             </div>
         </div>

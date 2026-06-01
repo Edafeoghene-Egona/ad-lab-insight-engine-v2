@@ -155,7 +155,7 @@ const ReportViewer = ({ html, businessName, onNewReport, onBack, onSaveHtml }: R
   return (
     <div className="min-h-screen flex flex-col bg-background">
       {/* Toolbar */}
-      <div className="bg-[#050505] border-b border-white/5 px-6 py-3 flex items-center justify-between">
+      <div className="viewer-toolbar px-6 py-3 flex items-center justify-between sticky top-0 z-30">
         <div className="flex items-center gap-3 min-w-0">
           {onBack && (
             <>
@@ -163,18 +163,21 @@ const ReportViewer = ({ html, businessName, onNewReport, onBack, onSaveHtml }: R
                 variant="ghost"
                 size="sm"
                 onClick={onBack}
-                className="text-slate-300 hover:text-white hover:bg-white/5 rounded-lg h-8 shrink-0"
+                className="text-white/70 hover:text-white hover:bg-white/10 h-8 shrink-0"
                 title="Go back"
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back
               </Button>
-              <div className="w-px h-5 bg-white/10 shrink-0" />
+              <div className="w-px h-5 bg-white/15 shrink-0" />
             </>
           )}
-          <h2 className="font-display text-base font-semibold text-white/90 truncate">
-            Report: <span className="text-brand-400">{businessName}</span>
-          </h2>
+          <div className="min-w-0 flex flex-col">
+            <span className="micro-label text-white/45">Report</span>
+            <h2 className="text-sm text-white truncate type-engineered">
+              {businessName}
+            </h2>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           {editMode ? (

@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { ReportHistoryEntry, deleteReport } from "@/lib/report-history";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar } from "@/components/ui/calendar";
@@ -39,19 +38,19 @@ type Preset = "today" | "yesterday" | "last7" | "custom" | null;
 
 const statusBadge = (status: ReportHistoryEntry["status"]) => {
   if (status === "pending") return (
-    <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200/50">
+    <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground bg-muted px-2 py-0.5 rounded-[4px] border border-border">
       <Loader2 className="w-3 h-3 animate-spin" />
       Processing
     </span>
   );
   if (status === "error") return (
-    <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-red-600 bg-red-50 px-2 py-0.5 rounded-full border border-red-200/50">
+    <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-destructive bg-destructive/5 px-2 py-0.5 rounded-[4px] border border-destructive/20">
       <AlertCircle className="w-3 h-3" />
       Failed
     </span>
   );
   return (
-    <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/50">
+    <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-primary bg-secondary px-2 py-0.5 rounded-[4px] border border-primary/15">
       <CheckCircle2 className="w-3 h-3" />
       Complete
     </span>
@@ -110,14 +109,14 @@ const ReportHistory = ({ history, automatedHistory, onView, onRefresh }: ReportH
 
   // Empty state component
   const EmptyState = ({ message, showHint }: { message: string; showHint?: boolean }) => (
-    <div className="flex flex-col items-center justify-center py-10 text-center">
-      <div className="w-14 h-14 rounded-2xl bg-brand-50 flex items-center justify-center mb-4 border border-brand-100/50">
-        <Inbox className="w-7 h-7 text-brand-400" />
+    <div className="flex flex-col items-center justify-center py-12 text-center">
+      <div className="w-12 h-12 rounded-[4px] border border-border bg-card flex items-center justify-center mb-5 text-primary">
+        <Inbox className="w-5 h-5" strokeWidth={1.5} />
       </div>
-      <p className="text-sm text-slate-500 max-w-xs">{message}</p>
+      <p className="text-xs text-muted-foreground tracking-[0.04em] uppercase max-w-xs">{message}</p>
       {showHint && (
-        <p className="text-xs text-brand-400 mt-3 flex items-center gap-1">
-          <span>↑</span> Use the report buttons above to get started
+        <p className="micro-label-lg text-primary mt-4 flex items-center gap-1.5">
+          <span>↑</span> use the report buttons above to begin
         </p>
       )}
     </div>
@@ -130,23 +129,23 @@ const ReportHistory = ({ history, automatedHistory, onView, onRefresh }: ReportH
     }
 
     return (
-      <div className="space-y-2.5">
+      <div className="space-y-2">
         {filtered.map((entry, i) => (
-          <Card
+          <div
             key={entry.id}
-            className="overflow-hidden rounded-xl bg-white/70 backdrop-blur-sm border-l-2 border-l-brand-200 border-t border-r border-b border-t-brand-100/30 border-r-brand-100/30 border-b-brand-100/30 shadow-sm shadow-brand-500/[0.03] hover:border-l-brand-400 hover:shadow-md hover:shadow-brand-500/[0.08] hover:-translate-y-0.5 transition-all duration-300 animate-slide-up"
-            style={{ animationDelay: `${i * 0.05}s` }}
+            className="history-card overflow-hidden rounded-[4px] bg-card border border-border border-l-2 border-l-primary/50 animate-slide-up"
+            style={{ animationDelay: `${i * 0.04}s` }}
           >
-            <CardContent className="p-4 flex items-center justify-between">
+            <div className="p-4 flex items-center justify-between">
               <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2 mb-0.5">
-                  <p className="font-semibold text-slate-800 truncate text-sm">{entry.clientName}</p>
+                <div className="flex items-center gap-2.5 mb-1.5">
+                  <p className="font-semibold text-foreground truncate text-sm tracking-[0.01em]">{entry.clientName}</p>
                   {statusBadge(entry.status)}
                 </div>
                 {entry.jobType !== "competitor" && (
-                  <p className="text-xs text-slate-500 truncate">{entry.googleAdsId}</p>
+                  <p className="micro-label-lg text-muted-foreground truncate">{entry.googleAdsId}</p>
                 )}
-                <p className="text-[11px] text-slate-400 mt-1 tabular-nums">
+                <p className="micro-label-lg text-muted-foreground/70 mt-1.5 tabular-nums">
                   {new Date(entry.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                   {entry.jobType !== "competitor" && (
                     <> · {entry.dateRange.start} — {entry.dateRange.end}</>
@@ -159,26 +158,26 @@ const ReportHistory = ({ history, automatedHistory, onView, onRefresh }: ReportH
                     variant="ghost"
                     size="sm"
                     onClick={() => onView(entry)}
-                    className="h-8 gap-1.5 px-2 text-slate-400 hover:text-brand-600 hover:bg-brand-50/50 transition-colors"
+                    className="h-8 gap-1.5 px-2.5 text-muted-foreground hover:text-primary"
                     title="View report"
                   >
                     <ExternalLink className="w-3.5 h-3.5" />
-                    <span className="hidden sm:block text-xs font-medium">View</span>
+                    <span className="hidden sm:block">View</span>
                   </Button>
                 )}
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => setDeleteId(entry.id)}
-                  className="h-8 gap-1.5 px-2 text-slate-400 hover:text-destructive hover:bg-red-50/50 transition-colors"
+                  className="h-8 gap-1.5 px-2.5 text-muted-foreground hover:text-destructive"
                   title="Delete report"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
-                  <span className="hidden sm:block text-xs font-medium">Delete</span>
+                  <span className="hidden sm:block">Delete</span>
                 </Button>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         ))}
       </div>
     );
@@ -192,23 +191,38 @@ const ReportHistory = ({ history, automatedHistory, onView, onRefresh }: ReportH
   const automatedWeekly = automatedHistory.filter(h => h.jobType === "weekly" || !h.jobType);
   const automatedCompetitor = automatedHistory.filter(h => h.jobType === "competitor");
 
+  // Reusable accordion section — uniform tonal treatment
+  const Section = ({ value, title, count, children }: { value: string; title: string; count: number; children: React.ReactNode }) => (
+    <AccordionItem value={value} className="border border-border border-l-2 border-l-primary/40 rounded-[4px] px-4 data-[state=open]:bg-secondary/30 transition-colors">
+      <AccordionTrigger className="text-xs font-semibold uppercase tracking-[0.12em] text-foreground hover:no-underline py-4">
+        <span className="flex-1 text-left">{title}</span>
+        <span className="ml-2 mr-2 micro-label-lg text-primary bg-secondary px-2 py-0.5 rounded-[4px] border border-primary/15 tabular-nums">
+          {count}
+        </span>
+      </AccordionTrigger>
+      <AccordionContent>
+        <div className="pt-1 pb-3">{children}</div>
+      </AccordionContent>
+    </AccordionItem>
+  );
+
   // Show empty state when no reports exist at all
   if (history.length === 0 && automatedHistory.length === 0) {
     return (
-      <div className="mt-10">
-        <h3 className="font-display text-xl font-semibold text-slate-800 flex items-center gap-2 mb-6">
-          <Clock className="w-5 h-5 text-brand-500" />
+      <div>
+        <h3 className="text-xl text-foreground flex items-center gap-2.5 mb-8">
+          <Clock className="w-5 h-5 text-primary" strokeWidth={1.5} />
           Report History
         </h3>
-        <EmptyState message="No reports yet. Generate your first report to see it here!" showHint />
+        <EmptyState message="No reports yet. Generate your first report to see it here." showHint />
       </div>
     );
   }
 
   // Date filter bar — shared across both tabs
   const DateFilterBar = () => (
-    <div className="flex flex-wrap items-center gap-2 mb-5 p-3 bg-brand-50/30 rounded-xl border border-brand-100/40 backdrop-blur-sm">
-      <CalendarDays className="w-4 h-4 text-brand-400 shrink-0" />
+    <div className="flex flex-wrap items-center gap-2 mb-6 p-3 bg-card rounded-[4px] border border-border">
+      <CalendarDays className="w-4 h-4 text-primary shrink-0" strokeWidth={1.5} />
       {(["today", "yesterday", "last7"] as const).map((preset) => {
         const labels = { today: "Today", yesterday: "Yesterday", last7: "Last 7 Days" };
         const isActive = activePreset === preset;
@@ -216,9 +230,9 @@ const ReportHistory = ({ history, automatedHistory, onView, onRefresh }: ReportH
           <button
             key={preset}
             onClick={() => handlePreset(preset)}
-            className={`text-xs font-medium px-3 py-1.5 rounded-lg transition-all ${isActive
-              ? "bg-gradient-to-r from-brand-500 to-brand-600 text-white shadow-sm shadow-brand-500/20"
-              : "bg-white/80 text-slate-600 border border-brand-100/50 hover:border-brand-200 hover:bg-white"
+            className={`text-[10px] font-semibold uppercase tracking-[0.12em] px-3 py-1.5 rounded-[4px] transition-colors ${isActive
+              ? "bg-primary text-primary-foreground"
+              : "bg-background text-muted-foreground border border-border hover:border-primary/50 hover:text-foreground"
               }`}
           >
             {labels[preset]}
@@ -234,16 +248,16 @@ const ReportHistory = ({ history, automatedHistory, onView, onRefresh }: ReportH
               setActivePreset("custom");
               setCalendarOpen(true);
             }}
-            className={`text-xs font-medium px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${activePreset === "custom"
-              ? "bg-gradient-to-r from-brand-500 to-brand-600 text-white shadow-sm shadow-brand-500/20"
-              : "bg-white/80 text-slate-600 border border-brand-100/50 hover:border-brand-200 hover:bg-white"
+            className={`text-[10px] font-semibold uppercase tracking-[0.12em] px-3 py-1.5 rounded-[4px] transition-colors flex items-center gap-1.5 ${activePreset === "custom"
+              ? "bg-primary text-primary-foreground"
+              : "bg-background text-muted-foreground border border-border hover:border-primary/50 hover:text-foreground"
               }`}
           >
             <CalendarDays className="w-3.5 h-3.5" />
             {activePreset === "custom" ? customLabel : "Custom Range"}
           </button>
         </PopoverTrigger>
-        <PopoverContent className="w-auto p-0 shadow-xl rounded-xl" align="start">
+        <PopoverContent className="w-auto p-0 rounded-[4px]" align="start">
           <Calendar
             mode="range"
             selected={customRange}
@@ -264,7 +278,7 @@ const ReportHistory = ({ history, automatedHistory, onView, onRefresh }: ReportH
       {hasActiveFilter && (
         <button
           onClick={handleClearFilter}
-          className="ml-auto text-xs font-medium px-2.5 py-1.5 rounded-lg text-brand-500 hover:text-brand-700 hover:bg-brand-50 flex items-center gap-1 transition-all"
+          className="ml-auto text-[10px] font-semibold uppercase tracking-[0.12em] px-2.5 py-1.5 rounded-[4px] text-primary hover:bg-secondary flex items-center gap-1 transition-colors"
         >
           <X className="w-3.5 h-3.5" />
           Clear
@@ -274,17 +288,16 @@ const ReportHistory = ({ history, automatedHistory, onView, onRefresh }: ReportH
   );
 
   return (
-    <div className="mt-10">
+    <div>
       <Tabs defaultValue="recent" className="w-full">
-        <div className="flex items-center justify-between mb-6 pb-5 border-b border-slate-100">
-          <h3 className="font-display text-xl font-semibold text-slate-800 flex items-center gap-2">
-            <Clock className="w-5 h-5 text-brand-500" />
+        <div className="flex items-center justify-between mb-8 pb-5 border-b border-border">
+          <h3 className="text-xl text-foreground flex items-center gap-2.5">
+            <Clock className="w-5 h-5 text-primary" strokeWidth={1.5} />
             Report History
-            <div className="h-0.5 w-8 bg-gradient-to-r from-brand-400 to-transparent rounded-full ml-1" />
           </h3>
-          <TabsList className="bg-brand-50/50 border border-brand-100/40">
-            <TabsTrigger value="recent" className="text-sm data-[state=active]:bg-white data-[state=active]:text-brand-700 data-[state=active]:shadow-sm">Recent</TabsTrigger>
-            <TabsTrigger value="automated" className="text-sm gap-1.5 flex items-center data-[state=active]:bg-white data-[state=active]:text-brand-700 data-[state=active]:shadow-sm">
+          <TabsList className="bg-card border border-border rounded-[4px] p-1">
+            <TabsTrigger value="recent" className="text-[10px] font-semibold uppercase tracking-[0.12em] rounded-[4px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Recent</TabsTrigger>
+            <TabsTrigger value="automated" className="text-[10px] font-semibold uppercase tracking-[0.12em] gap-1.5 flex items-center rounded-[4px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <Bot className="w-3.5 h-3.5" />
               Automated
             </TabsTrigger>
@@ -295,97 +308,34 @@ const ReportHistory = ({ history, automatedHistory, onView, onRefresh }: ReportH
         <DateFilterBar />
 
         <TabsContent value="recent" className="animate-in fade-in duration-300">
-          <Accordion type="multiple" defaultValue={[]} className="w-full space-y-4">
-            <AccordionItem value="audits" className="border-none bg-white/50 backdrop-blur-sm rounded-xl px-4 border border-brand-100/30 data-[state=open]:shadow-sm data-[state=open]:shadow-brand-500/[0.04] transition-all pb-1 border-l-2 border-l-brand-300">
-              <AccordionTrigger className="text-sm font-semibold text-slate-700 hover:no-underline py-4">
-                Full Account Audits
-                <span className="ml-2 text-xs font-normal text-brand-600 bg-brand-50 px-2 py-0.5 rounded-full border border-brand-100/50">
-                  {filterByDate(manualAudit).length}
-                </span>
-              </AccordionTrigger>
-              <AccordionContent>
-                <div className="pt-1 pb-2">
-                  {renderList(manualAudit, "No recent audits found.")}
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-
-            <AccordionItem value="weekly" className="border-none bg-white/50 backdrop-blur-sm rounded-xl px-4 border border-brand-100/30 data-[state=open]:shadow-sm data-[state=open]:shadow-brand-500/[0.04] transition-all pb-1 border-l-2 border-l-brand-300">
-              <AccordionTrigger className="text-sm font-semibold text-slate-700 hover:no-underline py-4">
-                Weekly Performance Reports
-                <span className="ml-2 text-xs font-normal text-brand-600 bg-brand-50 px-2 py-0.5 rounded-full border border-brand-100/50">
-                  {filterByDate(manualWeekly).length}
-                </span>
-              </AccordionTrigger>
-              <AccordionContent>
-                <div className="pt-1 pb-2">
-                  {renderList(manualWeekly, "No recent weekly reports found.")}
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-
-            <AccordionItem value="competitor" className="border-none bg-white/50 backdrop-blur-sm rounded-xl px-4 border border-teal-100/30 data-[state=open]:shadow-sm data-[state=open]:shadow-teal-500/[0.04] transition-all pb-1 border-l-2 border-l-teal-400">
-              <AccordionTrigger className="text-sm font-semibold text-slate-700 hover:no-underline py-4">
-                Client Competitor Analysis
-                <span className="ml-2 text-xs font-normal text-teal-600 bg-teal-50 px-2 py-0.5 rounded-full border border-teal-100/50">
-                  {filterByDate(manualCompetitor).length}
-                </span>
-              </AccordionTrigger>
-              <AccordionContent>
-                <div className="pt-1 pb-2">
-                  {renderList(manualCompetitor, "No recent competitor analysis reports found.")}
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-
-            <AccordionItem value="custom" className="border-none bg-white/50 backdrop-blur-sm rounded-xl px-4 border border-orange-100/30 data-[state=open]:shadow-sm data-[state=open]:shadow-orange-500/[0.04] transition-all pb-1 border-l-2 border-l-orange-400">
-              <AccordionTrigger className="text-sm font-semibold text-slate-700 hover:no-underline py-4">
-                Custom Reports
-                <span className="ml-2 text-xs font-normal text-orange-600 bg-orange-50 px-2 py-0.5 rounded-full border border-orange-100/50">
-                  {filterByDate(manualCustom).length}
-                </span>
-              </AccordionTrigger>
-              <AccordionContent>
-                <div className="pt-1 pb-2">
-                  {renderList(manualCustom, "No custom reports found.")}
-                </div>
-              </AccordionContent>
-            </AccordionItem>
+          <Accordion type="multiple" defaultValue={[]} className="w-full space-y-3">
+            <Section value="audits" title="Full Account Audits" count={filterByDate(manualAudit).length}>
+              {renderList(manualAudit, "No recent audits found.")}
+            </Section>
+            <Section value="weekly" title="Weekly Performance Reports" count={filterByDate(manualWeekly).length}>
+              {renderList(manualWeekly, "No recent weekly reports found.")}
+            </Section>
+            <Section value="competitor" title="Client Competitor Analysis" count={filterByDate(manualCompetitor).length}>
+              {renderList(manualCompetitor, "No recent competitor analysis reports found.")}
+            </Section>
+            <Section value="custom" title="Custom Reports" count={filterByDate(manualCustom).length}>
+              {renderList(manualCustom, "No custom reports found.")}
+            </Section>
           </Accordion>
         </TabsContent>
 
-        <TabsContent value="automated" className="space-y-4 animate-in fade-in duration-300">
-          <div className="text-sm text-slate-600 bg-brand-50/50 p-3 rounded-lg border border-brand-100/50 flex items-start gap-2 backdrop-blur-sm">
-            <Bot className="w-4 h-4 text-brand-500 mt-0.5 shrink-0" />
+        <TabsContent value="automated" className="space-y-3 animate-in fade-in duration-300">
+          <div className="text-xs text-muted-foreground bg-card p-3.5 rounded-[4px] border border-border border-l-2 border-l-primary/40 flex items-start gap-2.5 tracking-[0.02em] leading-relaxed">
+            <Bot className="w-4 h-4 text-primary mt-0.5 shrink-0" strokeWidth={1.5} />
             <p>These reports are automatically scheduled and generated by the system. They are accessible to all team members.</p>
           </div>
-          <Accordion type="multiple" defaultValue={[]} className="w-full space-y-4">
-            <AccordionItem value="auto-weekly" className="border-none bg-white/50 backdrop-blur-sm rounded-xl px-4 border border-brand-100/30 data-[state=open]:shadow-sm data-[state=open]:shadow-brand-500/[0.04] transition-all pb-1 border-l-2 border-l-brand-300">
-              <AccordionTrigger className="text-sm font-semibold text-slate-700 hover:no-underline py-4">
-                Weekly Reports
-                <span className="ml-2 text-xs font-normal text-brand-600 bg-brand-50 px-2 py-0.5 rounded-full border border-brand-100/50">
-                  {filterByDate(automatedWeekly).length}
-                </span>
-              </AccordionTrigger>
-              <AccordionContent>
-                <div className="pt-1 pb-2">
-                  {renderList(automatedWeekly, "No automated weekly reports available yet.")}
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="auto-competitor" className="border-none bg-white/50 backdrop-blur-sm rounded-xl px-4 border border-teal-100/30 data-[state=open]:shadow-sm data-[state=open]:shadow-teal-500/[0.04] transition-all pb-1 border-l-2 border-l-teal-400">
-              <AccordionTrigger className="text-sm font-semibold text-slate-700 hover:no-underline py-4">
-                Competitor Analysis
-                <span className="ml-2 text-xs font-normal text-teal-600 bg-teal-50 px-2 py-0.5 rounded-full border border-teal-100/50">
-                  {filterByDate(automatedCompetitor).length}
-                </span>
-              </AccordionTrigger>
-              <AccordionContent>
-                <div className="pt-1 pb-2">
-                  {renderList(automatedCompetitor, "No automated competitor analysis reports available yet.")}
-                </div>
-              </AccordionContent>
-            </AccordionItem>
+          <Accordion type="multiple" defaultValue={[]} className="w-full space-y-3">
+            <Section value="auto-weekly" title="Weekly Reports" count={filterByDate(automatedWeekly).length}>
+              {renderList(automatedWeekly, "No automated weekly reports available yet.")}
+            </Section>
+            <Section value="auto-competitor" title="Competitor Analysis" count={filterByDate(automatedCompetitor).length}>
+              {renderList(automatedCompetitor, "No automated competitor analysis reports available yet.")}
+            </Section>
           </Accordion>
         </TabsContent>
       </Tabs>
