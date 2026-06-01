@@ -51,6 +51,34 @@ const [currentReportType, setCurrentReportType] = useState<"weekly" | "audit" | 
     refreshHistory().finally(() => setHistoryLoading(false));
   }, [refreshHistory]);
 
+  // Auto-refresh: silently pull the latest data from the database every 30s.
+  // Skips while the tab is hidden and guards against overlapping in-flight calls;
+  // also refreshes immediately when the tab regains focus.
+  useEffect(() => {
+    const REFRESH_MS = 30_000;
+    let inFlight = false;
+    const tick = async () => {
+      if (document.hidden || inFlight) return;
+      inFlight = true;
+      try {
+        await refreshHistory();
+      } catch {
+        /* transient fetch error — next tick will retry */
+      } finally {
+        inFlight = false;
+      }
+    };
+    const intervalId = setInterval(tick, REFRESH_MS);
+    const onVisibility = () => {
+      if (!document.hidden) tick();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      clearInterval(intervalId);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [refreshHistory]);
+
   const cleanup = useCallback(() => {
     if (pollRef.current) clearInterval(pollRef.current);
     if (timerRef.current) clearInterval(timerRef.current);
@@ -260,8 +288,10 @@ const [currentReportType, setCurrentReportType] = useState<"weekly" | "audit" | 
           </div>
 
           <div className="flex items-center gap-5">
-            <div className="hidden md:flex items-center gap-2 text-foreground">
+            <div className="hidden md:flex items-center gap-2.5" title="Data auto-refreshes every 30 seconds">
               <span className="w-1.5 h-1.5 rounded-full bg-primary live-dot" />
+              <span className="type-eyebrow text-primary">Live</span>
+              <span className="w-px h-3 bg-border" />
               <span className="type-eyebrow text-muted-foreground">{firstName}</span>
             </div>
             <Button
