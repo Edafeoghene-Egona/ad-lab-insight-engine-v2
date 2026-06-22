@@ -7,6 +7,7 @@ export const CLIENT_NAMES = [
   "bbettermembership",
   "bhealth",
   "billionballers",
+  "bloombuild",
   "drinkdefendly",
   "ecomflow",
   "elavoura",
