@@ -186,10 +186,12 @@ const ReportHistory = ({ history, automatedHistory, onView, onRefresh }: ReportH
   const manualWeekly = history.filter(h => h.jobType === "weekly" || !h.jobType);
   const manualAudit = history.filter(h => h.jobType === "audit");
   const manualCompetitor = history.filter(h => h.jobType === "competitor");
+  const manualYoutube = history.filter(h => h.jobType === "youtube");
   const manualCustom = history.filter(h => h.jobType === "custom");
 
   const automatedWeekly = automatedHistory.filter(h => h.jobType === "weekly" || !h.jobType);
   const automatedCompetitor = automatedHistory.filter(h => h.jobType === "competitor");
+  const automatedYoutube = automatedHistory.filter(h => h.jobType === "youtube");
 
   // Reusable accordion section — uniform tonal treatment
   const Section = ({ value, title, count, children }: { value: string; title: string; count: number; children: React.ReactNode }) => (
@@ -318,6 +320,9 @@ const ReportHistory = ({ history, automatedHistory, onView, onRefresh }: ReportH
             <Section value="competitor" title="Client Competitor Analysis" count={filterByDate(manualCompetitor).length}>
               {renderList(manualCompetitor, "No recent competitor analysis reports found.")}
             </Section>
+            <Section value="youtube" title="YouTube Performance" count={filterByDate(manualYoutube).length}>
+              {renderList(manualYoutube, "No recent YouTube performance reports found.")}
+            </Section>
             <Section value="custom" title="Custom Reports" count={filterByDate(manualCustom).length}>
               {renderList(manualCustom, "No custom reports found.")}
             </Section>
@@ -335,6 +340,9 @@ const ReportHistory = ({ history, automatedHistory, onView, onRefresh }: ReportH
             </Section>
             <Section value="auto-competitor" title="Competitor Analysis" count={filterByDate(automatedCompetitor).length}>
               {renderList(automatedCompetitor, "No automated competitor analysis reports available yet.")}
+            </Section>
+            <Section value="auto-youtube" title="YouTube Performance" count={filterByDate(automatedYoutube).length}>
+              {renderList(automatedYoutube, "No automated YouTube performance reports available yet.")}
             </Section>
           </Accordion>
         </TabsContent>

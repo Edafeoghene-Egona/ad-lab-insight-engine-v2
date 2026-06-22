@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>numoya — YouTube Video Performance Report</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        display: ['"Space Grotesk"', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: { 50:'#eef2ff', 100:'#e0e7ff', 200:'#c7d2fe', 400: '#818cf8', 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca' },
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f8fafc; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        body {
+            background-color: #f8fafc;
+            background-image: radial-gradient(circle at 15% 50%, rgba(99,102,241,0.04), transparent 35%), radial-gradient(circle at 85% 30%, rgba(244,63,94,0.03), transparent 35%);
+            background-attachment: fixed;
+            color: #0f172a;
+        }
+        .glass-panel {
+            background: rgba(255,255,255,0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(0,0,0,0.06);
+            box-shadow: 0 8px 32px -4px rgba(0,0,0,0.04), 0 4px 16px -4px rgba(0,0,0,0.02);
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: slideUp 0.4s ease-out forwards; }
+        @keyframes slideUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+        .nav-tab { position: relative; transition: all 0.3s ease; }
+        .nav-tab::after { content:''; position:absolute; bottom:-2px; left:0; right:0; height:2px; background:#6366f1; transform:scaleX(0); transition:transform 0.3s ease; }
+        .nav-tab.active { color:#0f172a; font-weight:600; }
+        .nav-tab.active::after { transform:scaleX(1); }
+        .stat-card { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+        .stat-card:hover { transform:translateY(-2px); box-shadow:0 12px 32px -4px rgba(99,102,241,0.1); }
+        .delta-up { color: #059669; }
+        .delta-down { color: #e11d48; }
+        .delta-neutral { color: #64748b; }
+        .checklist-row:hover { background:#f8fafc; }
+        .product-row:hover { background:#f8fafc; }
+        .badge { display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:999px; font-size:10px; font-weight:700; letter-spacing:0.05em; text-transform:uppercase; }
+        .res-win { background:#d1fae5; color:#065f46; border:1px solid #a7f3d0; }
+        .res-test { background:#ede9fe; color:#4c1d95; border:1px solid #c4b5fd; }
+        .res-loss { background:#fee2e2; color:#991b1b; border:1px solid #fca5a5; }
+
+        [contenteditable]:focus { outline: 2px solid rgba(99,102,241,0.4); border-radius: 4px; outline-offset: 2px; }
+        [contenteditable]:hover { background: rgba(99,102,241,0.04); border-radius: 4px; }
+        .edit-hint { opacity:0; font-size:10px; color:#6366f1; font-weight:600; letter-spacing:0.05em; text-transform:uppercase; transition:opacity 0.2s; margin-left:6px; }
+        *:hover > .edit-hint { opacity:1; }
+        .signal-card { transition: all 0.2s ease; }
+        .signal-card:hover .delete-btn { opacity:1; }
+        .delete-btn { opacity:0; transition:opacity 0.2s; }
+        .action-item { transition: all 0.2s ease; }
+        .action-item:hover .delete-action-btn { opacity:1; }
+        .delete-action-btn { opacity:0; transition:opacity 0.2s; }
+
+        /* ─── View Mode ─────────────────────────────────────────── */
+        body.view-mode [contenteditable="true"] {
+            pointer-events: none;
+            user-select: text;
+            background: transparent !important;
+            outline: none !important;
+        }
+        body.view-mode .edit-controls { display: none !important; }
+        body.view-mode .edit-hint { display: none !important; }
+        body.view-mode .delete-btn { display: none !important; }
+        body.view-mode .delete-action-btn { display: none !important; }
+
+        /* Executive summary editable region */
+        #execSummaryText:focus {
+            outline: 2px solid rgba(99,102,241,0.4);
+            border-radius: 6px;
+            outline-offset: 4px;
+        }
+        #execSummaryText:hover { background: rgba(99,102,241,0.03); border-radius: 6px; }
+        body.view-mode #execSummaryText { pointer-events: none; background: transparent !important; outline: none !important; }
+
+        .sort-btn { cursor: pointer; user-select: none; display:inline-flex; align-items:center; gap:3px; }
+        .sort-btn:hover { color: #4f46e5; }
+        .sort-btn.sort-asc::after { content: ' ↑'; font-size:9px; color:#4f46e5; }
+        .sort-btn.sort-desc::after { content: ' ↓'; font-size:9px; color:#4f46e5; }
+
+        .wow-badge { font-size:9px; font-weight:700; padding:1px 5px; border-radius:4px; white-space:nowrap; }
+        .wow-up { background:#d1fae5; color:#065f46; }
+        .wow-down { background:#fee2e2; color:#991b1b; }
+        .wow-neutral { background:#f1f5f9; color:#64748b; }
+
+        .summary-edit-hint { transition: opacity 0.25s; }
+
+        /* ─── Creative cards (YouTube) ──────────────────────────── */
+        .creative-card { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+        .creative-card:hover { transform: translateY(-3px); box-shadow: 0 18px 40px -8px rgba(15,23,42,0.16); }
+        .creative-thumb {
+            position: relative; width: 100%; aspect-ratio: 16/9; overflow: hidden;
+            background: linear-gradient(135deg,#1e293b 0%,#4338ca 100%); display:flex; align-items:center; justify-content:center;
+        }
+        .creative-thumb img { width: 100%; height: 100%; object-fit: cover; }
+        .creative-thumb .thumb-fallback {
+            display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px;
+            width:100%; height:100%; color: rgba(255,255,255,0.85);
+        }
+        .play-overlay {
+            position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+            background: rgba(15,23,42,0.18); transition: background 0.2s ease;
+        }
+        .creative-card:hover .play-overlay { background: rgba(15,23,42,0.32); }
+        .play-overlay .play-btn {
+            width:54px; height:54px; border-radius:999px; background: rgba(255,0,0,0.92);
+            display:flex; align-items:center; justify-content:center; box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+            transition: transform 0.2s ease;
+        }
+        .creative-card:hover .play-overlay .play-btn { transform: scale(1.08); }
+        .creative-rank {
+            position:absolute; top:10px; left:10px; width:26px; height:26px; border-radius:7px;
+            background: rgba(15,23,42,0.78); color:#fff; display:flex; align-items:center; justify-content:center;
+            font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:12px; backdrop-filter: blur(4px);
+        }
+        .creative-duration {
+            position:absolute; bottom:10px; right:10px; background: rgba(15,23,42,0.82); color:#fff;
+            font-size:11px; font-weight:600; padding:1px 7px; border-radius:5px; font-variant-numeric: tabular-nums;
+        }
+        .lb-thumb { width:72px; height:40px; border-radius:5px; object-fit:cover; flex-shrink:0; background:#e2e8f0; }
+        .retention-pill { font-size:9px; font-weight:700; padding:1px 6px; border-radius:999px; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased">
+
+<div class="fixed inset-0 z-[-1] pointer-events-none opacity-30" style="background-image:linear-gradient(#e2e8f0 1px,transparent 1px),linear-gradient(90deg,#e2e8f0 1px,transparent 1px);background-size:32px 32px;"></div>
+
+<header class="relative pt-10 pb-8 px-6 lg:px-12 z-10 bg-[#cb5dec] shadow-lg overflow-hidden">
+    <div class="absolute inset-0 z-0 opacity-10 pointer-events-none" style="background-image:linear-gradient(#fff 1px,transparent 1px),linear-gradient(90deg,#fff 1px,transparent 1px);background-size:32px 32px;"></div>
+    <div class="absolute inset-0 z-0 bg-gradient-to-tr from-transparent via-white/5 to-white/10 pointer-events-none"></div>
+    <div class="max-w-7xl mx-auto relative z-10">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-8 border-b border-white/20 pb-8">
+            <div>
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="flex items-center justify-center w-8 h-8 rounded-lg bg-white/10 border border-white/20 text-white">
+                        <i data-lucide="youtube" class="w-4 h-4"></i>
+                    </div>
+                    <span class="text-xs font-bold tracking-widest uppercase text-white/70">Ad-Lab.io</span>
+                    <span class="text-white/30">|</span>
+                    <span class="text-xs font-bold tracking-widest uppercase text-white">YouTube Video Performance</span>
+                </div>
+                <h1 class="font-display text-5xl md:text-6xl font-bold tracking-tight text-white mb-5">
+                    numoya<span class="text-white/50 font-light">.com</span>
+                </h1>
+                <div class="flex flex-wrap gap-x-8 gap-y-3 text-sm">
+                    <div>
+                        <p class="text-white/60 uppercase tracking-wider text-[10px] font-bold mb-1">Report Period</p>
+                        <p class="text-white font-semibold">Jun 15 – Jun 22, 2026</p>
+                    </div>
+                    <div>
+                        <p class="text-white/60 uppercase tracking-wider text-[10px] font-bold mb-1">Window</p>
+                        <p class="text-white font-medium">Last 7 Days</p>
+                    </div>
+                    <div>
+                        <p class="text-white/60 uppercase tracking-wider text-[10px] font-bold mb-1">Account ID</p>
+                        <p class="text-white font-mono">332-254-7649</p>
+                    </div>
+                    <div>
+                        <p class="text-white/60 uppercase tracking-wider text-[10px] font-bold mb-1">Generated By</p>
+                        <p class="text-white font-medium flex items-center gap-1.5"><i data-lucide="bot" class="w-3 h-3 text-white/70"></i> Ad-Lab Tooling</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<nav class="sticky top-0 z-50 bg-white/90 backdrop-blur-xl border-b border-slate-200 shadow-sm">
+    <div class="max-w-7xl mx-auto px-6 lg:px-12">
+        <div class="flex overflow-x-auto hide-scrollbar gap-6">
+            <button class="nav-tab active py-4 text-sm text-slate-500 whitespace-nowrap" onclick="switchTab('overview',this)">Executive Summary</button>
+            <button class="nav-tab py-4 text-sm text-slate-500 whitespace-nowrap" onclick="switchTab('creatives',this)">Creative Performance</button>
+            <button class="nav-tab py-4 text-sm text-slate-500 whitespace-nowrap" onclick="switchTab('retention',this)">Hook &amp; Retention</button>
+            <button class="nav-tab py-4 text-sm text-slate-500 whitespace-nowrap" onclick="switchTab('trendlines',this)">Trendlines</button>
+            <button class="nav-tab py-4 text-sm text-slate-500 whitespace-nowrap flex items-center gap-1.5" onclick="switchTab('action',this)">
+                <i data-lucide="zap" class="w-3.5 h-3.5 text-brand-500"></i> Action Plan
+            </button>
+        </div>
+    </div>
+</nav>
+
+<main class="flex-grow w-full max-w-7xl mx-auto px-6 lg:px-12 py-10">
+
+<!-- ═══════════════════════════════════════════════════════════
+     EXECUTIVE SUMMARY TAB
+════════════════════════════════════════════════════════════ -->
+<div id="panel-overview" class="tab-content active">
+
+    <!-- ── Executive Briefing / Summary Box ──────────────────── -->
+    <div class="glass-panel rounded-2xl p-7 mb-10 border-l-4 border-l-brand-500 relative overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-br from-brand-50/50 via-transparent to-transparent pointer-events-none rounded-2xl"></div>
+        <div class="relative z-10">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-7 h-7 rounded-lg bg-brand-100 border border-brand-200 flex items-center justify-center">
+                        <i data-lucide="sparkles" class="w-3.5 h-3.5 text-brand-600"></i>
+                    </div>
+                    <span class="text-[10px] uppercase font-bold tracking-widest text-brand-700">Executive Briefing</span>
+                    <span class="summary-edit-hint edit-controls text-[10px] text-slate-400 italic font-normal normal-case tracking-normal">— click text to edit</span>
+                </div>
+                <span class="text-[10px] text-slate-400 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded font-mono uppercase tracking-wider">Last 7 Days · Jun 15 – Jun 22</span>
+            </div>
+            <p class="text-sm leading-relaxed text-slate-700 font-medium" contenteditable="true" id="execSummaryText">Over the last 7 days, numoya's YouTube video campaigns served 1.42M impressions and drove 457,056 views at a 32.2% view rate and $0.024 average CPV — spending $10,975 to generate 654 conversions ($28,234 value). We tested 8 creatives this week, of which 3 cleared our win threshold (37.5% win rate). The standout is "GoBrush PRO — 3-Second Transformation": a 68.2% hook rate and 30.1% completion drove 214 conversions at the account's lowest CPV ($0.018). Hook quality is the clearest dividing line between winners and losers — the bottom two creatives ("Features Walkthrough", "Static Promo") never cleared a 35% hook rate and should be retired. Priorities: scale the top 3 transformation/before-after angles, re-cut the mid-pack UGC creatives with a stronger first 3 seconds, and pause the two losing creatives to reallocate spend.</p>
+        </div>
+    </div>
+
+    <!-- ── Performance Overview heading + stats ──────────────── -->
+    <div class="flex items-center gap-3 mb-2">
+        <div class="h-px w-8 bg-brand-500"></div>
+        <h2 class="font-display text-2xl font-semibold text-slate-900">Performance Overview</h2>
+    </div>
+    <p class="text-sm text-slate-500 mb-8 ml-11">Jun 15 – Jun 22, 2026 &nbsp;·&nbsp; <span class="font-medium text-slate-700">Last 7 Days · All Video Campaigns</span></p>
+
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+
+        <div class="stat-card glass-panel p-5 rounded-2xl flex flex-col gap-2">
+            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center justify-between">Impressions <i data-lucide="eye" class="w-3.5 h-3.5 opacity-40"></i></p>
+            <p class="font-display text-2xl font-bold text-slate-900">1.42M</p>
+            <p class="text-[10px] text-slate-400 uppercase tracking-wider">Video Ad Served</p>
+        </div>
+
+        <div class="stat-card glass-panel p-5 rounded-2xl flex flex-col gap-2">
+            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center justify-between">Views <i data-lucide="play" class="w-3.5 h-3.5 opacity-40"></i></p>
+            <p class="font-display text-2xl font-bold text-slate-900">457,056</p>
+            <p class="text-[10px] text-slate-400 uppercase tracking-wider">Total Video Views</p>
+        </div>
+
+        <div class="stat-card glass-panel p-5 rounded-2xl flex flex-col gap-2">
+            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center justify-between">View Rate <i data-lucide="gauge" class="w-3.5 h-3.5 opacity-40"></i></p>
+            <p class="font-display text-2xl font-bold text-slate-900">32.2%</p>
+            <p class="text-[10px] text-slate-400 uppercase tracking-wider">Views / Impressions</p>
+        </div>
+
+        <div class="stat-card glass-panel p-5 rounded-2xl flex flex-col gap-2">
+            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center justify-between">Avg CPV <i data-lucide="dollar-sign" class="w-3.5 h-3.5 opacity-40"></i></p>
+            <p class="font-display text-2xl font-bold text-slate-900">$0.024</p>
+            <p class="text-[10px] text-slate-400 uppercase tracking-wider">$10,975 Spend</p>
+        </div>
+
+        <div class="stat-card glass-panel p-5 rounded-2xl flex flex-col gap-2 border-brand-100">
+            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center justify-between">Hook Rate <i data-lucide="zap" class="w-3.5 h-3.5 opacity-40 text-brand-600"></i></p>
+            <p class="font-display text-2xl font-bold text-brand-600">55.3%</p>
+            <p class="text-[10px] text-slate-400 uppercase tracking-wider">Watched Past 25%</p>
+        </div>
+
+        <div class="stat-card glass-panel p-5 rounded-2xl flex flex-col gap-2">
+            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center justify-between">Conversions <i data-lucide="mouse-pointer-click" class="w-3.5 h-3.5 opacity-40"></i></p>
+            <p class="font-display text-2xl font-bold text-slate-900">654</p>
+            <p class="text-[10px] text-slate-400 uppercase tracking-wider">$28,234 Value</p>
+        </div>
+    </div>
+
+    <!-- ── Win Rate hero band ─────────────────────────────────── -->
+    <div class="glass-panel rounded-2xl p-7 mb-10 relative overflow-hidden border-t-4 border-t-brand-500">
+        <div class="absolute inset-0 bg-gradient-to-r from-brand-50/50 via-transparent to-emerald-50/40 pointer-events-none"></div>
+        <div class="relative z-10 flex flex-col md:flex-row md:items-center gap-8">
+            <div class="flex items-center gap-6">
+                <div class="relative w-24 h-24 flex-shrink-0">
+                    <svg viewBox="0 0 100 100" class="w-24 h-24 -rotate-90">
+                        <circle cx="50" cy="50" r="42" fill="none" stroke="#e2e8f0" stroke-width="9"></circle>
+                        <circle cx="50" cy="50" r="42" fill="none" stroke="#4f46e5" stroke-width="9" stroke-linecap="round"
+                                stroke-dasharray="263.9" stroke-dashoffset="164.9"></circle>
+                    </svg>
+                    <div class="absolute inset-0 flex flex-col items-center justify-center">
+                        <span class="font-display text-2xl font-bold text-slate-900" id="winRatePct">37.5%</span>
+                    </div>
+                </div>
+                <div>
+                    <p class="text-[10px] uppercase font-bold tracking-widest text-brand-700 mb-1">Creative Win Rate</p>
+                    <h3 class="font-display text-xl font-bold text-slate-900 mb-1.5"><span id="winRateCount">3 of 8</span> creatives won</h3>
+                    <p class="text-sm text-slate-500 max-w-md">A creative "wins" when its view rate and CPV both beat the account benchmark (≥30% VVR &amp; ≤$0.025 CPV) with a positive conversion signal.</p>
+                </div>
+            </div>
+            <div class="flex gap-4 md:ml-auto">
+                <div class="text-center px-4 py-3 rounded-xl bg-emerald-50 border border-emerald-100 min-w-[80px]">
+                    <p class="font-display text-2xl font-bold text-emerald-600" id="winCount">3</p>
+                    <p class="text-[10px] uppercase font-bold tracking-wider text-emerald-700 mt-0.5">Winners</p>
+                </div>
+                <div class="text-center px-4 py-3 rounded-xl bg-violet-50 border border-violet-100 min-w-[80px]">
+                    <p class="font-display text-2xl font-bold text-violet-600" id="testCount">3</p>
+                    <p class="text-[10px] uppercase font-bold tracking-wider text-violet-700 mt-0.5">Testing</p>
+                </div>
+                <div class="text-center px-4 py-3 rounded-xl bg-rose-50 border border-rose-100 min-w-[80px]">
+                    <p class="font-display text-2xl font-bold text-rose-600" id="lossCount">2</p>
+                    <p class="text-[10px] uppercase font-bold tracking-wider text-rose-700 mt-0.5">Retire</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Key Signals ────────────────────────────────────────── -->
+    <div class="flex items-center justify-between mb-6">
+        <div class="flex items-center gap-3">
+            <div class="h-px w-8 bg-brand-500"></div>
+            <h2 class="font-display text-2xl font-semibold text-slate-900">Key Signals</h2>
+        </div>
+        <div class="flex gap-2 edit-controls">
+            <button onclick="addSignal('success')" class="flex items-center gap-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 px-3 py-1.5 rounded-lg transition-colors">
+                <i data-lucide="plus" class="w-3 h-3"></i> Green Signal
+            </button>
+            <button onclick="addSignal('warning')" class="flex items-center gap-1.5 text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 hover:bg-amber-100 px-3 py-1.5 rounded-lg transition-colors">
+                <i data-lucide="plus" class="w-3 h-3"></i> Amber Signal
+            </button>
+            <button onclick="addSignal('danger')" class="flex items-center gap-1.5 text-xs font-bold text-rose-700 bg-rose-50 border border-rose-200 hover:bg-rose-100 px-3 py-1.5 rounded-lg transition-colors">
+                <i data-lucide="plus" class="w-3 h-3"></i> Red Signal
+            </button>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12" id="signalsGrid">
+
+        <div class="signal-card glass-panel rounded-2xl p-6 relative overflow-hidden border-t-4 border-t-emerald-500">
+            <button onclick="removeSignal(this)" class="delete-btn edit-controls absolute top-3 right-3 text-emerald-400 hover:text-emerald-600 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg p-1 transition-colors z-10">
+                <i data-lucide="x" class="w-3.5 h-3.5"></i>
+            </button>
+            <div class="flex items-center gap-2 mb-4">
+                <span class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-100 border border-emerald-200 text-emerald-700 text-[10px] uppercase font-bold tracking-widest">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                    <span contenteditable="true">Top Performer</span>
+                </span>
+            </div>
+            <h3 class="font-display text-lg font-bold text-slate-900 mb-2" contenteditable="true">"3-Second Transformation" Is the Hook to Beat</h3>
+            <p class="text-sm text-slate-600 leading-relaxed mb-4" contenteditable="true">The opening transformation shot earns a 68.2% hook rate — 13 points above the account average — and carries it through to a 30.1% completion rate. It delivered 214 conversions this week at the lowest CPV in the account ($0.018). This first-3-seconds pattern (visible result before any branding) should become the template for the next creative batch.</p>
+            <div class="pt-4 border-t border-slate-100">
+                <div class="font-display text-3xl font-bold text-emerald-600 leading-none" contenteditable="true">68.2%</div>
+                <div class="text-xs text-slate-500 mt-1" contenteditable="true">Hook Rate — "3-Second Transformation"</div>
+            </div>
+        </div>
+
+        <div class="signal-card glass-panel rounded-2xl p-6 relative overflow-hidden border-t-4 border-t-amber-500">
+            <button onclick="removeSignal(this)" class="delete-btn edit-controls absolute top-3 right-3 text-amber-400 hover:text-amber-600 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg p-1 transition-colors z-10">
+                <i data-lucide="x" class="w-3.5 h-3.5"></i>
+            </button>
+            <div class="flex items-center gap-2 mb-4">
+                <span class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-100 border border-amber-200 text-amber-700 text-[10px] uppercase font-bold tracking-widest">
+                    <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                    <span contenteditable="true">Drop-off</span>
+                </span>
+            </div>
+            <h3 class="font-display text-lg font-bold text-slate-900 mb-2" contenteditable="true">UGC Creatives Hook Well but Lose the Mid-Roll</h3>
+            <p class="text-sm text-slate-600 leading-relaxed mb-4" contenteditable="true">The three "testing" UGC creatives hold a healthy 45–51% hook rate but shed most of their audience between the 25% and 50% marks — completion falls to 10–14%. The promise lands but the payoff is too slow. Re-cut to bring the product demo and offer forward by ~5 seconds before scaling spend.</p>
+            <div class="pt-4 border-t border-slate-100">
+                <div class="font-display text-3xl font-bold text-amber-600 leading-none" contenteditable="true">-38%</div>
+                <div class="text-xs text-slate-500 mt-1" contenteditable="true">Avg Retention Drop, 25% → 50%</div>
+            </div>
+        </div>
+
+        <div class="signal-card glass-panel rounded-2xl p-6 relative overflow-hidden border-t-4 border-t-rose-500">
+            <button onclick="removeSignal(this)" class="delete-btn edit-controls absolute top-3 right-3 text-rose-400 hover:text-rose-600 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-lg p-1 transition-colors z-10">
+                <i data-lucide="x" class="w-3.5 h-3.5"></i>
+            </button>
+            <div class="flex items-center gap-2 mb-4">
+                <span class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-100 border border-rose-200 text-rose-700 text-[10px] uppercase font-bold tracking-widest">
+                    <span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span>
+                    <span contenteditable="true">Retire</span>
+                </span>
+            </div>
+            <h3 class="font-display text-lg font-bold text-slate-900 mb-2" contenteditable="true">Two Creatives Never Cleared the Hook Threshold</h3>
+            <p class="text-sm text-slate-600 leading-relaxed mb-4" contenteditable="true">"Features Walkthrough" (34.2% hook) and "Static Promo — 20% Off" (28.1% hook) both sit well below the 35% floor, with the account's highest CPVs ($0.038 and $0.043) and just 17 combined conversions. They're absorbing spend that the top 3 could convert more efficiently. Pause both and redeploy budget.</p>
+            <div class="pt-4 border-t border-slate-100">
+                <div class="font-display text-3xl font-bold text-rose-600 leading-none" contenteditable="true">$935</div>
+                <div class="text-xs text-slate-500 mt-1" contenteditable="true">Weekly Spend on 2 Losing Creatives</div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+<!-- ═══ /panel-overview ══════════════════════════════════════ -->
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     CREATIVE PERFORMANCE TAB
+════════════════════════════════════════════════════════════ -->
+<div id="panel-creatives" class="tab-content">
+    <div class="flex items-center gap-3 mb-2">
+        <div class="h-px w-8 bg-brand-500"></div>
+        <h2 class="font-display text-2xl font-semibold text-slate-900">Top Performing Creatives</h2>
+    </div>
+    <p class="text-sm text-slate-500 mb-8 ml-11">Jun 15 – Jun 22, 2026 &nbsp;·&nbsp; <span class="font-medium text-slate-700">Ranked by view rate. Click any creative to preview on YouTube.</span></p>
+
+    <!-- Top 3 hero creative cards -->
+    <div id="topCreativesGrid" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10"></div>
+
+    <!-- Charts -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div class="glass-panel rounded-2xl p-6">
+            <h3 class="text-sm font-semibold text-slate-600 uppercase tracking-widest mb-5 flex justify-between items-center">
+                View Share by Creative <span class="text-[10px] bg-slate-100 border border-slate-200 px-2 py-1 rounded text-slate-500">Last 7 Days</span>
+            </h3>
+            <div class="h-72 relative w-full flex justify-center"><canvas id="viewShareChart"></canvas></div>
+        </div>
+        <div class="glass-panel rounded-2xl p-6">
+            <h3 class="text-sm font-semibold text-slate-600 uppercase tracking-widest mb-5 flex justify-between items-center">
+                Conversions by Creative <span class="text-[10px] bg-emerald-50 text-emerald-600 border border-emerald-200 px-2 py-1 rounded font-bold">Last 7 Days</span>
+            </h3>
+            <div class="h-72 relative w-full"><canvas id="convByCreativeChart"></canvas></div>
+        </div>
+    </div>
+
+    <!-- Leaderboard table -->
+    <div class="glass-panel rounded-2xl overflow-hidden">
+        <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+            <h3 class="font-display font-semibold text-slate-800 text-sm uppercase tracking-widest">Creative Leaderboard — All Tested</h3>
+            <span class="text-[10px] bg-brand-50 text-brand-600 border border-brand-200 px-2 py-1 rounded font-bold uppercase tracking-wider">8 Creatives</span>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm" id="leaderboardTable">
+                <thead class="bg-slate-50 border-b border-slate-200 text-xs uppercase tracking-wider text-slate-500 font-semibold">
+                    <tr>
+                        <th class="px-5 py-4">Creative</th>
+                        <th class="px-5 py-4 text-right"><span class="sort-btn" onclick="sortCreatives('impr')">Impr</span></th>
+                        <th class="px-5 py-4 text-right"><span class="sort-btn" onclick="sortCreatives('views')">Views</span></th>
+                        <th class="px-5 py-4 text-right"><span class="sort-btn" onclick="sortCreatives('vvr')">VVR</span></th>
+                        <th class="px-5 py-4 text-right"><span class="sort-btn" onclick="sortCreatives('hook')">Hook</span></th>
+                        <th class="px-5 py-4 text-right"><span class="sort-btn" onclick="sortCreatives('comp')">Compl</span></th>
+                        <th class="px-5 py-4 text-right"><span class="sort-btn" onclick="sortCreatives('cpv')">CPV</span></th>
+                        <th class="px-5 py-4 text-right"><span class="sort-btn" onclick="sortCreatives('conv')">Conv</span></th>
+                        <th class="px-5 py-4 text-center">Result</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 text-slate-700 bg-white" id="leaderboardBody"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     HOOK & RETENTION TAB
+════════════════════════════════════════════════════════════ -->
+<div id="panel-retention" class="tab-content">
+    <div class="flex items-center gap-3 mb-2">
+        <div class="h-px w-8 bg-brand-500"></div>
+        <h2 class="font-display text-2xl font-semibold text-slate-900">Hook &amp; Retention</h2>
+    </div>
+    <p class="text-sm text-slate-500 mb-8 ml-11">Jun 15 – Jun 22, 2026 &nbsp;·&nbsp; <span class="font-medium text-slate-700">Hook rate = % of impressions that watched past 25%. Completion = watched to 100%.</span></p>
+
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <div class="stat-card glass-panel p-5 rounded-2xl flex flex-col gap-2">
+            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Hook Rate (25%)</p>
+            <p class="font-display text-2xl font-bold text-brand-600">55.3%</p>
+            <p class="text-[10px] text-slate-400 uppercase tracking-wider">Account Avg</p>
+        </div>
+        <div class="stat-card glass-panel p-5 rounded-2xl flex flex-col gap-2">
+            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Midpoint (50%)</p>
+            <p class="font-display text-2xl font-bold text-slate-900">38.4%</p>
+            <p class="text-[10px] text-slate-400 uppercase tracking-wider">Account Avg</p>
+        </div>
+        <div class="stat-card glass-panel p-5 rounded-2xl flex flex-col gap-2">
+            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Third Quartile (75%)</p>
+            <p class="font-display text-2xl font-bold text-slate-900">26.7%</p>
+            <p class="text-[10px] text-slate-400 uppercase tracking-wider">Account Avg</p>
+        </div>
+        <div class="stat-card glass-panel p-5 rounded-2xl flex flex-col gap-2">
+            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Completion (100%)</p>
+            <p class="font-display text-2xl font-bold text-emerald-600">19.9%</p>
+            <p class="text-[10px] text-slate-400 uppercase tracking-wider">Account Avg</p>
+        </div>
+    </div>
+
+    <div class="glass-panel rounded-2xl p-6 mb-8">
+        <h3 class="text-sm font-semibold text-slate-600 uppercase tracking-widest mb-1 flex justify-between items-center">
+            Audience Retention Curve
+            <span class="text-[10px] bg-slate-100 border border-slate-200 px-2 py-1 rounded text-slate-500">Top 5 Creatives</span>
+        </h3>
+        <p class="text-xs text-slate-400 mb-5">% of viewers still watching at each quartile of the video</p>
+        <div class="h-80 relative w-full"><canvas id="retentionChart"></canvas></div>
+    </div>
+
+    <div class="glass-panel rounded-2xl p-6">
+        <h3 class="text-sm font-semibold text-slate-600 uppercase tracking-widest mb-1 flex justify-between items-center">
+            Hook Rate by Creative
+            <span class="text-[10px] bg-brand-50 text-brand-600 border border-brand-200 px-2 py-1 rounded font-bold">Threshold: 35%</span>
+        </h3>
+        <p class="text-xs text-slate-400 mb-5">Creatives below the 35% line are flagged for retirement</p>
+        <div class="h-80 relative w-full"><canvas id="hookChart"></canvas></div>
+    </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     TRENDLINES TAB
+════════════════════════════════════════════════════════════ -->
+<div id="panel-trendlines" class="tab-content">
+    <div class="flex items-center justify-between mb-2">
+        <div class="flex items-center gap-3">
+            <div class="h-px w-8 bg-brand-500"></div>
+            <h2 class="font-display text-2xl font-semibold text-slate-900">Daily Trendlines</h2>
+        </div>
+    </div>
+    <p class="text-sm text-slate-500 mb-8 ml-11">Jun 15 – Jun 22, 2026 &nbsp;·&nbsp; Daily video performance across all creatives</p>
+
+    <div class="glass-panel rounded-2xl p-6 mb-6">
+        <h3 class="text-sm font-semibold text-slate-600 uppercase tracking-widest mb-1 flex justify-between items-center">
+            Daily Views vs Spend
+            <span class="text-[10px] bg-slate-100 border border-slate-200 px-2 py-1 rounded text-slate-500">Jun 15 – Jun 22</span>
+        </h3>
+        <p class="text-xs text-slate-400 mb-5">Period views total: 457,056 · Spend total: $10,975</p>
+        <div class="h-72 relative w-full"><canvas id="viewsSpendTrend"></canvas></div>
+    </div>
+
+    <div class="glass-panel rounded-2xl p-6 mb-6">
+        <h3 class="text-sm font-semibold text-slate-600 uppercase tracking-widest mb-1 flex justify-between items-center">
+            Daily View Rate
+            <span class="text-[10px] bg-brand-50 text-brand-600 border border-brand-200 px-2 py-1 rounded font-bold">Period Avg: 32.2%</span>
+        </h3>
+        <p class="text-xs text-slate-400 mb-5">Target threshold shown at 30%</p>
+        <div class="h-56 relative w-full"><canvas id="vvrTrend"></canvas></div>
+    </div>
+
+    <div class="glass-panel rounded-2xl p-6">
+        <h3 class="text-sm font-semibold text-slate-600 uppercase tracking-widest mb-1 flex justify-between items-center">
+            Daily Conversions
+            <span class="text-[10px] bg-slate-100 border border-slate-200 px-2 py-1 rounded text-slate-500">654 Total</span>
+        </h3>
+        <p class="text-xs text-slate-400 mb-5">Conversions attributed to video views &amp; engaged-view actions</p>
+        <div class="h-56 relative w-full"><canvas id="convTrend"></canvas></div>
+    </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     ACTION PLAN TAB
+════════════════════════════════════════════════════════════ -->
+<div id="panel-action" class="tab-content">
+    <div class="flex items-center justify-between mb-8">
+        <div class="flex items-center gap-3">
+            <div class="h-px w-8 bg-brand-500"></div>
+            <h2 class="font-display text-2xl font-semibold text-slate-900">Action Plan &amp; Priorities</h2>
+        </div>
+        <button onclick="addActionItem()" class="flex items-center gap-2 text-sm font-bold text-brand-600 bg-brand-50 border border-brand-200 hover:bg-brand-100 px-4 py-2 rounded-xl transition-colors edit-controls">
+            <i data-lucide="plus" class="w-4 h-4"></i> Add Priority
+        </button>
+    </div>
+
+    <div class="space-y-5" id="actionPlanList">
+
+        <div id="actionPlanEmptyState" class="edit-controls glass-panel rounded-2xl border-2 border-dashed border-slate-200 py-14 flex flex-col items-center gap-3 text-center">
+            <div class="w-11 h-11 rounded-xl bg-brand-50 border border-brand-100 flex items-center justify-center">
+                <i data-lucide="clipboard-list" class="w-5 h-5 text-brand-500"></i>
+            </div>
+            <div>
+                <p class="text-sm font-semibold text-slate-500">No priorities added yet</p>
+                <p class="text-xs text-slate-400 mt-0.5 max-w-md">Use the &ldquo;Add Priority&rdquo; button above to write the action plan for this report.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+</main>
+
+<footer class="border-t border-slate-200 mt-auto py-6 bg-white/60 backdrop-blur-sm">
+    <div class="max-w-7xl mx-auto px-6 lg:px-12 flex flex-col md:flex-row justify-between items-center gap-3 text-sm">
+        <p class="text-slate-500">Generated for <strong class="text-slate-700">numoya</strong> · Jun 15 – Jun 22, 2026 · Ad-Lab.io</p>
+        <p class="text-xs text-slate-400 italic edit-controls">Click any text to edit · Use + buttons to add signals &amp; action-plan priorities.</p>
+        <div class="flex items-center gap-2 text-slate-400 font-bold tracking-widest uppercase text-xs">
+            <i data-lucide="youtube" class="w-4 h-4 text-brand-500"></i> Ad-Lab.io Internal
+        </div>
+    </div>
+</footer>
+
+<script>
+lucide.createIcons();
+
+Chart.defaults.color = '#64748b';
+Chart.defaults.font.family = '"Plus Jakarta Sans", sans-serif';
+Chart.defaults.plugins.tooltip.backgroundColor = 'rgba(255,255,255,0.97)';
+Chart.defaults.plugins.tooltip.titleColor = '#0f172a';
+Chart.defaults.plugins.tooltip.bodyColor = '#334155';
+Chart.defaults.plugins.tooltip.borderColor = 'rgba(0,0,0,0.08)';
+Chart.defaults.plugins.tooltip.borderWidth = 1;
+Chart.defaults.plugins.tooltip.padding = 12;
+Chart.defaults.plugins.tooltip.cornerRadius = 8;
+Chart.defaults.plugins.tooltip.displayColors = true;
+
+let creativesRendered = false, retentionRendered = false, trendRendered = false;
+
+function switchTab(tabId, btn) {
+    document.querySelectorAll('.tab-content').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('panel-' + tabId).classList.add('active');
+    if (btn) btn.classList.add('active');
+    if (tabId === 'creatives' && !creativesRendered) { renderCreativeCharts(); creativesRendered = true; }
+    if (tabId === 'retention' && !retentionRendered) { renderRetentionCharts(); retentionRendered = true; }
+    if (tabId === 'trendlines' && !trendRendered) { renderTrendCharts(); trendRendered = true; }
+}
+
+/* ── Key Signals ────────────────────────────────────────── */
+let sigCounter = 0;
+const sigColors = {
+    success: { border:'border-t-emerald-500', badge:'bg-emerald-100 border-emerald-200 text-emerald-700', dot:'bg-emerald-500', stat:'text-emerald-600', label:'Win' },
+    warning: { border:'border-t-amber-500', badge:'bg-amber-100 border-amber-200 text-amber-700', dot:'bg-amber-500 animate-pulse', stat:'text-amber-600', label:'Watch' },
+    danger:  { border:'border-t-rose-500', badge:'bg-rose-100 border-rose-200 text-rose-700', dot:'bg-rose-500 animate-pulse', stat:'text-rose-600', label:'Alert' }
+};
+function addSignal(type) {
+    sigCounter++;
+    const c = sigColors[type];
+    const div = document.createElement('div');
+    div.className = `signal-card glass-panel rounded-2xl p-6 relative overflow-hidden border-t-4 ${c.border}`;
+    div.innerHTML = `
+        <button onclick="removeSignal(this)" class="delete-btn edit-controls absolute top-3 right-3 text-slate-400 hover:text-rose-500 bg-slate-100 hover:bg-rose-50 border border-slate-200 rounded-lg p-1 transition-colors z-10"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
+        <div class="flex items-center gap-2 mb-4">
+            <span class="flex items-center gap-1.5 px-2.5 py-1 rounded-full ${c.badge} text-[10px] uppercase font-bold tracking-widest border">
+                <span class="w-1.5 h-1.5 rounded-full ${c.dot}"></span>
+                <span contenteditable="true">${c.label}</span>
+            </span>
+        </div>
+        <h3 class="font-display text-lg font-bold text-slate-900 mb-2" contenteditable="true">New Signal — Edit me</h3>
+        <p class="text-sm text-slate-600 leading-relaxed mb-4" contenteditable="true">Describe the insight or alert here.</p>
+        <div class="pt-4 border-t border-slate-100">
+            <div class="font-display text-3xl font-bold ${c.stat} leading-none" contenteditable="true">—</div>
+            <div class="text-xs text-slate-500 mt-1" contenteditable="true">Key metric</div>
+        </div>`;
+    document.getElementById('signalsGrid').appendChild(div);
+    lucide.createIcons();
+}
+function removeSignal(btn) { btn.closest('.signal-card').remove(); }
+
+/* ── Action Plan ────────────────────────────────────────── */
+let actionCounter = 0;
+const impactCycle = ['Critical Impact','High Impact','Medium Impact','Low Impact'];
+const timelineCycle = ['Immediate','24 Hours','This Week','This Month','Ongoing'];
+function cycleImpact(el) {
+    const colors = {
+        'Critical Impact':'bg-rose-100 text-rose-700 border-rose-200',
+        'High Impact':'bg-amber-100 text-amber-700 border-amber-200',
+        'Medium Impact':'bg-brand-100 text-brand-700 border-brand-200',
+        'Low Impact':'bg-slate-100 text-slate-600 border-slate-200'
+    };
+    const idx = impactCycle.indexOf(el.textContent.trim());
+    const next = impactCycle[(idx+1) % impactCycle.length];
+    el.textContent = next;
+    el.className = `impact-badge px-2.5 py-0.5 rounded text-[10px] uppercase font-bold border cursor-pointer ${colors[next]}`;
+    el.setAttribute('onclick','cycleImpact(this)');
+}
+function cycleTimeline(el) {
+    const idx = timelineCycle.indexOf(el.textContent.trim());
+    el.textContent = timelineCycle[(idx+1) % timelineCycle.length];
+}
+function addStep(listId, color) {
+    const colors = { amber:'text-amber-500', rose:'text-rose-500', emerald:'text-emerald-500', brand:'text-brand-500', slate:'text-slate-500' };
+    const cl = colors[color] || 'text-brand-500';
+    const div = document.createElement('div');
+    div.className = `action-step flex items-start gap-3 bg-white p-3 rounded-lg border border-slate-200 shadow-sm group`;
+    div.innerHTML = `<i data-lucide="arrow-right" class="w-4 h-4 ${cl} mt-0.5 flex-shrink-0"></i><p class="text-sm text-slate-700 flex-grow" contenteditable="true">New step — click to edit.</p><button onclick="removeStep(this)" class="opacity-0 group-hover:opacity-100 text-slate-300 hover:text-rose-400 flex-shrink-0 transition-all ml-1 edit-controls"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>`;
+    document.getElementById(listId).appendChild(div);
+    lucide.createIcons();
+    div.querySelector('[contenteditable]').focus();
+}
+function removeStep(btn) { btn.closest('.action-step').remove(); }
+function removeAction(btn) {
+    btn.closest('.action-item').remove();
+    renumberPriorities();
+    if (document.querySelectorAll('#actionPlanList .action-item').length === 0) {
+        const empty = document.getElementById('actionPlanEmptyState');
+        if (empty) empty.style.display = '';
+    }
+}
+function renumberPriorities() {
+    document.querySelectorAll('#actionPlanList .action-item').forEach((el, i) => {
+        const lbl = el.querySelector('.priority-label');
+        if (lbl) lbl.textContent = `Priority ${String(i+1).padStart(2,'0')}`;
+    });
+}
+const themeColors = ['rose','amber','emerald','brand'];
+function addActionItem() {
+    actionCounter++;
+    const theme = themeColors[(actionCounter-1) % themeColors.length];
+    const stepsId = `actionSteps${actionCounter}`;
+    const tColors = { rose:'text-rose-600', amber:'text-amber-600', emerald:'text-emerald-600', brand:'text-brand-600' };
+    const bgColors = { rose:'from-rose-50/40', amber:'from-amber-50/40', emerald:'from-emerald-50/40', brand:'from-brand-50/30' };
+    const tc = tColors[theme]; const bg = bgColors[theme];
+    const div = document.createElement('div');
+    div.className = `action-item glass-panel rounded-2xl p-6 lg:p-8 flex flex-col lg:flex-row gap-8 relative overflow-hidden`;
+    div.setAttribute('data-theme', theme);
+    div.innerHTML = `
+        <div class="absolute inset-0 bg-gradient-to-br ${bg} to-transparent pointer-events-none"></div>
+        <button onclick="removeAction(this)" class="delete-action-btn edit-controls absolute top-4 right-4 text-slate-400 hover:text-rose-500 bg-slate-100 hover:bg-rose-50 border border-slate-200 hover:border-rose-200 rounded-lg p-1.5 transition-colors z-10"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+        <div class="flex-grow relative z-10">
+            <div class="flex items-center gap-3 mb-4 flex-wrap">
+                <span class="text-xs font-bold tracking-widest ${tc} uppercase priority-label">Priority ${String(actionCounter).padStart(2,'0')}</span>
+                <div class="flex gap-2 flex-wrap">
+                    <span class="impact-badge bg-slate-100 text-slate-600 px-2.5 py-0.5 rounded text-[10px] uppercase font-bold border border-slate-200 cursor-pointer" onclick="cycleImpact(this)">High Impact</span>
+                    <span class="timeline-badge bg-slate-100 text-slate-600 px-2.5 py-0.5 rounded text-[10px] uppercase font-bold border border-slate-200 cursor-pointer" onclick="cycleTimeline(this)">This Week</span>
+                </div>
+            </div>
+            <h3 class="font-display text-xl font-bold text-slate-900 mb-5" contenteditable="true">New Priority — Click to edit title</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3" id="${stepsId}">
+                <div class="action-step flex items-start gap-3 bg-white p-3 rounded-lg border border-slate-200 shadow-sm group">
+                    <i data-lucide="arrow-right" class="w-4 h-4 ${tc} mt-0.5 flex-shrink-0"></i>
+                    <p class="text-sm text-slate-700 flex-grow" contenteditable="true">Add your first action step here.</p>
+                    <button onclick="removeStep(this)" class="opacity-0 group-hover:opacity-100 text-slate-300 hover:text-rose-400 flex-shrink-0 transition-all ml-1 edit-controls"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
+                </div>
+            </div>
+            <button onclick="addStep('${stepsId}','${theme}')" class="mt-3 text-xs ${tc} font-semibold hover:underline flex items-center gap-1 edit-controls"><i data-lucide="plus" class="w-3 h-3"></i> Add step</button>
+        </div>
+        <div class="lg:w-44 flex flex-col justify-center items-start lg:items-end border-t lg:border-t-0 lg:border-l border-slate-200 pt-5 lg:pt-0 lg:pl-8 relative z-10">
+            <span class="text-[10px] uppercase tracking-widest font-bold text-slate-400 mb-2" contenteditable="true">Key Metric</span>
+            <span class="font-display text-4xl font-bold ${tc}" contenteditable="true">—</span>
+            <span class="text-xs text-slate-400 mt-1" contenteditable="true">Metric label</span>
+        </div>`;
+    const emptyState = document.getElementById('actionPlanEmptyState');
+    if (emptyState) emptyState.style.display = 'none';
+    document.getElementById('actionPlanList').appendChild(div);
+    lucide.createIcons();
+    div.querySelector('[contenteditable]').focus();
+}
+
+/* ── Creative data ──────────────────────────────────────── */
+/* id = YouTube video ID → preview https://www.youtube.com/watch?v={id}, thumb https://img.youtube.com/vi/{id}/hqdefault.jpg
+   vvr/hook/p50/p75/comp are rates (0–1). result: 'win' | 'test' | 'loss'. */
+const creatives = [
+    { id:'nmGB3sec01', title:'GoBrush PRO — 3-Second Transformation', format:'In-Stream · 15s', dur:'0:15',
+      impr:310000, views:127720, vvr:0.412, hook:0.682, p50:0.521, p75:0.388, comp:0.301, cpv:0.018, spend:2298.96, conv:214, convVal:9630, result:'win' },
+    { id:'nmBA4ftr02', title:'Before & After — Frizz to Sleek', format:'In-Stream · 20s', dur:'0:20',
+      impr:268000, views:103180, vvr:0.385, hook:0.641, p50:0.472, p75:0.331, comp:0.247, cpv:0.021, spend:2166.78, conv:168, convVal:7392, result:'win' },
+    { id:'nmFND8st03', title:'Founder Story — Why We Built GoBrush', format:'In-Stream · 30s', dur:'0:30',
+      impr:142000, views:50694, vvr:0.357, hook:0.598, p50:0.430, p75:0.298, comp:0.221, cpv:0.024, spend:1216.66, conv:92, convVal:4140, result:'win' },
+    { id:'nmUGCmr004', title:'UGC — Morning Routine', format:'In-Stream · 25s', dur:'0:25',
+      impr:205000, views:61090, vvr:0.298, hook:0.512, p50:0.331, p75:0.205, comp:0.142, cpv:0.027, spend:1649.43, conv:71, convVal:2982, result:'test' },
+    { id:'nmPSheat05', title:'Problem / Solution — Heat Damage', format:'In-Stream · 20s', dur:'0:20',
+      impr:188000, views:51136, vvr:0.272, hook:0.488, p50:0.302, p75:0.188, comp:0.121, cpv:0.029, spend:1482.94, conv:54, convVal:2106, result:'test' },
+    { id:'nmTSTmnt06', title:'Testimonial Montage', format:'In-Stream · 30s', dur:'0:30',
+      impr:164000, views:39524, vvr:0.241, hook:0.451, p50:0.276, p75:0.162, comp:0.104, cpv:0.031, spend:1225.24, conv:38, convVal:1406, result:'test' },
+    { id:'nmFEATwk07', title:'Product Features Walkthrough', format:'In-Stream · 45s', dur:'0:45',
+      impr:96000, views:16896, vvr:0.176, hook:0.342, p50:0.181, p75:0.092, comp:0.058, cpv:0.038, spend:642.05, conv:11, convVal:374, result:'loss' },
+    { id:'nmSTATIC08', title:'Static Promo — 20% Off', format:'Bumper · 6s', dur:'0:06',
+      impr:48000, views:6816, vvr:0.142, hook:0.281, p50:0.142, p75:0.071, comp:0.041, cpv:0.043, spend:293.09, conv:6, convVal:204, result:'loss' },
+];
+
+const HOOK_THRESHOLD = 0.35;
+const resultMeta = {
+    win:  { badge:'res-win',  label:'Win',  dot:'#10b981' },
+    test: { badge:'res-test', label:'Test', dot:'#8b5cf6' },
+    loss: { badge:'res-loss', label:'Retire', dot:'#f43f5e' },
+};
+const ytWatch = id => `https://www.youtube.com/watch?v=${id}`;
+const ytThumb = id => `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
+
+let creativeSortKey = 'vvr';
+let creativeSortDir = 'desc';
+
+function thumbFallback() {
+    return `<div class="thumb-fallback"><i data-lucide="youtube" style="width:32px;height:32px;"></i><span style="font-size:10px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;">Video Preview</span></div>`;
+}
+
+function renderTopCreatives() {
+    const top = [...creatives].sort((a,b) => b.vvr - a.vvr).slice(0, 3);
+    const grid = document.getElementById('topCreativesGrid');
+    grid.innerHTML = '';
+    top.forEach((c, i) => {
+        const rm = resultMeta[c.result];
+        grid.innerHTML += `
+        <div class="creative-card glass-panel rounded-2xl overflow-hidden flex flex-col">
+            <a href="${ytWatch(c.id)}" target="_blank" rel="noopener noreferrer" class="creative-thumb block">
+                <img src="${ytThumb(c.id)}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';this.parentElement.querySelectorAll('[data-lucide]').length||lucide.createIcons();">
+                ${thumbFallback()}
+                <span class="play-overlay"><span class="play-btn"><i data-lucide="play" style="width:22px;height:22px;color:#fff;fill:#fff;margin-left:2px;"></i></span></span>
+                <span class="creative-rank">${i+1}</span>
+                <span class="creative-duration">${c.dur}</span>
+            </a>
+            <div class="p-5 flex flex-col flex-grow">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-[10px] uppercase font-bold tracking-wider text-slate-400">${c.format}</span>
+                    <span class="badge ${rm.badge}">${rm.label}</span>
+                </div>
+                <h3 class="font-display font-bold text-slate-900 text-base leading-snug mb-4">${c.title}</h3>
+                <div class="grid grid-cols-3 gap-3 mb-4">
+                    <div><p class="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-0.5">VVR</p><p class="font-display text-lg font-bold text-slate-800">${(c.vvr*100).toFixed(1)}%</p></div>
+                    <div><p class="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-0.5">Hook</p><p class="font-display text-lg font-bold text-brand-600">${(c.hook*100).toFixed(1)}%</p></div>
+                    <div><p class="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-0.5">Compl</p><p class="font-display text-lg font-bold text-slate-800">${(c.comp*100).toFixed(1)}%</p></div>
+                    <div><p class="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-0.5">Views</p><p class="font-display text-base font-bold text-slate-800">${c.views.toLocaleString()}</p></div>
+                    <div><p class="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-0.5">CPV</p><p class="font-display text-base font-bold text-slate-800">$${c.cpv.toFixed(3)}</p></div>
+                    <div><p class="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-0.5">Conv</p><p class="font-display text-base font-bold text-emerald-600">${c.conv}</p></div>
+                </div>
+                <a href="${ytWatch(c.id)}" target="_blank" rel="noopener noreferrer" class="mt-auto flex items-center justify-center gap-2 bg-[#ff0000] hover:bg-[#d90000] text-white text-xs font-bold px-4 py-2.5 rounded-xl transition-colors shadow-sm">
+                    <i data-lucide="youtube" class="w-4 h-4"></i> Watch on YouTube
+                </a>
+            </div>
+        </div>`;
+    });
+    lucide.createIcons();
+}
+
+function renderLeaderboard() {
+    const sorted = [...creatives].sort((a,b) => {
+        const av = a[creativeSortKey] ?? -Infinity;
+        const bv = b[creativeSortKey] ?? -Infinity;
+        return creativeSortDir === 'desc' ? bv - av : av - bv;
+    });
+
+    document.querySelectorAll('#leaderboardTable .sort-btn').forEach(btn => {
+        btn.classList.remove('sort-asc','sort-desc');
+        const key = btn.getAttribute('onclick')?.match(/sortCreatives\('(\w+)'\)/)?.[1];
+        if (key === creativeSortKey) btn.classList.add(creativeSortDir === 'asc' ? 'sort-asc' : 'sort-desc');
+    });
+
+    const tbody = document.getElementById('leaderboardBody');
+    tbody.innerHTML = '';
+    sorted.forEach(c => {
+        const rm = resultMeta[c.result];
+        const hookCls = c.hook < HOOK_THRESHOLD ? 'text-rose-600 font-bold' : 'text-slate-600';
+        tbody.innerHTML += `<tr class="product-row transition-colors">
+            <td class="px-5 py-3 align-middle">
+                <a href="${ytWatch(c.id)}" target="_blank" rel="noopener noreferrer" class="flex items-center gap-3 group">
+                    <img src="${ytThumb(c.id)}" class="lb-thumb" alt="" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2272%22 height=%2240%22><rect width=%2272%22 height=%2240%22 fill=%22%23e2e8f0%22/></svg>';">
+                    <div class="min-w-0">
+                        <p class="text-slate-800 font-semibold text-sm leading-tight group-hover:text-brand-600 transition-colors">${c.title}</p>
+                        <p class="text-[10px] text-slate-400 uppercase tracking-wider mt-0.5">${c.format}</p>
+                    </div>
+                </a>
+            </td>
+            <td class="px-5 py-3 text-right font-mono text-slate-500 text-sm align-middle">${(c.impr/1000).toFixed(0)}k</td>
+            <td class="px-5 py-3 text-right font-mono text-slate-600 text-sm align-middle">${c.views.toLocaleString()}</td>
+            <td class="px-5 py-3 text-right font-mono text-slate-700 text-sm font-semibold align-middle">${(c.vvr*100).toFixed(1)}%</td>
+            <td class="px-5 py-3 text-right font-mono text-sm align-middle ${hookCls}">${(c.hook*100).toFixed(1)}%</td>
+            <td class="px-5 py-3 text-right font-mono text-slate-500 text-sm align-middle">${(c.comp*100).toFixed(1)}%</td>
+            <td class="px-5 py-3 text-right font-mono text-slate-500 text-sm align-middle">$${c.cpv.toFixed(3)}</td>
+            <td class="px-5 py-3 text-right font-mono text-slate-700 text-sm font-semibold align-middle">${c.conv}</td>
+            <td class="px-5 py-3 text-center align-middle"><span class="badge ${rm.badge}">${rm.label}</span></td>
+        </tr>`;
+    });
+    lucide.createIcons();
+}
+
+function sortCreatives(key) {
+    if (creativeSortKey === key) {
+        creativeSortDir = creativeSortDir === 'desc' ? 'asc' : 'desc';
+    } else {
+        creativeSortKey = key;
+        creativeSortDir = 'desc';
+    }
+    renderLeaderboard();
+}
+
+function renderWinRate() {
+    const wins = creatives.filter(c => c.result === 'win').length;
+    const tests = creatives.filter(c => c.result === 'test').length;
+    const losses = creatives.filter(c => c.result === 'loss').length;
+    const total = creatives.length;
+    const pct = total ? (wins / total) * 100 : 0;
+    const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+    set('winRatePct', pct.toFixed(1) + '%');
+    set('winRateCount', `${wins} of ${total}`);
+    set('winCount', wins);
+    set('testCount', tests);
+    set('lossCount', losses);
+}
+
+function renderCreativeCharts() {
+    const palette = ['#6366f1','#10b981','#f59e0b','#f43f5e','#8b5cf6','#06b6d4','#fb923c','#94a3b8'];
+
+    new Chart(document.getElementById('viewShareChart'), {
+        type: 'doughnut',
+        data: {
+            labels: creatives.map(c => c.title.length > 26 ? c.title.substring(0,26)+'…' : c.title),
+            datasets: [{ data: creatives.map(c => c.views),
+                backgroundColor: palette, borderWidth: 0, hoverOffset: 8 }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false, cutout: '70%',
+            plugins: {
+                legend: { position: 'right', labels: { padding: 10, usePointStyle: true, pointStyle: 'circle', font: { size: 9 } } },
+                tooltip: { callbacks: { label: c => ' ' + c.parsed.toLocaleString() + ' views' } }
+            }
+        }
+    });
+
+    const byConv = [...creatives].sort((a,b) => b.conv - a.conv);
+    new Chart(document.getElementById('convByCreativeChart'), {
+        type: 'bar',
+        data: {
+            labels: byConv.map(c => c.title.length > 24 ? c.title.substring(0,24)+'…' : c.title),
+            datasets: [{ label: 'Conversions', data: byConv.map(c => c.conv),
+                backgroundColor: byConv.map(c => resultMeta[c.result].dot), borderRadius: 4 }]
+        },
+        options: {
+            indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ' ' + c.raw + ' conversions' } } },
+            scales: {
+                x: { grid: { color: 'rgba(0,0,0,0.04)', borderDash: [4,4] } },
+                y: { grid: { display: false }, ticks: { font: { size: 10 } } }
+            }
+        }
+    });
+}
+
+function renderRetentionCharts() {
+    const lineColors = ['#6366f1','#10b981','#f59e0b','#f43f5e','#8b5cf6'];
+    const top5 = [...creatives].sort((a,b) => b.vvr - a.vvr).slice(0, 5);
+
+    new Chart(document.getElementById('retentionChart'), {
+        type: 'line',
+        data: {
+            labels: ['Impression','25%','50%','75%','100%'],
+            datasets: top5.map((c, i) => ({
+                label: c.title.length > 24 ? c.title.substring(0,24)+'…' : c.title,
+                data: [100, c.hook*100, c.p50*100, c.p75*100, c.comp*100],
+                borderColor: lineColors[i], backgroundColor: lineColors[i] + '14',
+                fill: false, tension: 0.35, pointRadius: 3, borderWidth: 2.5
+            }))
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, pointStyle: 'circle', padding: 14, boxWidth: 8, font: { size: 10 } } },
+                tooltip: { callbacks: { label: c => ' ' + c.dataset.label + ': ' + c.raw.toFixed(1) + '%' } } },
+            scales: {
+                x: { grid: { display: false } },
+                y: { grid: { color: 'rgba(0,0,0,0.04)' }, ticks: { callback: v => v + '%' }, min: 0, max: 100 }
+            }
+        }
+    });
+
+    const byHook = [...creatives].sort((a,b) => b.hook - a.hook);
+    new Chart(document.getElementById('hookChart'), {
+        type: 'bar',
+        data: {
+            labels: byHook.map(c => c.title.length > 26 ? c.title.substring(0,26)+'…' : c.title),
+            datasets: [{ label: 'Hook Rate (25%)', data: byHook.map(c => +(c.hook*100).toFixed(1)),
+                backgroundColor: byHook.map(c => c.hook < HOOK_THRESHOLD ? '#f43f5e' : '#6366f1'), borderRadius: 4 }]
+        },
+        options: {
+            indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: c => ' ' + c.raw + '% hook rate' } }
+            },
+            scales: {
+                x: { grid: { color: 'rgba(0,0,0,0.04)', borderDash: [4,4] }, ticks: { callback: v => v + '%' }, min: 0, max: 80 },
+                y: { grid: { display: false }, ticks: { font: { size: 10 } } }
+            }
+        }
+    });
+}
+
+function renderTrendCharts() {
+    const labels = [];
+    for (let i = 0; i < 7; i++) {
+        const d = new Date(2026, 5, 15 + i);
+        labels.push(`${d.toLocaleString('en-US',{month:'short'})} ${d.getDate()}`);
+    }
+    const viewsData = [58200, 61400, 65800, 70100, 68900, 64300, 68356];
+    const spendData = [1402, 1488, 1571, 1690, 1648, 1543, 1633];
+    const vvrData   = [30.8, 31.4, 32.1, 33.0, 32.7, 31.9, 33.0];
+    const convData  = [84, 89, 96, 103, 99, 91, 92];
+
+    const commonLineOpts = {
+        responsive: true, maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, pointStyle: 'circle', padding: 20, boxWidth: 10 } } },
+        scales: { x: { grid: { display: false }, ticks: { font: { size: 10 } } } }
+    };
+
+    new Chart(document.getElementById('viewsSpendTrend'), {
+        type: 'line',
+        data: {
+            labels,
+            datasets: [
+                { label: 'Views', data: viewsData, borderColor: '#6366f1', backgroundColor: 'rgba(99,102,241,0.06)', fill: true, tension: 0.4, pointRadius: 0, borderWidth: 2.5, yAxisID: 'y' },
+                { label: 'Spend ($)', data: spendData, borderColor: '#f43f5e', backgroundColor: 'rgba(244,63,94,0.04)', fill: false, tension: 0.4, pointRadius: 0, borderWidth: 2.5, yAxisID: 'y1' }
+            ]
+        },
+        options: { ...commonLineOpts, scales: { ...commonLineOpts.scales,
+            y: { position:'left', grid: { color: 'rgba(0,0,0,0.04)' }, ticks: { callback: v => (v/1000).toFixed(0) + 'k' } },
+            y1: { position:'right', grid: { display:false }, ticks: { callback: v => '$' + v.toLocaleString() } } } }
+    });
+
+    new Chart(document.getElementById('vvrTrend'), {
+        type: 'line',
+        data: {
+            labels,
+            datasets: [
+                { label: 'View Rate', data: vvrData, borderColor: '#6366f1', backgroundColor: 'rgba(99,102,241,0.08)', fill: true, tension: 0.4, pointRadius: 0, borderWidth: 2.5 },
+                { label: 'Target (30%)', data: Array(7).fill(30), borderColor: '#f59e0b', borderDash: [6,4], borderWidth: 1.5, pointRadius: 0, fill: false, tension: 0 }
+            ]
+        },
+        options: { ...commonLineOpts, scales: { ...commonLineOpts.scales, y: { grid: { color: 'rgba(0,0,0,0.04)' }, ticks: { callback: v => v + '%' } } } }
+    });
+
+    new Chart(document.getElementById('convTrend'), {
+        type: 'line',
+        data: {
+            labels,
+            datasets: [
+                { label: 'Conversions', data: convData, borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.06)', fill: true, tension: 0.4, pointRadius: 0, borderWidth: 2.5 }
+            ]
+        },
+        options: { ...commonLineOpts, scales: { ...commonLineOpts.scales, y: { grid: { color: 'rgba(0,0,0,0.04)' } } } }
+    });
+}
+
+/* ── Initial render (cards, table & win-rate render on load; charts lazy per tab) ── */
+renderTopCreatives();
+renderLeaderboard();
+renderWinRate();
+</script>
+</body>
+</html>
+<!--
+    ════════════════════════════════════════════════════════════════════════════
+    YOUTUBE VIDEO PERFORMANCE REPORT — TEMPLATE NOTES
+    ════════════════════════════════════════════════════════════════════════════
+    DATA MODEL
+      • Populate the `creatives` array (search "── Creative data ──") with one entry
+        per video ad. Everything else — top-3 cards, leaderboard, win-rate hero,
+        view-share / conversions / retention / hook charts — derives from it.
+      • `id` is the YouTube video ID (from GAQL `video.id`). It powers both the
+        preview link (youtube.com/watch?v={id}) and the thumbnail
+        (img.youtube.com/vi/{id}/hqdefault.jpg). If a thumb 404s it falls back to a
+        branded placeholder, so partial data still renders cleanly.
+      • Rates (vvr, hook, p50, p75, comp) are 0–1 decimals. Map from GAQL:
+          vvr  → metrics.video_view_rate
+          hook → metrics.video_quartile_p25_rate   (hook proxy)
+          p50  → metrics.video_quartile_p50_rate
+          p75  → metrics.video_quartile_p75_rate
+          comp → metrics.video_quartile_p100_rate
+      • `result` is computed business logic ('win' | 'test' | 'loss'), not a GAQL
+        field — set it from your win rule. Adjust HOOK_THRESHOLD to move the
+        retirement line used in the leaderboard + hook chart.
+      • Headline stat cards, the win-rate hero and the briefing text are plain
+        editable HTML — overwrite the numbers directly when generating.
+      • The Action Plan ships EMPTY by design — media buyers add priorities
+        manually via the "Add Priority" button. Do not auto-populate it.
+
+    SHARE MODE — DISABLE EDITING FOR SHARED REPORTS
+      When generating a shareable link, add the class "view-mode" to <body>.
+        editable : <body class="min-h-screen flex flex-col antialiased">
+        read-only: <body class="min-h-screen flex flex-col antialiased view-mode">
+      This disables every contenteditable field, hides all add/remove/edit
+      controls, and preserves all charts, tables, and layout perfectly.
+    ════════════════════════════════════════════════════════════════════════════
+    -->

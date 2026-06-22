@@ -8,7 +8,7 @@ import LoadingState from "@/components/LoadingState";
 import ReportViewer from "@/components/ReportViewer";
 import ReportHistory from "@/components/ReportHistory";
 import { useAuth } from "@/contexts/AuthContext";
-import { LogOut, FileText, Activity, Search, Code2 } from "lucide-react";
+import { LogOut, FileText, Activity, Search, Code2, Youtube } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { initiateReport, pollForCompletion, generateJobId } from "@/lib/api";
 import {
@@ -19,13 +19,13 @@ import {
   ReportHistoryEntry
 } from "@/lib/report-history";
 
-type AppState = "dashboard" | "weekly_form" | "audit_form" | "competitor_form" | "custom_form" | "loading";
+type AppState = "dashboard" | "weekly_form" | "audit_form" | "competitor_form" | "youtube_form" | "custom_form" | "loading";
 
 const Index = () => {
   const { signOut, user } = useAuth();
   const [state, setState] = useState<AppState>("dashboard");
   const [viewingReport, setViewingReport] = useState(false);
-const [currentReportType, setCurrentReportType] = useState<"weekly" | "audit" | "competitor" | "custom">("weekly");
+const [currentReportType, setCurrentReportType] = useState<"weekly" | "audit" | "competitor" | "youtube" | "custom">("weekly");
   const [clientName, setClientName] = useState("");
   const [reportHtml, setReportHtml] = useState("");
   const [currentJobId, setCurrentJobId] = useState<string | null>(null);
@@ -149,6 +149,13 @@ const [currentReportType, setCurrentReportType] = useState<"weekly" | "audit" | 
     setState("loading");
     setElapsed(0);
 
+    // Where to return the user if this run fails or times out
+    const backState: AppState =
+      currentReportType === "audit" ? "audit_form" :
+        currentReportType === "competitor" ? "competitor_form" :
+          currentReportType === "youtube" ? "youtube_form" :
+            "weekly_form";
+
     try {
       const job_id = generateJobId();
       currentJobIdRef.current = job_id;
@@ -169,7 +176,7 @@ const [currentReportType, setCurrentReportType] = useState<"weekly" | "audit" | 
         client_name: data.clientName,
         google_ads_id: data.googleAdsId,
         date_range: { start: data.startDate, end: data.endDate },
-        reportType: currentReportType as "weekly" | "audit" | "competitor",
+        reportType: currentReportType as "weekly" | "audit" | "competitor" | "youtube",
       });
 
       // Refresh history to show our new pending job
@@ -185,7 +192,7 @@ const [currentReportType, setCurrentReportType] = useState<"weekly" | "audit" | 
       pollRef.current = setInterval(async () => {
         attempts++;
         try {
-          const result = await pollForCompletion(job_id, currentReportType as "weekly" | "audit" | "competitor");
+          const result = await pollForCompletion(job_id, currentReportType as "weekly" | "audit" | "competitor" | "youtube");
 
           if (result.status === "complete" && result.html) {
             cleanup();
@@ -202,13 +209,13 @@ const [currentReportType, setCurrentReportType] = useState<"weekly" | "audit" | 
             cleanup();
             await updateReport(job_id, { status: "error" });
             await refreshHistory();
-            setState(currentReportType === "weekly" ? "weekly_form" : currentReportType === "audit" ? "audit_form" : "competitor_form");
+            setState(backState);
             toast.error(result.error || "Report generation failed. Please try again.");
           } else if (attempts >= maxAttempts) {
             cleanup();
             await updateReport(job_id, { status: "error" });
             await refreshHistory();
-            setState(currentReportType === "weekly" ? "weekly_form" : currentReportType === "audit" ? "audit_form" : "competitor_form");
+            setState(backState);
             toast.error("Report generation timed out. Please try again.");
           }
         } catch {
@@ -216,13 +223,13 @@ const [currentReportType, setCurrentReportType] = useState<"weekly" | "audit" | 
             cleanup();
             await updateReport(job_id, { status: "error" });
             await refreshHistory();
-            setState(currentReportType === "weekly" ? "weekly_form" : currentReportType === "audit" ? "audit_form" : "competitor_form");
+            setState(backState);
             toast.error("Report generation timed out. Please try again.");
           }
         }
       }, 60000); // Poll every 60 seconds
     } catch {
-      setState(currentReportType === "weekly" ? "weekly_form" : currentReportType === "audit" ? "audit_form" : "competitor_form");
+      setState(backState);
       toast.error("Failed to initiate report. Please check your connection and try again.");
     }
   };
@@ -324,7 +331,7 @@ const [currentReportType, setCurrentReportType] = useState<"weekly" | "audit" | 
               In-depth, AI-powered traffic analysis and account audits for any client — generated in minutes.
             </p>
             <div className="flex flex-wrap gap-x-8 gap-y-2 pt-8 border-t border-border max-w-2xl">
-              {["Weekly Reports", "Account Audits", "Competitor Analysis"].map((t, i) => (
+              {["Weekly Reports", "Account Audits", "Competitor Analysis", "YouTube Performance"].map((t, i) => (
                 <span key={t} className="type-eyebrow text-muted-foreground flex items-center gap-2">
                   <span className="micro-label-accent micro-label">0{i + 1}</span> {t}
                 </span>
@@ -363,17 +370,18 @@ const [currentReportType, setCurrentReportType] = useState<"weekly" | "audit" | 
         </div>
 
         {/* Report Type Selection */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-4">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-5 mb-4">
           {[
             { key: "weekly", state: "weekly_form", icon: Activity, no: "01", title: "Weekly Report", desc: "Standard performance metrics" },
             { key: "audit", state: "audit_form", icon: FileText, no: "02", title: "Account Audit", desc: "Deep-dive structure analysis" },
             { key: "competitor", state: "competitor_form", icon: Search, no: "03", title: "Competitor Analysis", desc: "Competitive landscape report" },
-            { key: "custom", state: "custom_form", icon: Code2, no: "04", title: "Custom Report", desc: "Paste & visualise HTML report" },
+            { key: "youtube", state: "youtube_form", icon: Youtube, no: "04", title: "YouTube Performance", desc: "Top creatives, hook & win rates" },
+            { key: "custom", state: "custom_form", icon: Code2, no: "05", title: "Custom Report", desc: "Paste & visualise HTML report" },
           ].map(({ key, state: target, icon: Icon, no, title, desc }) => (
             <button
               key={key}
               onClick={() => {
-                setCurrentReportType(key as "weekly" | "audit" | "competitor" | "custom");
+                setCurrentReportType(key as "weekly" | "audit" | "competitor" | "youtube" | "custom");
                 setState(target as AppState);
               }}
               className="report-type-card group relative p-6 text-left flex flex-col min-h-[180px]"
@@ -459,9 +467,30 @@ const [currentReportType, setCurrentReportType] = useState<"weekly" | "audit" | 
             </div>
           )}
 
+          {state === "youtube_form" && (
+            <div className="max-w-xl mx-auto bg-card border border-border rounded-[4px] p-8 md:p-10 relative">
+              <span className="micro-label absolute top-4 right-5">form / youtube · 04</span>
+              <div className="flex items-center gap-4 mb-8 pb-6 border-b border-border">
+                <div className="p-3 border border-border rounded-[4px] text-primary">
+                  <Youtube className="w-5 h-5" strokeWidth={1.5} />
+                </div>
+                <div>
+                  <h2 className="text-lg text-foreground">YouTube Performance</h2>
+                  <p className="text-xs text-muted-foreground tracking-[0.04em] uppercase mt-1">Configure report parameters</p>
+                </div>
+              </div>
+              <ReportForm
+                onSubmit={handleSubmit}
+                isLoading={false}
+                submitLabel="Generate YouTube Report"
+                onBack={() => setState("dashboard")}
+              />
+            </div>
+          )}
+
           {state === "custom_form" && (
             <div className="max-w-xl mx-auto bg-card border border-border rounded-[4px] p-8 md:p-10 relative">
-              <span className="micro-label absolute top-4 right-5">form / custom · 04</span>
+              <span className="micro-label absolute top-4 right-5">form / custom · 05</span>
               <div className="flex items-center gap-4 mb-8 pb-6 border-b border-border">
                 <div className="p-3 border border-border rounded-[4px] text-primary">
                   <Code2 className="w-5 h-5" strokeWidth={1.5} />
