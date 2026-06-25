@@ -1,5 +1,5 @@
 import { useMemoizedRangeLabel } from "@/components/creativeos/useRangeLabel";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
@@ -60,7 +60,7 @@ const CreativeOS = () => {
 
   const clientsForSwitcher = portfolio.data?.clients ?? [];
 
-  const content = useMemo(() => {
+  const renderContent = () => {
     if (onPortfolio) {
       if (portfolio.isLoading) return <LoadingState />;
       if (portfolio.isError)
@@ -79,8 +79,7 @@ const CreativeOS = () => {
     if (tab === "trend") return <Trendlines data={client.data} />;
     if (tab === "vault") return <WinningVault data={client.data} />;
     return null;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onPortfolio, portfolio.data, portfolio.isLoading, portfolio.isError, client.data, client.isLoading, client.isError, tab, statusFilter, search]);
+  };
 
   const showFilterBar = !onPortfolio && tab === "lab";
 
@@ -123,7 +122,7 @@ const CreativeOS = () => {
             </div>
           )}
           <div className="flex-1 overflow-y-auto px-6 lg:px-8 py-6">
-            <div className="max-w-[1440px] mx-auto">{content}</div>
+            <div className="max-w-[1440px] mx-auto">{renderContent()}</div>
           </div>
         </main>
       </div>

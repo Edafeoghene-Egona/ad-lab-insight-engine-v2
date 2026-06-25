@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { Calendar, ChevronDown, RefreshCw, Search } from "lucide-react";
-import { defaultRange } from "@/lib/creativeos";
 import type { ClientRollup, DateRange } from "@/lib/creativeos-types";
 import { cn } from "@/lib/utils";
 
@@ -18,17 +17,26 @@ function presetRange(days: number | "mtd"): DateRange {
   return { start: iso(new Date(today.getTime() - days * 864e5)), end: iso(today) };
 }
 
-function useClickOutside<T extends HTMLElement>(onClose: () => void) {
+function useDismiss<T extends HTMLElement>(onClose: () => void) {
   const ref = useRef<T>(null);
   useEffect(() => {
-    const handler = (e: MouseEvent) => {
+    const onMouse = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) onClose();
     };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("mousedown", onMouse);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onMouse);
+      document.removeEventListener("keydown", onKey);
+    };
   }, [onClose]);
   return ref;
 }
+
+const initial = (s?: string) => (s?.[0] ?? "?").toUpperCase();
 
 interface TopbarProps {
   clients: ClientRollup[];
@@ -54,8 +62,8 @@ export function CreativeOSTopbar({
   const [acctOpen, setAcctOpen] = useState(false);
   const [dateOpen, setDateOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const acctRef = useClickOutside<HTMLDivElement>(() => setAcctOpen(false));
-  const dateRef = useClickOutside<HTMLDivElement>(() => setDateOpen(false));
+  const acctRef = useDismiss<HTMLDivElement>(() => setAcctOpen(false));
+  const dateRef = useDismiss<HTMLDivElement>(() => setDateOpen(false));
 
   const selected = clients.find((c) => c.customerId === selectedId);
   const filtered = clients.filter((c) => c.name.toLowerCase().includes(query.toLowerCase()));
@@ -76,6 +84,8 @@ export function CreativeOSTopbar({
       {/* Account switcher */}
       <div className="relative" ref={acctRef}>
         <button
+          aria-haspopup="menu"
+          aria-expanded={acctOpen ? "true" : "false"}
           onClick={() => {
             setAcctOpen((o) => !o);
             setDateOpen(false);
@@ -83,7 +93,7 @@ export function CreativeOSTopbar({
           className="flex items-center gap-2.5 bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 hover:border-slate-300"
         >
           <div className="cos-display w-5 h-5 rounded bg-indigo-600 text-white flex items-center justify-center text-[10px] font-bold">
-            {(selected?.name ?? "A")[0].toUpperCase()}
+            {initial(selected?.name ?? "A")}
           </div>
           <div className="text-left leading-tight">
             <div className="text-xs font-bold text-slate-800">{selected ? selected.name : "All clients"}</div>
@@ -142,6 +152,8 @@ export function CreativeOSTopbar({
       {/* Date range */}
       <div className="relative" ref={dateRef}>
         <button
+          aria-haspopup="menu"
+          aria-expanded={dateOpen ? "true" : "false"}
           onClick={() => {
             setDateOpen((o) => !o);
             setAcctOpen(false);
@@ -175,16 +187,24 @@ export function CreativeOSTopbar({
               </label>
               <input
                 type="date"
+                aria-label="Start date"
                 value={range.start}
                 max={range.end}
-                onChange={(e) => onRange({ ...range, start: e.target.value })}
+                onChange={(e) => {
+                  const start = e.target.value;
+                  if (start && start <= range.end) onRange({ ...range, start });
+                }}
                 className="border border-slate-200 rounded-md px-1.5 py-1 text-[11px] outline-none focus:border-indigo-300"
               />
               <input
                 type="date"
+                aria-label="End date"
                 value={range.end}
                 min={range.start}
-                onChange={(e) => onRange({ ...range, end: e.target.value })}
+                onChange={(e) => {
+                  const end = e.target.value;
+                  if (end && end >= range.start) onRange({ ...range, end });
+                }}
                 className="border border-slate-200 rounded-md px-1.5 py-1 text-[11px] outline-none focus:border-indigo-300"
               />
             </div>

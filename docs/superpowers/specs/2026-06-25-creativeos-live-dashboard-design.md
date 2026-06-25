@@ -135,7 +135,7 @@ Built into the existing empty workflow `5B9bHIEOeOEcYeG1` ("My workflow 10"), re
 | **Creative Testing Lab** | client | Top-3 hero creative cards + sortable creative leaderboard table (impr, views, VVR, hook, completion, CPV, conv, status). |
 | **Hook & Retention** | client | Quartile funnel, retention curves (top creatives), hook-rate ranking, drop-off heatmap. Hidden/partial where Demand Gen lacks quartiles. |
 | **Trendlines** | client | Daily views vs spend, daily view rate, daily conversions over the window. |
-| **Winning Vault** | portfolio + client | All WIN-labeled creatives across active clients (and per-client), sortable, with YouTube thumbnails/links. |
+| **Winning Vault** | client (v1) | All WIN-labeled creatives for the selected client, sortable, with YouTube thumbnails/links. (Portfolio-wide vault is deferred: the `portfolio` scope returns only account rollups, not creative-level rows, so a cross-client vault would require an extra creative-level pull. v1 is client-scoped.) |
 
 ## 6. Data shapes (response contracts)
 

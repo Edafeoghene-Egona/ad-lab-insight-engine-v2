@@ -9,7 +9,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { fmtCompact, fmtMoney } from "@/lib/creativeos";
+import { fmtCompact, fmtMoney, ratePct } from "@/lib/creativeos";
 import type { DailyPoint } from "@/lib/creativeos-types";
 
 const shortDate = (iso: string) => {
@@ -70,7 +70,7 @@ export function MetricTrend({
 }) {
   const data = daily.map((d) => ({
     label: shortDate(d.date),
-    value: asPercent ? +(d.viewRate <= 1 ? d.viewRate * 100 : d.viewRate).toFixed(1) : d[dataKey],
+    value: asPercent ? +ratePct(d[dataKey]).toFixed(1) : d[dataKey],
   }));
   return (
     <ResponsiveContainer width="100%" height={210}>
