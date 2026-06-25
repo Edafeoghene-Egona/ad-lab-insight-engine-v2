@@ -17,8 +17,9 @@ function Metric({ label, value, accent }: { label: string; value: string; accent
   );
 }
 
-/** A single video creative: YouTube thumbnail + metric grid + watch link. */
-export function CreativeCard({ creative, rank }: { creative: Creative; rank?: number }) {
+/** A single video creative: YouTube thumbnail + metric grid + watch link.
+ *  When `onOpen` is given, the title/metrics area opens the detail drawer. */
+export function CreativeCard({ creative, rank, onOpen }: { creative: Creative; rank?: number; onOpen?: () => void }) {
   const [thumbFailed, setThumbFailed] = useState(false);
   const { videoId } = creative;
   const showThumb = videoId && !thumbFailed;
@@ -67,10 +68,16 @@ export function CreativeCard({ creative, rank }: { creative: Creative; rank?: nu
           <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400">{creative.format}</span>
           <StatusBadge status={creative.status} />
         </div>
-        <h3 className="cos-display font-bold text-slate-900 text-base leading-snug mb-4 line-clamp-2">
+        <h3
+          className={`cos-display font-bold text-slate-900 text-base leading-snug mb-4 line-clamp-2 ${onOpen ? "cursor-pointer hover:text-indigo-600 transition-colors" : ""}`}
+          onClick={onOpen}
+        >
           {creative.title}
         </h3>
-        <div className="grid grid-cols-3 gap-3 mb-4">
+        <div
+          className={`grid grid-cols-3 gap-3 mb-4 ${onOpen ? "cursor-pointer" : ""}`}
+          onClick={onOpen}
+        >
           <Metric label="VVR" value={ratePct(creative.viewRate).toFixed(1) + "%"} />
           <Metric
             label="Hook"

@@ -5,9 +5,10 @@ import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import "@/components/creativeos/creativeos.css";
 import { CreativeOSTopbar } from "@/components/creativeos/CreativeOSTopbar";
-import { CreativeOSSidebar, TABS, type TabId } from "@/components/creativeos/CreativeOSSidebar";
+import { CreativeOSSidebar, TABS, subsFor, type TabId } from "@/components/creativeos/CreativeOSSidebar";
 import { PageHeader } from "@/components/creativeos/PageHeader";
 import { CreativeOSFilterBar, type StatusFilter } from "@/components/creativeos/CreativeOSFilterBar";
+import { CreativeDrawer } from "@/components/creativeos/CreativeDrawer";
 import { LoadingState, ErrorState, EmptyState } from "@/components/creativeos/states";
 import { CommandCenter } from "@/components/creativeos/tabs/CommandCenter";
 import { CreativeLab } from "@/components/creativeos/tabs/CreativeLab";
@@ -15,15 +16,17 @@ import { HookRetention } from "@/components/creativeos/tabs/HookRetention";
 import { Trendlines } from "@/components/creativeos/tabs/Trendlines";
 import { WinningVault } from "@/components/creativeos/tabs/WinningVault";
 import { defaultRange, fetchClient, fetchPortfolio } from "@/lib/creativeos";
-import type { DateRange } from "@/lib/creativeos-types";
+import type { Creative, DateRange } from "@/lib/creativeos-types";
 
 const CreativeOS = () => {
   const navigate = useNavigate();
   const [tab, setTab] = useState<TabId>("command");
+  const [sub, setSub] = useState<string>("Portfolio");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [range, setRange] = useState<DateRange>(() => defaultRange());
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [search, setSearch] = useState("");
+  const [drawerCreative, setDrawerCreative] = useState<Creative | null>(null);
 
   const rangeLabel = useMemoizedRangeLabel(range);
 
@@ -38,27 +41,29 @@ const CreativeOS = () => {
     enabled: !!selectedId,
   });
 
+  const goTab = (t: TabId) => {
+    if (TABS.find((x) => x.id === t)?.clientOnly && !selectedId) return;
+    setTab(t);
+    setSub(subsFor(t)[0]);
+  };
+
   const selectClient = (id: string | null) => {
     setSelectedId(id);
     if (id) {
-      // Drilling into a client: leave the portfolio-only Command Center.
-      if (tab === "command") setTab("lab");
+      setTab("lab");
+      setSub(subsFor("lab")[0]);
     } else {
       setTab("command");
+      setSub(subsFor("command")[0]);
     }
-  };
-
-  const onTab = (t: TabId) => {
-    if (TABS.find((x) => x.id === t)?.clientOnly && !selectedId) return;
-    setTab(t);
   };
 
   const tabTitle = TABS.find((t) => t.id === tab)?.label ?? "Command Center";
   const onPortfolio = tab === "command" || !selectedId;
   const activeQuery = onPortfolio ? portfolio : client;
   const isFetching = portfolio.isFetching || client.isFetching;
-
   const clientsForSwitcher = portfolio.data?.clients ?? [];
+  const openCreative = (c: Creative) => setDrawerCreative(c);
 
   const renderContent = () => {
     if (onPortfolio) {
@@ -68,20 +73,22 @@ const CreativeOS = () => {
       if (!portfolio.data) return null;
       if (!portfolio.data.clients.length)
         return <EmptyState title="No active video / Demand Gen clients in this window" hint="Try widening the date range." />;
-      return <CommandCenter data={portfolio.data} onSelectClient={selectClient} />;
+      return <CommandCenter data={portfolio.data} sub={sub} onSelectClient={selectClient} />;
     }
     if (client.isLoading) return <LoadingState />;
     if (client.isError)
       return <ErrorState message={(client.error as Error)?.message ?? "Unknown error"} onRetry={() => client.refetch()} />;
     if (!client.data) return null;
-    if (tab === "lab") return <CreativeLab data={client.data} statusFilter={statusFilter} search={search} />;
-    if (tab === "hook") return <HookRetention data={client.data} />;
-    if (tab === "trend") return <Trendlines data={client.data} />;
-    if (tab === "vault") return <WinningVault data={client.data} />;
+    if (tab === "lab")
+      return <CreativeLab data={client.data} sub={sub} statusFilter={statusFilter} search={search} onOpenCreative={openCreative} />;
+    if (tab === "hook") return <HookRetention data={client.data} sub={sub} onOpenCreative={openCreative} />;
+    if (tab === "trend") return <Trendlines data={client.data} sub={sub} />;
+    if (tab === "vault") return <WinningVault data={client.data} onOpenCreative={openCreative} />;
     return null;
   };
 
-  const showFilterBar = !onPortfolio && tab === "lab";
+  // Filter bar only matters on the Lab → Leaderboard view.
+  const showFilterBar = !onPortfolio && tab === "lab" && sub === "Leaderboard";
 
   return (
     <div className="cos-root h-screen flex flex-col">
@@ -96,11 +103,14 @@ const CreativeOS = () => {
         isFetching={isFetching}
       />
       <div className="flex-1 flex min-h-0">
-        <CreativeOSSidebar tab={tab} onTab={onTab} hasClient={!!selectedId} />
+        <CreativeOSSidebar tab={tab} onTab={goTab} hasClient={!!selectedId} />
         <main className="flex-1 min-w-0 flex flex-col overflow-hidden">
           <PageHeader
             tabTitle={tabTitle}
             window={range}
+            subs={subsFor(tab)}
+            activeSub={sub}
+            onSub={setSub}
             selectedClient={
               selectedId
                 ? {
@@ -125,6 +135,7 @@ const CreativeOS = () => {
           {selectedId && (
             <div className="px-6 lg:px-8 pt-3">
               <button
+                type="button"
                 onClick={() => selectClient(null)}
                 className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-indigo-600"
               >
@@ -137,7 +148,11 @@ const CreativeOS = () => {
           </div>
         </main>
       </div>
+
+      <CreativeDrawer creative={drawerCreative} onClose={() => setDrawerCreative(null)} />
+
       <button
+        type="button"
         onClick={() => navigate("/")}
         className="fixed bottom-4 left-4 z-50 text-[11px] text-slate-400 hover:text-slate-600 bg-white/80 border border-slate-200 rounded-lg px-3 py-1.5"
       >

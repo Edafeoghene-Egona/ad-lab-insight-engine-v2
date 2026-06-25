@@ -1,10 +1,10 @@
 import { Trophy } from "lucide-react";
 import { CreativeCard } from "../CreativeCard";
 import { EmptyState } from "../states";
-import type { ClientResponse } from "@/lib/creativeos-types";
+import type { ClientResponse, Creative } from "@/lib/creativeos-types";
 
-/** All WIN-labeled creatives for the selected client, ranked by view rate. */
-export function WinningVault({ data }: { data: ClientResponse }) {
+/** All WIN creatives for the selected client, ranked by view rate. */
+export function WinningVault({ data, onOpenCreative }: { data: ClientResponse; onOpenCreative: (c: Creative) => void }) {
   const winners = data.creatives
     .filter((c) => c.status === "win")
     .sort((a, b) => b.viewRate - a.viewRate);
@@ -31,7 +31,7 @@ export function WinningVault({ data }: { data: ClientResponse }) {
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {winners.map((c, i) => (
-          <CreativeCard key={c.videoId ?? i} creative={c} rank={i + 1} />
+          <CreativeCard key={c.videoId ?? i} creative={c} rank={i + 1} onOpen={() => onOpenCreative(c)} />
         ))}
       </div>
     </div>

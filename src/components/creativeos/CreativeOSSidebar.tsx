@@ -3,13 +3,15 @@ import { cn } from "@/lib/utils";
 
 export type TabId = "command" | "lab" | "hook" | "trend" | "vault";
 
-export const TABS: { id: TabId; label: string; icon: typeof Zap; clientOnly: boolean }[] = [
-  { id: "command", label: "Command Center", icon: LayoutGrid, clientOnly: false },
-  { id: "lab", label: "Creative Testing Lab", icon: Zap, clientOnly: true },
-  { id: "hook", label: "Hook & Retention", icon: BarChart3, clientOnly: true },
-  { id: "trend", label: "Trendlines", icon: TrendingUp, clientOnly: true },
-  { id: "vault", label: "Winning Vault", icon: Trophy, clientOnly: true },
+export const TABS: { id: TabId; label: string; icon: typeof Zap; clientOnly: boolean; subs: string[] }[] = [
+  { id: "command", label: "Command Center", icon: LayoutGrid, clientOnly: false, subs: ["Portfolio", "Account Health", "This Week"] },
+  { id: "lab", label: "Creative Testing Lab", icon: Zap, clientOnly: true, subs: ["Leaderboard", "Test Pipeline", "Compare"] },
+  { id: "hook", label: "Hook & Retention", icon: BarChart3, clientOnly: true, subs: ["Quartile Funnel", "Retention Curves", "Hook Rate Ranking", "Drop-off Map"] },
+  { id: "trend", label: "Trendlines", icon: TrendingUp, clientOnly: true, subs: ["Views vs Spend", "View Rate", "Conversions", "Custom"] },
+  { id: "vault", label: "Winning Vault", icon: Trophy, clientOnly: true, subs: ["Winners"] },
 ];
+
+export const subsFor = (id: TabId): string[] => TABS.find((t) => t.id === id)?.subs ?? [];
 
 interface SidebarProps {
   tab: TabId;

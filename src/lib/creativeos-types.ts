@@ -17,6 +17,8 @@ export interface ClientRollup {
   viewRate: number;
   avgCpv: number;
   conversions: number;
+  /** Google Ads conversion value (for ROAS). May be absent on older payloads. */
+  conversionsValue?: number;
   status: { win: number; test: number; loss: number };
   /** Per-client daily series, returned by the portfolio loop. May be absent on older payloads. */
   daily?: DailyPoint[];

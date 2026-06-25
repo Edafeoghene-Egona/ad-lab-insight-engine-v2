@@ -1,4 +1,5 @@
 import type { ClientResponse, DateRange } from "@/lib/creativeos-types";
+import { cn } from "@/lib/utils";
 
 interface PageHeaderProps {
   /** Tab title shown on the plain (portfolio) header. */
@@ -6,6 +7,9 @@ interface PageHeaderProps {
   window: DateRange;
   /** When set, the pink client header is rendered instead of the plain one. */
   selectedClient?: ClientResponse["account"] | null;
+  subs: string[];
+  activeSub: string;
+  onSub: (s: string) => void;
 }
 
 const fmtRange = (w: DateRange) => {
@@ -14,14 +18,55 @@ const fmtRange = (w: DateRange) => {
   return `${f(w.start)} – ${f(w.end)}`;
 };
 
+/** Sub-tab row, rendered inside the header. `onLight` flips colours for the pink header. */
+function SubTabs({
+  subs,
+  activeSub,
+  onSub,
+  onLight,
+}: {
+  subs: string[];
+  activeSub: string;
+  onSub: (s: string) => void;
+  onLight?: boolean;
+}) {
+  if (subs.length <= 1) return null;
+  return (
+    <div className="flex gap-1 mt-4 overflow-x-auto cos-hide-scrollbar">
+      {subs.map((s) => {
+        const on = s === activeSub;
+        return (
+          <button
+            key={s}
+            type="button"
+            onClick={() => onSub(s)}
+            className={cn(
+              "px-3.5 py-2 text-[13px] whitespace-nowrap border-b-2 transition-colors",
+              onLight
+                ? on
+                  ? "text-white border-white font-bold"
+                  : "text-white/70 border-transparent hover:text-white font-medium"
+                : on
+                  ? "text-slate-900 border-indigo-500 font-bold"
+                  : "text-slate-500 border-transparent hover:text-slate-700 font-medium",
+            )}
+          >
+            {s}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 /**
  * Plain header on the portfolio view; the pink/gradient client header
- * ONLY when a specific client is selected (per spec).
+ * ONLY when a specific client is selected (per spec). Both carry the sub-tab row.
  */
-export function PageHeader({ tabTitle, window, selectedClient }: PageHeaderProps) {
+export function PageHeader({ tabTitle, window, selectedClient, subs, activeSub, onSub }: PageHeaderProps) {
   if (!selectedClient) {
     return (
-      <div className="px-6 lg:px-8 pt-6 pb-4 border-b border-slate-200 bg-white/60">
+      <div className="px-6 lg:px-8 pt-6 pb-2 border-b border-slate-200 bg-white/60">
         <div className="flex items-center gap-3">
           <div className="h-px w-8 bg-indigo-500" />
           <h1 className="cos-display text-2xl font-semibold text-slate-900">{tabTitle}</h1>
@@ -29,6 +74,7 @@ export function PageHeader({ tabTitle, window, selectedClient }: PageHeaderProps
         <p className="text-xs text-slate-500 mt-1 ml-11">
           {fmtRange(window)} · All active clients · pulled live from Google Ads
         </p>
+        <SubTabs subs={subs} activeSub={activeSub} onSub={onSub} />
       </div>
     );
   }
@@ -42,7 +88,7 @@ export function PageHeader({ tabTitle, window, selectedClient }: PageHeaderProps
   ];
 
   return (
-    <div className="cos-client-header relative overflow-hidden px-6 lg:px-8 pt-7 pb-5 text-white" data-testid="cos-pink-header">
+    <div className="cos-client-header relative overflow-hidden px-6 lg:px-8 pt-7 pb-2 text-white" data-testid="cos-pink-header">
       <div
         className="absolute inset-0 opacity-10 pointer-events-none"
         style={{
@@ -51,27 +97,30 @@ export function PageHeader({ tabTitle, window, selectedClient }: PageHeaderProps
           backgroundSize: "32px 32px",
         }}
       />
-      <div className="relative flex flex-col md:flex-row md:items-end md:justify-between gap-4">
-        <div>
-          <div className="text-[9px] tracking-[0.12em] uppercase font-bold text-white/80 mb-2">
-            Ad-Lab.io · CreativeOS
+      <div className="relative">
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+          <div>
+            <div className="text-[9px] tracking-[0.12em] uppercase font-bold text-white/80 mb-2">
+              Ad-Lab.io · CreativeOS
+            </div>
+            <h1 className="cos-display text-4xl font-bold tracking-tight">
+              {name}
+              <span className="text-white/50 font-light">.com</span>
+            </h1>
+            <div className="flex flex-wrap gap-x-6 gap-y-2 mt-4">
+              {meta.map(([k, v]) => (
+                <div key={k}>
+                  <p className="text-[9px] uppercase tracking-wider font-bold text-white/60 mb-0.5">{k}</p>
+                  <p className="text-xs font-semibold">{v}</p>
+                </div>
+              ))}
+            </div>
           </div>
-          <h1 className="cos-display text-4xl font-bold tracking-tight">
-            {name}
-            <span className="text-white/50 font-light">.com</span>
-          </h1>
-          <div className="flex flex-wrap gap-x-6 gap-y-2 mt-4">
-            {meta.map(([k, v]) => (
-              <div key={k}>
-                <p className="text-[9px] uppercase tracking-wider font-bold text-white/60 mb-0.5">{k}</p>
-                <p className="text-xs font-semibold">{v}</p>
-              </div>
-            ))}
-          </div>
+          <span className="inline-flex items-center gap-1.5 bg-white/16 px-2.5 py-1 rounded-full text-[11px] font-semibold self-start">
+            <span className="w-1.5 h-1.5 rounded-full bg-white cos-pulse" /> Live
+          </span>
         </div>
-        <span className="inline-flex items-center gap-1.5 bg-white/16 px-2.5 py-1 rounded-full text-[11px] font-semibold self-start">
-          <span className="w-1.5 h-1.5 rounded-full bg-white cos-pulse" /> Live
-        </span>
+        <SubTabs subs={subs} activeSub={activeSub} onSub={onSub} onLight />
       </div>
     </div>
   );

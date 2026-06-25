@@ -56,6 +56,29 @@ export function ViewsSpendTrend({ daily }: { daily: DailyPoint[] }) {
   );
 }
 
+type MetricDef = { key: "views" | "spend" | "viewRate" | "conversions"; label: string; color: string };
+
+const metricVal = (d: DailyPoint, key: MetricDef["key"]) =>
+  key === "viewRate" ? +ratePct(d.viewRate).toFixed(2) : d[key];
+
+/** Dual-axis plot of any two daily metrics against each other. */
+export function CustomTrend({ daily, a, b }: { daily: DailyPoint[]; a: MetricDef; b: MetricDef }) {
+  const data = daily.map((d) => ({ label: shortDate(d.date), a: metricVal(d, a.key), b: metricVal(d, b.key) }));
+  return (
+    <ResponsiveContainer width="100%" height={300}>
+      <ComposedChart data={data} margin={{ top: 8, right: 8, left: -8, bottom: 0 }}>
+        <CartesianGrid stroke="rgba(0,0,0,0.05)" vertical={false} />
+        <XAxis dataKey="label" tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} />
+        <YAxis yAxisId="a" tick={{ fontSize: 10, fill: a.color }} axisLine={false} tickLine={false} />
+        <YAxis yAxisId="b" orientation="right" tick={{ fontSize: 10, fill: b.color }} axisLine={false} tickLine={false} />
+        <Tooltip contentStyle={{ borderRadius: 8, fontSize: 12 }} />
+        <Area yAxisId="a" type="monotone" dataKey="a" name={a.label} stroke={a.color} fill={`${a.color}14`} strokeWidth={2.5} />
+        <Line yAxisId="b" type="monotone" dataKey="b" name={b.label} stroke={b.color} strokeWidth={2.5} dot={false} />
+      </ComposedChart>
+    </ResponsiveContainer>
+  );
+}
+
 /** Single-metric daily area chart (view rate or conversions). */
 export function MetricTrend({
   daily,
