@@ -9,6 +9,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import SharedReport from "./pages/SharedReport";
 import Auth from "./pages/Auth";
+import CreativeOS from "./pages/CreativeOS";
 
 const queryClient = new QueryClient();
 
@@ -25,6 +26,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Index />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/creativeos"
+              element={
+                <ProtectedRoute>
+                  <CreativeOS />
                 </ProtectedRoute>
               }
             />

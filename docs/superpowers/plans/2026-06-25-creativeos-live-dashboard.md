@@ -67,6 +67,19 @@
 
 ## Phase 1 — n8n workflow "CreativeOS — Live Data"
 
+### Discovered constants (confirmed from existing production workflows — Task 0 resolved)
+- **MCC (manager) customer id:** `4056871092`
+- **developer-token header:** `1zbn0cEIYjIq72aVw6r8PA`
+- **login-customer-id header:** `4056871092` (kept at the MCC on every call)
+- **OAuth2 credential:** `LmG0IOX0B4Va0yNI` (`googleAdsOAuth2Api`), via `authentication: predefinedCredentialType`
+- **Call method:** `n8n-nodes-base.httpRequest`, `POST` to
+  `https://googleads.googleapis.com/v21/customers/{CUSTOMER_ID}/googleAds:search`, body `{ "query": "<GAQL>" }`
+- **Enumerate active children:** `SELECT customer_client.id, customer_client.descriptive_name, customer_client.status FROM customer_client WHERE customer_client.status = 'ENABLED' AND customer_client.manager = false` (run against the MCC)
+- **Video metrics use TrueView-named fields** (NOT the generic ones): `metrics.video_trueview_views`, `metrics.video_trueview_view_rate`, `metrics.trueview_average_cpv`, plus `metrics.video_quartile_p25_rate/_p50_rate/_p75_rate/_p100_rate`, `metrics.cost_micros`, `metrics.conversions`, `metrics.impressions`.
+- **YouTube video id:** `video.id` (resource `video`); also `video.title`, `video.duration_millis`.
+- **Labels:** campaign-level via `campaign_label`. Match `win`/`test`/`loss` **case-insensitively** on `label.name`; if the live labels are spelled differently, update the token list in the mapping Code node.
+- **Demand Gen caveat:** `FROM video` + TrueView metrics is proven for Video campaigns; Demand Gen creative-level video metrics are net-new/unproven. Pull what's available; set `quartiles: null` when absent (graceful degrade per spec §4.2).
+
 > Follow the n8n-mcp tool order: `get_sdk_reference` → `get_suggested_nodes` → `search_nodes` → `get_node_types` → write code → `validate_node_config` per node → `validate_workflow` → `create_workflow_from_code`. Build into existing workflow `5B9bHIEOeOEcYeG1`; rename to "CreativeOS — Live Data".
 
 ### Task 1: Webhook + auth + router
@@ -87,37 +100,46 @@
 
 ### Task 2: Portfolio branch
 
-- [ ] **Step 1:** List active child accounts under the MCC (Google Ads node / GAQL on `customer_client` filtered to accounts with Video/Demand-Gen spend in `[start,end]`).
-- [ ] **Step 2:** Split-in-Batches (bounded concurrency, e.g. batch size 5) → per-account rollup GAQL:
+- [ ] **Step 1:** HTTP node against the MCC (`customers/4056871092/googleAds:search`) to list active children:
+  ```sql
+  SELECT customer_client.id, customer_client.descriptive_name, customer_client.status
+  FROM customer_client
+  WHERE customer_client.status = 'ENABLED' AND customer_client.manager = false
+  ```
+- [ ] **Step 2:** Split-in-Batches (bounded concurrency, e.g. batch size 5) → per-account rollup GAQL (HTTP node, `customers/{childId}/...`, `login-customer-id: 4056871092`):
   ```sql
   SELECT campaign.advertising_channel_type, metrics.cost_micros, metrics.impressions,
          metrics.video_views, metrics.video_view_rate, metrics.average_cpv,
-         metrics.conversions, metrics.conversions_value, label.name
+         metrics.conversions, metrics.conversions_value
   FROM campaign
   WHERE segments.date BETWEEN '{{start}}' AND '{{end}}'
     AND campaign.advertising_channel_type IN ('VIDEO','DEMAND_GEN')
   ```
-- [ ] **Step 2a:** Wrap each account call so a failure pushes `{customerId,message}` to an `errors` array instead of aborting (Continue On Fail + collector).
-- [ ] **Step 3:** Code node aggregates to the §6 `portfolio` contract: `clients[]` (with win/test/loss counts from `label.name`), `totals`, `errors[]`.
+  and a second call per account for label counts:
+  ```sql
+  SELECT campaign.id, label.name FROM campaign_label
+  ```
+- [ ] **Step 2a:** Wrap each account call so a failure pushes `{customerId,message}` to an `errors` array instead of aborting (Continue On Fail + collector). An account with zero VIDEO/DEMAND_GEN rows is simply omitted from `clients[]` (defines "active").
+- [ ] **Step 3:** Code node aggregates to the §6 `portfolio` contract: `clients[]` (win/test/loss counts derived by matching `label.name` case-insensitively against win/test/loss), `totals`, `errors[]`.
 - [ ] **Step 4:** `Respond to Webhook` returns the JSON.
 
 ### Task 3: Client branch
 
-- [ ] **Step 1:** Creative-level GAQL for `customerId` over `[start,end]`:
+- [ ] **Step 1:** Creative-level GAQL for `customerId` over `[start,end]` (HTTP node, resource `video` — the proven pattern):
   ```sql
-  SELECT ad_group_ad.ad.id, ad_group_ad.ad.name,
-         ad_group_ad.ad.video_responsive_ad.videos,  -- YouTube video id source; adjust per ad type
-         campaign.advertising_channel_type, label.name,
-         metrics.impressions, metrics.video_views, metrics.video_view_rate,
-         metrics.average_cpv, metrics.cost_micros, metrics.conversions, metrics.conversions_value,
+  SELECT video.id, video.title, video.duration_millis, video.channel_id,
+         campaign.id, campaign.name, campaign.advertising_channel_type,
+         metrics.impressions, metrics.video_trueview_views, metrics.video_trueview_view_rate,
+         metrics.trueview_average_cpv, metrics.cost_micros,
+         metrics.conversions, metrics.conversions_value,
          metrics.video_quartile_p25_rate, metrics.video_quartile_p50_rate,
          metrics.video_quartile_p75_rate, metrics.video_quartile_p100_rate
-  FROM ad_group_ad
-  WHERE segments.date BETWEEN '{{start}}' AND '{{end}}'
-    AND campaign.advertising_channel_type IN ('VIDEO','DEMAND_GEN')
+  FROM video
+  WHERE segments.date BETWEEN '{{start}}' AND '{{end}}' AND metrics.impressions > 0
   ```
-- [ ] **Step 2:** Daily series GAQL (segmented by `segments.date`) for trendlines.
-- [ ] **Step 3:** Code node maps to §6 `client` contract: `creatives[]` (quartiles → `null` when absent), `daily[]`, `account`, `benchmarks` (account avg viewRate/hook/cpv). Map `label.name` → `status` (`win`/`test`/`loss`/`null`).
+  Plus the per-account `campaign_label` query (as in Task 2) to attach win/test/loss status to each video via its `campaign.id`.
+- [ ] **Step 2:** Daily series GAQL (resource `customer` or `campaign`, segmented by `segments.date`) for trendlines: date, video views, cost_micros, view rate, conversions.
+- [ ] **Step 3:** Code node maps to §6 `client` contract: `creatives[]` (`videoId`=`video.id`, `durationSec`=`duration_millis/1000`, viewRate/avgCpv from the TrueView fields; `quartiles` → `null` when all four rates are absent/zero for Demand Gen), `daily[]`, `account`, `benchmarks` (account avg viewRate/hook/cpv). Map campaign `label.name` → `status` (`win`/`test`/`loss`/`null`).
 - [ ] **Step 4:** `Respond to Webhook` returns JSON.
 
 ### Task 4: Validate, save, smoke-test

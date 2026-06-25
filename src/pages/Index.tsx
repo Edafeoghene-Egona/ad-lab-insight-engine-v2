@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import adLabLogo from "@/assets/ad-lab-logo.png";
 import ReportForm from "@/components/ReportForm";
@@ -8,7 +9,7 @@ import LoadingState from "@/components/LoadingState";
 import ReportViewer from "@/components/ReportViewer";
 import ReportHistory from "@/components/ReportHistory";
 import { useAuth } from "@/contexts/AuthContext";
-import { LogOut, FileText, Activity, Search, Code2, Youtube } from "lucide-react";
+import { LogOut, FileText, Activity, Search, Code2, Youtube, LayoutDashboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { initiateReport, pollForCompletion, generateJobId } from "@/lib/api";
 import {
@@ -23,6 +24,7 @@ type AppState = "dashboard" | "weekly_form" | "audit_form" | "competitor_form" |
 
 const Index = () => {
   const { signOut, user } = useAuth();
+  const navigate = useNavigate();
   const [state, setState] = useState<AppState>("dashboard");
   const [viewingReport, setViewingReport] = useState(false);
 const [currentReportType, setCurrentReportType] = useState<"weekly" | "audit" | "competitor" | "youtube" | "custom">("weekly");
@@ -396,6 +398,30 @@ const [currentReportType, setCurrentReportType] = useState<"weekly" | "audit" | 
             </button>
           ))}
         </div>
+
+        {/* CreativeOS — distinct live dashboard surface (not a report generator) */}
+        <button
+          type="button"
+          onClick={() => navigate("/creativeos")}
+          className="report-type-card group relative mt-4 w-full p-6 text-left flex items-center gap-5 overflow-hidden"
+        >
+          <div className="p-3 border border-border rounded-[4px] text-primary shrink-0">
+            <LayoutDashboard className="w-6 h-6" strokeWidth={1.5} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-3">
+              <h3 className="text-base text-foreground">CreativeOS</h3>
+              <span className="type-eyebrow text-primary flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-primary live-dot" /> Live
+              </span>
+            </div>
+            <p className="text-xs text-muted-foreground tracking-[0.02em] leading-relaxed normal-case mt-1.5">
+              Live creative dashboard — Video &amp; Demand Gen performance for every active client, pulled on demand from Google Ads.
+            </p>
+          </div>
+          <span className="micro-label-lg text-muted-foreground/70 group-hover:text-primary transition-colors shrink-0">06</span>
+          <span className="micro-label absolute bottom-3 right-4 opacity-0 group-hover:opacity-100 transition-opacity">open dashboard →</span>
+        </button>
       </section>
       )}
 
