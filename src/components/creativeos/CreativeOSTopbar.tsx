@@ -225,5 +225,3 @@ export function CreativeOSTopbar({
     </div>
   );
 }
-
-export { defaultRange };

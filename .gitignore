@@ -24,3 +24,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Playwright MCP test artifacts
+.playwright-mcp/
+auth-loaded.png
