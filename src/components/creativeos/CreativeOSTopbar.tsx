@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Calendar, ChevronDown, RefreshCw, Search } from "lucide-react";
+import adLabLogo from "@/assets/ad-lab-logo.png";
+import { ClientAvatar } from "./ClientAvatar";
 import type { ClientRollup, DateRange } from "@/lib/creativeos-types";
 import { cn } from "@/lib/utils";
 
@@ -36,8 +38,6 @@ function useDismiss<T extends HTMLElement>(onClose: () => void) {
   return ref;
 }
 
-const initial = (s?: string) => (s?.[0] ?? "?").toUpperCase();
-
 interface TopbarProps {
   clients: ClientRollup[];
   selectedId: string | null;
@@ -71,9 +71,7 @@ export function CreativeOSTopbar({
   return (
     <div className="h-14 flex-shrink-0 border-b border-slate-200 bg-white/80 flex items-center gap-3 px-4 relative z-30">
       <div className="flex items-center gap-2.5">
-        <div className="cos-display w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold">
-          A
-        </div>
+        <img src={adLabLogo} alt="Ad-Lab" className="w-8 h-8 rounded-lg object-cover" />
         <div className="leading-none hidden sm:block">
           <div className="cos-display font-bold text-[15px] text-slate-900">Ad-Lab</div>
           <div className="text-[8.5px] tracking-[0.12em] text-slate-400 font-semibold">CREATIVEOS</div>
@@ -92,9 +90,11 @@ export function CreativeOSTopbar({
           }}
           className="flex items-center gap-2.5 bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 hover:border-slate-300"
         >
-          <div className="cos-display w-5 h-5 rounded bg-indigo-600 text-white flex items-center justify-center text-[10px] font-bold">
-            {initial(selected?.name ?? "A")}
-          </div>
+          {selected ? (
+            <ClientAvatar name={selected.name} seed={selected.customerId} size={20} />
+          ) : (
+            <img src={adLabLogo} alt="" className="w-5 h-5 rounded object-cover" />
+          )}
           <div className="text-left leading-tight">
             <div className="text-xs font-bold text-slate-800">{selected ? selected.name : "All clients"}</div>
             <div className="text-[9.5px] text-slate-400">{selected ? selected.customerId : "portfolio"}</div>
@@ -137,9 +137,7 @@ export function CreativeOSTopbar({
                     c.customerId === selectedId && "bg-slate-50",
                   )}
                 >
-                  <div className="cos-display w-5 h-5 rounded bg-indigo-600 text-white flex items-center justify-center text-[10px] font-bold">
-                    {c.name[0].toUpperCase()}
-                  </div>
+                  <ClientAvatar name={c.name} seed={c.customerId} size={20} />
                   <span className="text-xs font-medium text-slate-700 flex-1 truncate">{c.name}</span>
                 </button>
               ))}

@@ -1,6 +1,7 @@
 import { DollarSign, Play, Trophy, Users, AlertTriangle, Trash2 } from "lucide-react";
 import { GlassPanel } from "../GlassPanel";
 import { StatCard } from "../StatCard";
+import { ClientAvatar } from "../ClientAvatar";
 import { ViewsSpendTrend } from "../charts/TrendChart";
 import { fmtCompact, fmtMoney, ratePct } from "@/lib/creativeos";
 import type { ClientRollup, DailyPoint, PortfolioResponse } from "@/lib/creativeos-types";
@@ -40,9 +41,7 @@ function ClientCard({ client, onSelect }: { client: ClientRollup; onSelect: () =
   return (
     <button onClick={onSelect} className="cos-stat-card cos-glass rounded-2xl p-5 text-left flex flex-col gap-3">
       <div className="flex items-center gap-2.5">
-        <div className="cos-display w-9 h-9 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold">
-          {(client.name?.[0] ?? "?").toUpperCase()}
-        </div>
+        <ClientAvatar name={client.name} seed={client.customerId} size={36} />
         <div className="flex-1 min-w-0">
           <div className="font-bold text-sm text-slate-900 truncate">{client.name}</div>
           <div className="text-[10.5px] text-slate-400">{client.customerId}</div>
@@ -130,9 +129,7 @@ function AccountHealth({ data, onSelectClient }: { data: PortfolioResponse; onSe
                   onClick={() => onSelectClient(c.customerId)}
                   className="flex items-center gap-2 text-left min-w-0 hover:text-indigo-600"
                 >
-                  <span className="cos-display w-6 h-6 rounded bg-indigo-600 text-white flex items-center justify-center text-[10px] font-bold flex-shrink-0">
-                    {(c.name?.[0] ?? "?").toUpperCase()}
-                  </span>
+                  <ClientAvatar name={c.name} seed={c.customerId} size={24} />
                   <span className="text-[12.5px] font-semibold truncate">{c.name}</span>
                 </button>
                 {cell(roas == null ? "—" : roas.toFixed(1) + "×", roas == null ? "none" : roas >= 2 ? "good" : roas >= 1 ? "warn" : "bad")}
