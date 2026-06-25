@@ -38,6 +38,7 @@ export function CreativeDrawer({ creative, onClose }: { creative: Creative | nul
           </span>
           <button
             type="button"
+            aria-label="Close"
             onClick={onClose}
             className="absolute top-3.5 right-3.5 w-8 h-8 rounded-lg bg-black/40 text-white flex items-center justify-center hover:bg-black/60"
           >
@@ -61,6 +62,7 @@ export function CreativeDrawer({ creative, onClose }: { creative: Creative | nul
             <Cell label="CPV" value={fmtCpv(c.avgCpv)} />
             <Cell label="Conversions" value={c.conversions.toFixed(1)} accent="text-emerald-600" />
             <Cell label="Conv. value" value={fmtMoney(c.conversionsValue)} />
+            <Cell label="ROAS" value={c.cost > 0 && c.conversionsValue > 0 ? (c.conversionsValue / c.cost).toFixed(2) + "×" : "—"} accent="text-emerald-600" />
             <Cell label="Spend" value={fmtMoney(c.cost)} />
           </div>
 

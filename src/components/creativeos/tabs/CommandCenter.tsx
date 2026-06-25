@@ -1,4 +1,4 @@
-import { DollarSign, Play, Trophy, Users, AlertTriangle, Trash2 } from "lucide-react";
+import { DollarSign, Play, Trophy, Users, AlertTriangle, Trash2, TrendingUp } from "lucide-react";
 import { GlassPanel } from "../GlassPanel";
 import { StatCard } from "../StatCard";
 import { ClientAvatar } from "../ClientAvatar";
@@ -11,6 +11,11 @@ const winPctOf = (s: ClientRollup["status"]) => {
   const total = s.win + s.test + s.loss;
   return total ? Math.round((s.win / total) * 100) : 0;
 };
+
+/** ROAS = Google Ads conversion value ÷ spend; null when value is unavailable. */
+const roasOf = (c: ClientRollup): number | null =>
+  c.conversionsValue != null && c.spend > 0 ? c.conversionsValue / c.spend : null;
+const fmtRoas = (r: number | null) => (r == null ? "—" : r.toFixed(2) + "×");
 
 /** Minimal inline sparkline of daily views — no chart lib needed for a thumbnail trend. */
 function Sparkline({ points }: { points: number[] }) {
@@ -55,7 +60,7 @@ function ClientCard({ client, onSelect }: { client: ClientRollup; onSelect: () =
         {(
           [
             ["Spend", fmtMoney(client.spend)],
-            ["View rate", ratePct(client.viewRate).toFixed(1) + "%"],
+            ["ROAS", fmtRoas(roasOf(client))],
             ["Win rate", winPct + "%"],
           ] as [string, string][]
         ).map(([k, v]) => (
@@ -93,7 +98,6 @@ function ErrorsNotice({ errors }: { errors: PortfolioResponse["errors"] }) {
 // ── Account Health matrix ───────────────────────────────────────────────────
 function AccountHealth({ data, onSelectClient }: { data: PortfolioResponse; onSelectClient: (id: string) => void }) {
   const rows = [...data.clients].sort((a, b) => b.spend - a.spend);
-  const roasOf = (c: ClientRollup) => (c.conversionsValue != null && c.spend > 0 ? c.conversionsValue / c.spend : null);
 
   const cell = (val: string, tone: "good" | "warn" | "bad" | "none") => {
     const m = {
@@ -132,7 +136,7 @@ function AccountHealth({ data, onSelectClient }: { data: PortfolioResponse; onSe
                   <ClientAvatar name={c.name} seed={c.customerId} size={24} />
                   <span className="text-[12.5px] font-semibold truncate">{c.name}</span>
                 </button>
-                {cell(roas == null ? "—" : roas.toFixed(1) + "×", roas == null ? "none" : roas >= 2 ? "good" : roas >= 1 ? "warn" : "bad")}
+                {cell(fmtRoas(roas), roas == null ? "none" : roas >= 2 ? "good" : roas >= 1 ? "warn" : "bad")}
                 {cell(vr.toFixed(1) + "%", vr >= 25 ? "good" : vr >= 15 ? "warn" : "bad")}
                 {cell(wr + "%", wr >= 30 ? "good" : wr >= 15 ? "warn" : "bad")}
                 {cell(Math.round(c.conversions).toLocaleString(), "none")}
@@ -151,6 +155,8 @@ function ThisWeek({ data }: { data: PortfolioResponse }) {
   const tested = data.clients.reduce((s, c) => s + c.status.win + c.status.test + c.status.loss, 0);
   const winners = data.clients.reduce((s, c) => s + c.status.win, 0);
   const retirements = data.clients.reduce((s, c) => s + c.status.loss, 0);
+  const totalConvValue = data.clients.reduce((s, c) => s + (c.conversionsValue ?? 0), 0);
+  const blendedRoas = data.totals.spend > 0 && totalConvValue > 0 ? totalConvValue / data.totals.spend : null;
 
   // Aggregate per-client daily into a single portfolio daily series.
   const byDate: Record<string, DailyPoint> = {};
@@ -166,10 +172,11 @@ function ThisWeek({ data }: { data: PortfolioResponse }) {
 
   return (
     <div className="cos-reveal flex flex-col gap-6">
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         <StatCard label="Creatives tested" value={tested.toLocaleString()} foot={`across ${data.totals.clientsLive} clients`} />
         <StatCard label="Winners" value={String(winners)} foot="reached WIN" accentClass="text-emerald-600" icon={Trophy} />
         <StatCard label="Retirements" value={String(retirements)} foot="hit kill threshold" accentClass="text-rose-600" icon={Trash2} />
+        <StatCard label="Blended ROAS" value={fmtRoas(blendedRoas)} foot="conv. value ÷ spend" accentClass="text-emerald-600" icon={TrendingUp} />
         <StatCard label="Portfolio win rate" value={ratePct(data.totals.winRate).toFixed(0) + "%"} foot="of classified creatives" accentClass="text-indigo-600" />
       </div>
       {daily.length > 1 && (
@@ -191,11 +198,14 @@ function ThisWeek({ data }: { data: PortfolioResponse }) {
 function Portfolio({ data, onSelectClient }: { data: PortfolioResponse; onSelectClient: (id: string) => void }) {
   const { totals, clients, errors } = data;
   const sorted = [...clients].sort((a, b) => b.spend - a.spend);
+  const totalConvValue = clients.reduce((s, c) => s + (c.conversionsValue ?? 0), 0);
+  const blendedRoas = totals.spend > 0 && totalConvValue > 0 ? totalConvValue / totals.spend : null;
   return (
     <div className="cos-reveal flex flex-col gap-6">
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         <StatCard label="Clients live" value={String(totals.clientsLive)} foot="active accounts" icon={Users} />
         <StatCard label="Portfolio spend" value={fmtMoney(totals.spend)} foot="selected window" icon={DollarSign} />
+        <StatCard label="Blended ROAS" value={fmtRoas(blendedRoas)} foot="Google Ads conv. value" icon={TrendingUp} accentClass="text-emerald-600" />
         <StatCard label="Total views" value={fmtCompact(totals.views)} foot="video + demand gen" icon={Play} />
         <StatCard label="Win rate" value={ratePct(totals.winRate).toFixed(0) + "%"} foot="classified creatives" icon={Trophy} accentClass="text-indigo-600" />
       </div>
