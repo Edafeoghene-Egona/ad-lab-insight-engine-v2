@@ -18,7 +18,7 @@
 - `src/lib/creativeos-types.ts` — shared TS types for portfolio + client response contracts.
 - `src/lib/creativeos.ts` — API helpers (`fetchPortfolio`, `fetchClient`) + pure helpers (`defaultRange`, `normalizeStatus`).
 - `src/lib/creativeos.test.ts` — unit tests for pure helpers.
-- `src/pages/CreativeOS.tsx` — route shell: owns selected client + date range, renders topbar/sidebar/tab content, wires queries.
+- `src/pages/CreativeOS.tsx` — route shell (`CreativeOSPage` in the spec): owns selected client + date range, renders topbar/sidebar/tab content, wires queries.
 - `src/components/creativeos/CreativeOSTopbar.tsx` — logo, account switcher, date-range picker, Live/Refresh.
 - `src/components/creativeos/CreativeOSSidebar.tsx` — 5 tabs.
 - `src/components/creativeos/PageHeader.tsx` — plain on portfolio; pink/gradient when a client is selected.
@@ -60,6 +60,8 @@
   ```
 
 > If labels are NOT campaign-level or not spelled win/test/loss, update every GAQL `label`/`status` reference in Phase 1 accordingly before proceeding.
+>
+> **GAQL label join caveat:** the snippets in Tasks 2 & 3 show `label.name` inline on `campaign`/`ad_group_ad` for brevity, but Google Ads exposes labels through the association resources `campaign_label` / `ad_group_ad_label` (as Task 0's probe does). Expect to fetch labels via those resources and join them to the campaign/ad in the aggregation Code node, not select `label.name` directly on the metrics query.
 
 ---
 
@@ -346,7 +348,7 @@
   });
   ```
   Portfolio auto-loads on open (no `enabled` gate). Selecting a client enables the client query. `onRefresh` calls `refetch` on the active query. Changing `range` changes the key → refetch. Selecting a client also switches `tab` away from `command` if still on it.
-- [ ] **Step 3:** Layout: `CreativeOSTopbar` + flex row of `CreativeOSSidebar` + main column (`PageHeader` + `CreativeOSFilterBar` + tab content). Pass `selectedClient = selectedId ? client.data?.account : null` to `PageHeader`.
+- [ ] **Step 3:** Layout: `CreativeOSTopbar` + flex row of `CreativeOSSidebar` + main column (`PageHeader` + `CreativeOSFilterBar` + tab content). Pass `selectedClient = selectedId ? client.data?.account : null` to `PageHeader`. (Note: `CreativeOSFilterBar` is built in Task 16 — either build Task 16 immediately alongside this step, or temporarily omit the FilterBar from the layout to avoid a transient build break.)
 - [ ] **Step 4:** Render LoadingState/ErrorState/EmptyState based on the active query.
 - [ ] **Step 5:** Build; commit.
 
