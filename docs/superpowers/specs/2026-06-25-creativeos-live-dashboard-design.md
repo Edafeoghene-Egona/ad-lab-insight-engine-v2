@@ -48,7 +48,7 @@ it client-side in a clean, professionally designed React dashboard.
 | Sections | Command Center, Creative Testing Lab, Hook & Retention, Trendlines, Winning Vault. |
 | Client universe + entry | **Live MCC list** of active accounts + new `/creativeos` route, reached from a card on the Index dashboard. |
 | Charts | **recharts** (`^2.15.4`, already a dependency). |
-| Win classification | **Google Ads labels** (`win` / `test` / `loss`), mapped to WIN / TEST / RETIRE. Unlabeled → "—". |
+| Win classification | **Computed** from account benchmarks (NOT Google Ads labels — the MCC has none). WIN if `vvr≥acctVVR && cpv≤acctCPV && conv>0`; LOSS if `vvr<0.6·acctVVR \|\| (cpv>1.5·acctCPV && conv<1)`; else TEST. `loss` displays as RETIRE. |
 | Initial load | **Auto-pull** portfolio rollups on open. |
 
 ## 4. Architecture
@@ -97,10 +97,10 @@ Built into the existing empty workflow `5B9bHIEOeOEcYeG1` ("My workflow 10"), re
 
 ### 4.2 Google Ads query notes
 
-- **Status labels:** read campaign labels; map `win`/`test`/`loss` (case-insensitive) →
-  WIN/TEST/RETIRE. A creative inherits its (single-video test) campaign's label.
-  **Assumption to verify in implementation:** labels are applied at campaign level and spelled
-  win/test/loss. If they live on ads or differ, adjust the GAQL resource and mapping accordingly.
+- **Status (WIN/TEST/RETIRE):** RESOLVED during live testing — the MCC has **no** Google Ads
+  labels (`label`, `campaign_label`, `ad_group_ad_label` all probed empty). Status is **computed**
+  per creative from account benchmarks (see §3 Win classification), in the n8n Code nodes, not
+  read from labels. `loss` → RETIRE in the UI.
 - **Demand Gen risk:** Demand Gen campaigns may not expose the full video-quartile metric set. Where
   quartile data is absent, render all other metrics and **gracefully hide the retention curve** for
   that creative rather than error.
@@ -192,9 +192,11 @@ Built into the existing empty workflow `5B9bHIEOeOEcYeG1` ("My workflow 10"), re
 - **MCC id:** `4056871092`. Dev-token `1zbn0cEIYjIq72aVw6r8PA`, `login-customer-id: 4056871092` headers on every call. OAuth2 cred `LmG0IOX0B4Va0yNI`. Calls via HTTP Request node → `googleads.googleapis.com/v21/customers/{id}/googleAds:search`.
 - **Active accounts:** `FROM customer_client WHERE customer_client.status='ENABLED' AND customer_client.manager=false`.
 - **Video/creative:** resource `video`, TrueView-named metrics, `video.id` = YouTube id.
-- **Labels:** campaign-level via `campaign_label`. Matched case-insensitively to win/test/loss.
-  ⚠️ The win/test/loss labels could not be independently verified (the workflows that use them are not MCP-readable); proceeding on the user's explicit statement that campaigns are labeled win/test/loss, with tolerant matching. **Verify exact spelling against the live account when convenient.**
-- **Demand Gen quartiles:** net-new/unproven; degrade gracefully (`quartiles: null`).
+- **Labels:** ❌ The MCC uses NO Google Ads labels (confirmed empty via live probe of `label` /
+  `campaign_label` / `ad_group_ad_label`). Status is computed from benchmarks instead (§3).
+- **Metrics:** use standard v21 names (`metrics.video_views`, `video_view_rate`, `average_cpv`);
+  TrueView-prefixed names are rejected by v21.
+- **Demand Gen quartiles:** degrade gracefully (`quartiles: null`).
 
 ### Remaining (low-risk) assumptions
 
