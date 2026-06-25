@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { defaultRange, normalizeStatus, statusLabel } from "./creativeos";
+import { defaultRange, normalizeStatus, statusLabel, fmtCompact, ratePct } from "./creativeos";
 
 describe("defaultRange", () => {
   it("returns a 14-day window ending today", () => {
@@ -24,5 +24,21 @@ describe("statusLabel", () => {
     expect(statusLabel("loss")).toBe("RETIRE");
     expect(statusLabel("win")).toBe("WIN");
     expect(statusLabel(null)).toBe("—");
+  });
+});
+
+describe("fmtCompact", () => {
+  it("compacts thousands and millions", () => {
+    expect(fmtCompact(457056)).toBe("457k");
+    expect(fmtCompact(1420000)).toBe("1.4M");
+    expect(fmtCompact(840)).toBe("840");
+  });
+});
+
+describe("ratePct", () => {
+  it("scales fractions but leaves percentages", () => {
+    expect(ratePct(0.322)).toBeCloseTo(32.2);
+    expect(ratePct(32.2)).toBeCloseTo(32.2);
+    expect(ratePct(1)).toBeCloseTo(100);
   });
 });
