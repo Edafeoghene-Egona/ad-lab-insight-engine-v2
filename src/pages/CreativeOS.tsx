@@ -101,7 +101,18 @@ const CreativeOS = () => {
           <PageHeader
             tabTitle={tabTitle}
             window={range}
-            selectedClient={selectedId ? client.data?.account ?? { customerId: selectedId, name: clientsForSwitcher.find((c) => c.customerId === selectedId)?.name ?? selectedId } : null}
+            selectedClient={
+              selectedId
+                ? {
+                    customerId: selectedId,
+                    // Prefer the portfolio-known name — the client pull returns only the raw id.
+                    name:
+                      clientsForSwitcher.find((c) => c.customerId === selectedId)?.name ??
+                      client.data?.account.name ??
+                      selectedId,
+                  }
+                : null
+            }
           />
           {showFilterBar && (
             <CreativeOSFilterBar
