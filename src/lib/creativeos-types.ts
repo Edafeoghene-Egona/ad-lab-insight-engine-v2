@@ -18,6 +18,8 @@ export interface ClientRollup {
   avgCpv: number;
   conversions: number;
   status: { win: number; test: number; loss: number };
+  /** Per-client daily series, returned by the portfolio loop. May be absent on older payloads. */
+  daily?: DailyPoint[];
 }
 
 export interface PortfolioResponse {

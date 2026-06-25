@@ -4,10 +4,33 @@ import { StatCard } from "../StatCard";
 import { fmtCompact, fmtMoney, ratePct } from "@/lib/creativeos";
 import type { ClientRollup, PortfolioResponse } from "@/lib/creativeos-types";
 
+/** Minimal inline sparkline of daily views — no chart lib needed for a thumbnail trend. */
+function Sparkline({ points }: { points: number[] }) {
+  if (points.length < 2) return null;
+  const w = 96;
+  const h = 24;
+  const max = Math.max(...points);
+  const min = Math.min(...points);
+  const range = max - min || 1;
+  const d = points
+    .map((v, i) => {
+      const x = (i / (points.length - 1)) * w;
+      const y = h - 2 - ((v - min) / range) * (h - 4);
+      return `${i === 0 ? "M" : "L"}${x.toFixed(1)},${y.toFixed(1)}`;
+    })
+    .join(" ");
+  return (
+    <svg viewBox={`0 0 ${w} ${h}`} width={w} height={h} className="overflow-visible">
+      <path d={d} fill="none" stroke="#6366f1" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 function ClientCard({ client, onSelect }: { client: ClientRollup; onSelect: () => void }) {
   const { status } = client;
   const total = status.win + status.test + status.loss;
   const winPct = total ? Math.round((status.win / total) * 100) : 0;
+  const sparkPoints = (client.daily ?? []).map((d) => d.views);
   return (
     <button
       onClick={onSelect}
@@ -40,10 +63,13 @@ function ClientCard({ client, onSelect }: { client: ClientRollup; onSelect: () =
           </div>
         ))}
       </div>
-      <div className="flex items-center gap-3 text-[11px] text-slate-400">
-        <span className="text-emerald-600 font-semibold">{status.win} win</span>
-        <span className="text-violet-600 font-semibold">{status.test} test</span>
-        <span className="text-rose-600 font-semibold">{status.loss} retire</span>
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3 text-[11px] text-slate-400">
+          <span className="text-emerald-600 font-semibold">{status.win} win</span>
+          <span className="text-violet-600 font-semibold">{status.test} test</span>
+          <span className="text-rose-600 font-semibold">{status.loss} retire</span>
+        </div>
+        <Sparkline points={sparkPoints} />
       </div>
     </button>
   );
