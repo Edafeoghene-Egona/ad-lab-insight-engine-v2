@@ -70,12 +70,16 @@ Built into the existing empty workflow `5B9bHIEOeOEcYeG1` ("My workflow 10"), re
 
 - **Trigger:** Webhook (GET), friendly path (e.g. `creativeos`), **Header Auth** credential so the
   frontend's `Authorization: Bearer <VITE_WEBHOOK_KEY>` is validated (matches existing report
-  endpoints' auth pattern).
+  endpoints' auth pattern). Full production URL: `https://ad-lab.app.n8n.cloud/webhook/creativeos`
+  (same base host as the existing report webhooks in `src/lib/api.ts`).
 - **Router (`scope` param):**
   - `scope=portfolio`:
     1. List active accounts under the MCC (customers with Video/Demand-Gen spend in `[start,end]`).
     2. For each, run a single account-rollup GAQL query (spend, impressions, views, view rate,
        avg CPV, conversions, conversions value; counts of win/test/loss-labeled campaigns).
+       This is an N-account fan-out; run it with bounded concurrency (e.g. n8n loop /
+       Split-in-Batches) so a large MCC doesn't serialize into minutes. Expected account count
+       and observed latency here are the signal for whether the §4.1 cache escape hatch is needed.
     3. Aggregate → JSON array of client rollups + portfolio totals.
   - `scope=client` (requires `customerId`):
     1. Creative-level GAQL for that account over `[start,end]`: per video/ad — impressions,
@@ -185,7 +189,9 @@ Built into the existing empty workflow `5B9bHIEOeOEcYeG1` ("My workflow 10"), re
 ## 9. Open questions / assumptions to confirm during implementation
 
 1. **Label location & spelling** — confirm win/test/loss labels are campaign-level and exact
-   spelling against the live MCC before finalizing GAQL.
+   spelling against the live MCC before finalizing GAQL. **This is the feature's core value and
+   the GAQL resource choice (campaign vs ad) depends on it — make it the first implementation
+   task**, not a parallel assumption.
 2. **Active-client definition** — "active" = had Video/Demand-Gen spend (or impressions) in the
    selected window. Confirm this is the intended definition.
 3. **Demand Gen quartiles** — confirm which metrics Demand Gen exposes; adjust graceful-hide logic.
