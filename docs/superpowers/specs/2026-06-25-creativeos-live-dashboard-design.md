@@ -186,7 +186,17 @@ Built into the existing empty workflow `5B9bHIEOeOEcYeG1` ("My workflow 10"), re
   (last 14 days), and graceful handling of `quartiles: null`. Manual run via the dev server to
   confirm portfolio auto-load, client drill, refresh, and date-range refetch.
 
-## 9. Open questions / assumptions to confirm during implementation
+## 9. Open questions / assumptions — RESOLVED via discovery (2026-06-25)
+
+**Confirmed from existing production Google Ads workflows:**
+- **MCC id:** `4056871092`. Dev-token `1zbn0cEIYjIq72aVw6r8PA`, `login-customer-id: 4056871092` headers on every call. OAuth2 cred `LmG0IOX0B4Va0yNI`. Calls via HTTP Request node → `googleads.googleapis.com/v21/customers/{id}/googleAds:search`.
+- **Active accounts:** `FROM customer_client WHERE customer_client.status='ENABLED' AND customer_client.manager=false`.
+- **Video/creative:** resource `video`, TrueView-named metrics, `video.id` = YouTube id.
+- **Labels:** campaign-level via `campaign_label`. Matched case-insensitively to win/test/loss.
+  ⚠️ The win/test/loss labels could not be independently verified (the workflows that use them are not MCP-readable); proceeding on the user's explicit statement that campaigns are labeled win/test/loss, with tolerant matching. **Verify exact spelling against the live account when convenient.**
+- **Demand Gen quartiles:** net-new/unproven; degrade gracefully (`quartiles: null`).
+
+### Remaining (low-risk) assumptions
 
 1. **Label location & spelling** — confirm win/test/loss labels are campaign-level and exact
    spelling against the live MCC before finalizing GAQL. **This is the feature's core value and
