@@ -1,4 +1,8 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { supabase as defaultSupabase } from "@/integrations/supabase/client";
+
+/** Narrow alias for the injected client (tests pass a structural fake). */
+type Db = SupabaseClient;
 
 export interface ShareLinkRow {
   id: string;
@@ -23,11 +27,11 @@ export function shareUrl(token: string, origin: string = window.location.origin)
 
 const COLS = "id, customer_id, client_name, token, revoked";
 
-type Deps = { supabase?: any; userId: string };
+type Deps = { supabase?: Db; userId: string };
 
 export async function getShareLink(
   customerId: string,
-  supabase: any = defaultSupabase,
+  supabase: Db = defaultSupabase,
 ): Promise<ShareLinkRow | null> {
   const { data, error } = await supabase
     .from("client_share_links")
@@ -69,7 +73,7 @@ export async function getOrCreateShareLink(
 export async function setRevoked(
   customerId: string,
   revoked: boolean,
-  supabase: any = defaultSupabase,
+  supabase: Db = defaultSupabase,
 ): Promise<void> {
   const { error } = await supabase
     .from("client_share_links")
@@ -80,7 +84,7 @@ export async function setRevoked(
 
 export async function regenerateShareLink(
   customerId: string,
-  supabase: any = defaultSupabase,
+  supabase: Db = defaultSupabase,
 ): Promise<ShareLinkRow> {
   const { data, error } = await supabase
     .from("client_share_links")
