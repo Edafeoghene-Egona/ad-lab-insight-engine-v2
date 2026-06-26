@@ -28,3 +28,6 @@ dist-ssr
 # Playwright MCP test artifacts
 .playwright-mcp/
 auth-loaded.png
+
+# Supabase CLI scratch
+supabase/.temp/
