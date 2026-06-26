@@ -10,6 +10,7 @@ import NotFound from "./pages/NotFound";
 import SharedReport from "./pages/SharedReport";
 import Auth from "./pages/Auth";
 import CreativeOS from "./pages/CreativeOS";
+import ClientShareView from "./pages/ClientShareView";
 
 const queryClient = new QueryClient();
 
@@ -39,6 +40,8 @@ const App = () => (
             />
             <Route path="/auth" element={<Auth />} />
             <Route path="/shared/:id" element={<SharedReport />} />
+            {/* Public client share link — scoped server-side, no auth. */}
+            <Route path="/c/:token" element={<ClientShareView />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
