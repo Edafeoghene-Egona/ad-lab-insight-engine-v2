@@ -31,3 +31,6 @@ auth-loaded.png
 
 # Supabase CLI scratch
 supabase/.temp/
+
+# Track the example env (the .env.* rule above would otherwise ignore it)
+!.env.example
