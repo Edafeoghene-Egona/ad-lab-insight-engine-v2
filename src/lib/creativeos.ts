@@ -7,11 +7,8 @@ import type {
 
 // ── Pure helpers ──────────────────────────────────────────────────────────
 
-/** Last-14-days window (inclusive of today), as ISO YYYY-MM-DD strings. */
-export function defaultRange(today = new Date()): DateRange {
-  const iso = (d: Date) => d.toISOString().slice(0, 10);
-  return { start: iso(new Date(today.getTime() - 14 * 864e5)), end: iso(today) };
-}
+// Shared, framework-free date logic lives in ./date-range (also used server-side).
+export { defaultRange } from "./date-range";
 
 /** Map a raw Google Ads label name to a CreativeStatus (case-insensitive). */
 export function normalizeStatus(raw?: string | null): CreativeStatus {
