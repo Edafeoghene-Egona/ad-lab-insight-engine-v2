@@ -9,6 +9,7 @@ import { CreativeOSSidebar, TABS, subsFor, type TabId } from "@/components/creat
 import { PageHeader } from "@/components/creativeos/PageHeader";
 import { CreativeOSFilterBar, type StatusFilter } from "@/components/creativeos/CreativeOSFilterBar";
 import { CreativeDrawer } from "@/components/creativeos/CreativeDrawer";
+import { ShareLinkDialog } from "@/components/creativeos/ShareLinkDialog";
 import { LoadingState, ErrorState, EmptyState } from "@/components/creativeos/states";
 import { CommandCenter } from "@/components/creativeos/tabs/CommandCenter";
 import { CreativeLab } from "@/components/creativeos/tabs/CreativeLab";
@@ -27,6 +28,7 @@ const CreativeOS = () => {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [search, setSearch] = useState("");
   const [drawerCreative, setDrawerCreative] = useState<Creative | null>(null);
+  const [shareOpen, setShareOpen] = useState(false);
 
   const rangeLabel = useMemoizedRangeLabel(range);
 
@@ -64,6 +66,10 @@ const CreativeOS = () => {
   const isFetching = portfolio.isFetching || client.isFetching;
   const clientsForSwitcher = portfolio.data?.clients ?? [];
   const openCreative = (c: Creative) => setDrawerCreative(c);
+  // Prefer the portfolio-known name; the client pull returns only the raw id.
+  const selectedName = selectedId
+    ? clientsForSwitcher.find((c) => c.customerId === selectedId)?.name ?? client.data?.account.name ?? selectedId
+    : "";
 
   const renderContent = () => {
     if (onPortfolio) {
@@ -111,18 +117,8 @@ const CreativeOS = () => {
             subs={subsFor(tab)}
             activeSub={sub}
             onSub={setSub}
-            selectedClient={
-              selectedId
-                ? {
-                    customerId: selectedId,
-                    // Prefer the portfolio-known name — the client pull returns only the raw id.
-                    name:
-                      clientsForSwitcher.find((c) => c.customerId === selectedId)?.name ??
-                      client.data?.account.name ??
-                      selectedId,
-                  }
-                : null
-            }
+            selectedClient={selectedId ? { customerId: selectedId, name: selectedName } : null}
+            onShare={selectedId ? () => setShareOpen(true) : undefined}
           />
           {showFilterBar && (
             <CreativeOSFilterBar
@@ -150,6 +146,15 @@ const CreativeOS = () => {
       </div>
 
       <CreativeDrawer creative={drawerCreative} onClose={() => setDrawerCreative(null)} />
+
+      {selectedId && (
+        <ShareLinkDialog
+          open={shareOpen}
+          onOpenChange={setShareOpen}
+          customerId={selectedId}
+          clientName={selectedName}
+        />
+      )}
 
       <button
         type="button"

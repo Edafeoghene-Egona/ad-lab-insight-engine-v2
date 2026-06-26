@@ -1,3 +1,4 @@
+import { Share2 } from "lucide-react";
 import type { ClientResponse, DateRange } from "@/lib/creativeos-types";
 import { cn } from "@/lib/utils";
 
@@ -10,6 +11,8 @@ interface PageHeaderProps {
   subs: string[];
   activeSub: string;
   onSub: (s: string) => void;
+  /** When provided, renders a Share button on the client header (internal dashboard only). */
+  onShare?: () => void;
 }
 
 const fmtRange = (w: DateRange) => {
@@ -63,7 +66,7 @@ function SubTabs({
  * Plain header on the portfolio view; the pink/gradient client header
  * ONLY when a specific client is selected (per spec). Both carry the sub-tab row.
  */
-export function PageHeader({ tabTitle, window, selectedClient, subs, activeSub, onSub }: PageHeaderProps) {
+export function PageHeader({ tabTitle, window, selectedClient, subs, activeSub, onSub, onShare }: PageHeaderProps) {
   if (!selectedClient) {
     return (
       <div className="px-6 lg:px-8 pt-6 pb-2 border-b border-slate-200 bg-white/60">
@@ -116,9 +119,20 @@ export function PageHeader({ tabTitle, window, selectedClient, subs, activeSub, 
               ))}
             </div>
           </div>
-          <span className="inline-flex items-center gap-1.5 bg-white/16 px-2.5 py-1 rounded-full text-[11px] font-semibold self-start">
-            <span className="w-1.5 h-1.5 rounded-full bg-white cos-pulse" /> Live
-          </span>
+          <div className="flex items-center gap-2 self-start">
+            <span className="inline-flex items-center gap-1.5 bg-white/16 px-2.5 py-1 rounded-full text-[11px] font-semibold">
+              <span className="w-1.5 h-1.5 rounded-full bg-white cos-pulse" /> Live
+            </span>
+            {onShare && (
+              <button
+                type="button"
+                onClick={onShare}
+                className="inline-flex items-center gap-1.5 bg-white/16 hover:bg-white/24 px-2.5 py-1 rounded-full text-[11px] font-semibold transition-colors"
+              >
+                <Share2 className="w-3 h-3" /> Share
+              </button>
+            )}
+          </div>
         </div>
         <SubTabs subs={subs} activeSub={activeSub} onSub={onSub} onLight />
       </div>
