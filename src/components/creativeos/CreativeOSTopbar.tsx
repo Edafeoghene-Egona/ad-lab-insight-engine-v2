@@ -47,6 +47,10 @@ interface TopbarProps {
   rangeLabel: string;
   onRefresh: () => void;
   isFetching: boolean;
+  /** Public client share view: hide the account switcher + refresh, show a static client name. */
+  shareMode?: boolean;
+  /** Client name to display in share mode (the share fetch knows the name, not the switcher). */
+  clientLabel?: string;
 }
 
 export function CreativeOSTopbar({
@@ -58,6 +62,8 @@ export function CreativeOSTopbar({
   rangeLabel,
   onRefresh,
   isFetching,
+  shareMode = false,
+  clientLabel,
 }: TopbarProps) {
   const [acctOpen, setAcctOpen] = useState(false);
   const [dateOpen, setDateOpen] = useState(false);
@@ -79,6 +85,16 @@ export function CreativeOSTopbar({
       </div>
       <div className="w-px h-6 bg-slate-200" />
 
+      {/* Share mode: static client name in place of the account switcher. */}
+      {shareMode ? (
+        <div className="flex items-center gap-2.5 px-1 py-1.5">
+          <div className="text-left leading-tight">
+            <div className="text-xs font-bold text-slate-800">{clientLabel ?? "Client dashboard"}</div>
+            <div className="text-[9.5px] text-slate-400">Shared by Ad-Lab</div>
+          </div>
+        </div>
+      ) : (
+      <>
       {/* Account switcher */}
       <div className="relative" ref={acctRef}>
         <button
@@ -146,6 +162,8 @@ export function CreativeOSTopbar({
           </div>
         )}
       </div>
+      </>
+      )}
 
       {/* Date range */}
       <div className="relative" ref={dateRef}>
@@ -212,14 +230,17 @@ export function CreativeOSTopbar({
 
       <div className="flex-1" />
 
-      <button
-        onClick={onRefresh}
-        disabled={isFetching}
-        className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white rounded-lg px-3.5 py-2 text-xs font-bold transition-colors"
-      >
-        <RefreshCw className={cn("w-3.5 h-3.5", isFetching && "animate-spin")} />
-        {isFetching ? "Pulling…" : "Refresh"}
-      </button>
+      {!shareMode && (
+        <button
+          type="button"
+          onClick={onRefresh}
+          disabled={isFetching}
+          className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white rounded-lg px-3.5 py-2 text-xs font-bold transition-colors"
+        >
+          <RefreshCw className={cn("w-3.5 h-3.5", isFetching && "animate-spin")} />
+          {isFetching ? "Pulling…" : "Refresh"}
+        </button>
+      )}
     </div>
   );
 }
