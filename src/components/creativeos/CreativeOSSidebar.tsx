@@ -18,12 +18,15 @@ interface SidebarProps {
   onTab: (t: TabId) => void;
   /** Whether a client is selected — client-only tabs are disabled otherwise. */
   hasClient: boolean;
+  /** Optional subset of tabs to render (e.g. the public share view omits Command Center). */
+  tabs?: TabId[];
 }
 
-export function CreativeOSSidebar({ tab, onTab, hasClient }: SidebarProps) {
+export function CreativeOSSidebar({ tab, onTab, hasClient, tabs }: SidebarProps) {
+  const visible = tabs ? TABS.filter((t) => tabs.includes(t.id)) : TABS;
   return (
     <nav className="w-[60px] lg:w-[216px] flex-shrink-0 border-r border-slate-200 bg-white/70 flex flex-col gap-1 p-2.5 overflow-y-auto">
-      {TABS.map((t) => {
+      {visible.map((t) => {
         const disabled = t.clientOnly && !hasClient;
         const active = t.id === tab;
         const Icon = t.icon;
