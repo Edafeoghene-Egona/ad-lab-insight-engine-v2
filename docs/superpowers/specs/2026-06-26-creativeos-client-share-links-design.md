@@ -107,7 +107,10 @@ server proxy reads it via the **service-role** key (bypasses RLS). No `delete` n
   bundled.
 - Flow:
   1. Read `:token`, `start`, `end` (validate `start`/`end` are ISO `YYYY-MM-DD`; fall
-     back to a server-computed last-14-days default if absent/invalid).
+     back to a last-14-days default if absent/invalid). Reuse the existing
+     `defaultRange()` date logic from `creativeos.ts` — extract it to a framework-free
+     shared module so the proxy and the client share one implementation rather than
+     duplicating it.
   2. `select * from client_share_links where token = :token` (single row).
   3. Missing row → `404`; `revoked = true` → `403`.
   4. `fetch` n8n `scope=client&customerId=<row.customer_id>&start&end` with
@@ -121,7 +124,10 @@ server proxy reads it via the **service-role** key (bypasses RLS). No `delete` n
   n8n failure (502), date defaulting. `server.js` stays thin (wires Express → module).
 - **Dev environment:** add a Vite `server.proxy` entry so `/api` forwards to the Express
   server during `npm run dev` (Vite serves the SPA in dev; Express only serves built
-  `dist`). Document the env vars the dev server needs.
+  `dist`). There is no combined dev script today, so the Express proxy must run as a
+  second process during development — the plan should either add a combined dev script
+  (e.g. via `concurrently`) or document the two-process workflow. Document the env vars
+  the dev server needs (`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `WEBHOOK_KEY`).
 
 ### Component 3 — Public route + `ClientShareView`
 
@@ -135,8 +141,11 @@ server proxy reads it via the **service-role** key (bypasses RLS). No `delete` n
     `EmptyState`. A `404`/`403` response renders a friendly terminal state:
     "This link is no longer active." (not a retry-able error).
   - Renders tab content with the **existing** components (`CreativeLab`,
-    `HookRetention`, `Trendlines`, `WinningVault`) passing the fetched `data`.
-  - Reuses `CreativeDrawer` for creative detail.
+    `HookRetention`, `Trendlines`, `WinningVault`) passing the fetched `data`. Note
+    these components require more than `data`: they also take `sub` (owned here as
+    state) and an `onOpenCreative` callback (lab/hook/vault) — `ClientShareView` must
+    wire all of these, not just `data`.
+  - Reuses `CreativeDrawer` for creative detail (opened by `onOpenCreative`).
 
 ### Component 4 — Variant chrome (topbar + sidebar)
 
