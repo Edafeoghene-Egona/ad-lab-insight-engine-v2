@@ -11,6 +11,11 @@ export default defineConfig(({ mode }) => ({
     hmr: {
       overlay: false,
     },
+    // Forward share-link API calls to the Express server during `npm run dev`.
+    // In production the same server serves both the SPA and /api.
+    proxy: {
+      "/api": { target: "http://localhost:3000", changeOrigin: true },
+    },
   },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
   resolve: {
