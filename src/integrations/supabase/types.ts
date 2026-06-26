@@ -14,6 +14,35 @@ export type Database = {
   }
   public: {
     Tables: {
+      client_share_links: {
+        Row: {
+          id: string
+          customer_id: string
+          client_name: string
+          token: string
+          revoked: boolean
+          created_by: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          customer_id: string
+          client_name: string
+          token: string
+          revoked?: boolean
+          created_by?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          customer_id?: string
+          client_name?: string
+          token?: string
+          revoked?: boolean
+          created_by?: string | null
+          created_at?: string
+        }
+      }
       report_jobs: {
         Row: {
           id: string
