@@ -23,7 +23,7 @@ export async function resolveShareData({ token, start, end }, deps) {
 
   const { data: row, error } = await supabase
     .from("client_share_links")
-    .select("customer_id, revoked")
+    .select("customer_id, client_name, revoked")
     .eq("token", token)
     .maybeSingle();
 
@@ -40,5 +40,10 @@ export async function resolveShareData({ token, start, end }, deps) {
 
   const res = await fetchImpl(u, { headers: { Authorization: `Bearer ${webhookKey}` } });
   if (!res.ok) return { status: 502 };
-  return { status: 200, body: await res.json() };
+
+  const body = await res.json();
+  // The client-scope payload returns account.name = the raw customer id. Replace it
+  // with the friendly name captured when the share link was created.
+  if (body && body.account && row.client_name) body.account.name = row.client_name;
+  return { status: 200, body };
 }
