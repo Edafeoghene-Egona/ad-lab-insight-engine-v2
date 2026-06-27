@@ -12,6 +12,7 @@ import { CreativeDrawer } from "@/components/creativeos/CreativeDrawer";
 import { ShareLinkDialog } from "@/components/creativeos/ShareLinkDialog";
 import { LoadingState, ErrorState, EmptyState } from "@/components/creativeos/states";
 import { CommandCenter } from "@/components/creativeos/tabs/CommandCenter";
+import { ClientOverview } from "@/components/creativeos/tabs/ClientOverview";
 import { CreativeLab } from "@/components/creativeos/tabs/CreativeLab";
 import { HookRetention } from "@/components/creativeos/tabs/HookRetention";
 import { Trendlines } from "@/components/creativeos/tabs/Trendlines";
@@ -46,17 +47,17 @@ const CreativeOS = () => {
   const goTab = (t: TabId) => {
     if (TABS.find((x) => x.id === t)?.clientOnly && !selectedId) return;
     setTab(t);
-    setSub(subsFor(t)[0]);
+    setSub(subsFor(t)[0] ?? "");
   };
 
   const selectClient = (id: string | null) => {
     setSelectedId(id);
     if (id) {
-      setTab("lab");
-      setSub(subsFor("lab")[0]);
+      setTab("overview");
+      setSub(subsFor("overview")[0] ?? "");
     } else {
       setTab("command");
-      setSub(subsFor("command")[0]);
+      setSub(subsFor("command")[0] ?? "");
     }
   };
 
@@ -85,6 +86,7 @@ const CreativeOS = () => {
     if (client.isError)
       return <ErrorState message={(client.error as Error)?.message ?? "Unknown error"} onRetry={() => client.refetch()} />;
     if (!client.data) return null;
+    if (tab === "overview") return <ClientOverview data={client.data} onOpenCreative={openCreative} />;
     if (tab === "lab")
       return <CreativeLab data={client.data} sub={sub} statusFilter={statusFilter} search={search} onOpenCreative={openCreative} />;
     if (tab === "hook") return <HookRetention data={client.data} sub={sub} onOpenCreative={openCreative} />;
@@ -109,7 +111,7 @@ const CreativeOS = () => {
         isFetching={isFetching}
       />
       <div className="flex-1 flex min-h-0">
-        <CreativeOSSidebar tab={tab} onTab={goTab} hasClient={!!selectedId} tabs={["command", "lab", "hook", "trend", "vault"]} />
+        <CreativeOSSidebar tab={tab} onTab={goTab} hasClient={!!selectedId} tabs={["command", "overview", "lab", "hook", "trend", "vault"]} />
         <main className="flex-1 min-w-0 flex flex-col overflow-hidden">
           <PageHeader
             tabTitle={tabTitle}
