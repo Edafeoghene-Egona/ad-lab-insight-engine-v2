@@ -1,0 +1,1714 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>numoya - Google Ads Performance Report</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62.5..125,300..900&family=Alumni+Sans+SC:ital,wght@0,300..700;1,400&display=swap"
+        rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Archivo', 'system-ui', 'sans-serif'],
+                        display: ['Archivo', 'system-ui', 'sans-serif'],
+                        micro: ['"Alumni Sans SC"', 'sans-serif'],
+                    },
+                    colors: {
+                        /* Blueprint Grid brand purple #CF68ED tonal ramp */
+                        brand: { 50: '#fbf3fe', 100: '#f5e1fc', 200: '#ebc2f8', 300: '#df9cf2', 400: '#d67fef', 500: '#cf68ed', 600: '#b83fd9', 700: '#9a2bb8', 800: '#7c2293', 900: '#5e1a6f' },
+                    },
+                    /* Flat 4px system across every rounded-* utility */
+                    borderRadius: { 'none': '0', 'sm': '4px', DEFAULT: '4px', 'md': '4px', 'lg': '4px', 'xl': '4px', '2xl': '4px', '3xl': '4px', 'full': '4px' },
+                }
+            }
+        }
+    </script>
+
+    <style>
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: hsl(286 16% 55% / 0.4);
+            border-radius: 4px;
+        }
+
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        body {
+            background-color: #F4F5F7;
+            background-attachment: fixed;
+            color: #1c1424;
+            font-family: 'Archivo', system-ui, sans-serif;
+            letter-spacing: 0.01em;
+        }
+
+        /* Engineered headings — expanded width, uppercase, wide tracking */
+        h1, h2, h3, h4, h5, h6, .font-display {
+            font-family: 'Archivo', system-ui, sans-serif !important;
+            font-variation-settings: 'wdth' 125;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Alumni Sans SC micro-labels (tiny corner/caption texts) */
+        .micro-label {
+            font-family: 'Alumni Sans SC', sans-serif;
+            font-size: 9px;
+            line-height: 1.3;
+            letter-spacing: 0.32em;
+            text-transform: uppercase;
+            font-weight: 500;
+        }
+
+        /* Flat 4px surfaces — no glass/blur, hairline borders */
+        .glass-panel {
+            background: #ffffff;
+            border: 1px solid hsl(286 22% 88%);
+            border-radius: 4px;
+            box-shadow: 0 1px 0 0 hsl(286 22% 88%);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: slideUp 0.4s ease-out forwards;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(16px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .nav-tab {
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .nav-tab::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #cf68ed;
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .nav-tab.active {
+            color: #0f172a;
+            font-weight: 600;
+        }
+
+        .nav-tab.active::after {
+            transform: scaleX(1);
+        }
+
+        .stat-card {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 32px -4px rgba(207, 104, 237, 0.1);
+        }
+
+        .progress-ring__circle {
+            transition: stroke-dashoffset 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+
+        .delta-up {
+            color: #059669;
+        }
+
+        .delta-down {
+            color: #e11d48;
+        }
+
+        .delta-neutral {
+            color: #64748b;
+        }
+
+        .checklist-row:hover {
+            background: #f8fafc;
+        }
+
+        .product-row:hover {
+            background: #f8fafc;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .roas-good {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+
+        .roas-ok {
+            background: #ede9fe;
+            color: #4c1d95;
+            border: 1px solid #c4b5fd;
+        }
+
+        .roas-low {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+
+        [contenteditable]:focus {
+            outline: 2px solid rgba(207, 104, 237, 0.4);
+            border-radius: 4px;
+            outline-offset: 2px;
+        }
+
+        [contenteditable]:hover {
+            background: rgba(207, 104, 237, 0.04);
+            border-radius: 4px;
+        }
+
+        .edit-hint {
+            opacity: 0;
+            font-size: 10px;
+            color: #cf68ed;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            transition: opacity 0.2s;
+            margin-left: 6px;
+        }
+
+        *:hover>.edit-hint {
+            opacity: 1;
+        }
+
+        .signal-card {
+            transition: all 0.2s ease;
+        }
+
+        .signal-card:hover .delete-btn {
+            opacity: 1;
+        }
+
+        .delete-btn {
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .action-item {
+            transition: all 0.2s ease;
+        }
+
+        .action-item:hover .delete-action-btn {
+            opacity: 1;
+        }
+
+        .delete-action-btn {
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        /* View Mode */
+        body.view-mode [contenteditable="true"] {
+            pointer-events: none;
+            user-select: text;
+            background: transparent !important;
+            outline: none !important;
+        }
+
+        body.view-mode .edit-controls {
+            display: none !important;
+        }
+
+        body.view-mode .edit-hint {
+            display: none !important;
+        }
+
+        body.view-mode .delete-btn {
+            display: none !important;
+        }
+
+        body.view-mode .delete-action-btn {
+            display: none !important;
+        }
+
+        body.view-mode [data-ce-backup] {
+            font-size: inherit !important;
+            line-height: inherit !important;
+            font-weight: inherit !important;
+            font-family: inherit !important;
+            letter-spacing: inherit !important;
+        }
+
+        #execSummaryText:focus {
+            outline: 2px solid rgba(207, 104, 237, 0.4);
+            border-radius: 6px;
+            outline-offset: 4px;
+        }
+
+        #execSummaryText:hover {
+            background: rgba(207, 104, 237, 0.03);
+            border-radius: 6px;
+        }
+
+        body.view-mode #execSummaryText {
+            pointer-events: none;
+            background: transparent !important;
+            outline: none !important;
+        }
+
+        .sort-btn {
+            cursor: pointer;
+            user-select: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+        }
+
+        .sort-btn:hover {
+            color: #b83fd9;
+        }
+
+        .sort-btn.sort-asc::after {
+            content: ' \2191';
+            font-size: 9px;
+            color: #b83fd9;
+        }
+
+        .sort-btn.sort-desc::after {
+            content: ' \2193';
+            font-size: 9px;
+            color: #b83fd9;
+        }
+
+        .wow-badge {
+            font-size: 9px;
+            font-weight: 700;
+            padding: 1px 5px;
+            border-radius: 4px;
+            white-space: nowrap;
+        }
+
+        .wow-up {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .wow-down {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .wow-neutral {
+            background: #f1f5f9;
+            color: #64748b;
+        }
+
+        /* Resource cards */
+        .resource-card {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .resource-card:hover .resource-delete-btn {
+            opacity: 1;
+        }
+
+        .resource-delete-btn {
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .resource-card .resource-open-btn {
+            display: none;
+        }
+
+        body.view-mode .resource-card .resource-open-btn {
+            display: flex;
+        }
+
+        body.view-mode .resource-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 32px -4px rgba(207, 104, 237, 0.12);
+        }
+
+        .resource-url-display {
+            display: none !important;
+        }
+
+        body.view-mode .resource-url-display {
+            display: block !important;
+        }
+
+        .resource-thumb {
+            width: 160px;
+            height: 90px;
+            flex-shrink: 0;
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+            background: #f1f5f9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .resource-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .resource-thumb .thumb-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            width: 100%;
+            height: 100%;
+        }
+
+        .summary-edit-hint {
+            transition: opacity 0.25s;
+        }
+
+        .resource-open-btn.btn-disabled {
+            opacity: 0.4;
+            pointer-events: none;
+            cursor: default;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen flex flex-col antialiased">
+
+    <div class="fixed inset-0 z-[-1] pointer-events-none opacity-30"
+        style="background-image:linear-gradient(hsl(286 16% 80%) 1px,transparent 1px),linear-gradient(90deg,hsl(286 16% 80%) 1px,transparent 1px);background-size:32px 32px;">
+    </div>
+
+    <header class="relative pt-10 pb-8 px-6 lg:px-12 z-10 bg-[#cf68ed] shadow-lg overflow-hidden">
+        <div class="absolute inset-0 z-0 opacity-10 pointer-events-none"
+            style="background-image:linear-gradient(#fff 1px,transparent 1px),linear-gradient(90deg,#fff 1px,transparent 1px);background-size:32px 32px;">
+        </div>
+        <div
+            class="absolute inset-0 z-0 bg-gradient-to-tr from-transparent via-white/5 to-white/10 pointer-events-none">
+        </div>
+        <div class="max-w-7xl mx-auto relative z-10">
+            <div
+                class="flex flex-col md:flex-row justify-between items-start md:items-center gap-8 border-b border-white/20 pb-8">
+                <div>
+                    <div class="flex items-center gap-3 mb-4">
+                        <div
+                            class="flex items-center justify-center w-8 h-8 rounded-lg bg-white/10 border border-white/20 text-white">
+                            <i data-lucide="activity" class="w-4 h-4"></i>
+                        </div>
+                        <span class="text-xs font-bold tracking-widest uppercase text-white/70">Ad-Lab.io</span>
+                        <span class="text-white/30">|</span>
+                        <span class="text-xs font-bold tracking-widest uppercase text-white">Google Ads Report</span>
+                    </div>
+                    <h1 class="font-display text-5xl md:text-6xl font-bold tracking-tight text-white mb-5">
+                        numoya<span class="text-white/50 font-light">.com</span>
+                    </h1>
+                    <div class="flex flex-wrap gap-x-8 gap-y-3 text-sm">
+                        <div>
+                            <p class="text-white/60 uppercase tracking-wider text-[10px] font-bold mb-1">Report Period
+                            </p>
+                            <p class="text-white font-semibold">Feb 3 to Mar 3, 2026</p>
+                        </div>
+                        <div>
+                            <p class="text-white/60 uppercase tracking-wider text-[10px] font-bold mb-1">Concluded Week
+                            </p>
+                            <p class="text-white font-medium">Feb 25 to Mar 4, 2026</p>
+                        </div>
+                        <div>
+                            <p class="text-white/60 uppercase tracking-wider text-[10px] font-bold mb-1">Previous Week
+                            </p>
+                            <p class="text-white font-medium">Feb 18 to Feb 25, 2026</p>
+                        </div>
+                        <div>
+                            <p class="text-white/60 uppercase tracking-wider text-[10px] font-bold mb-1">Account ID</p>
+                            <p class="text-white font-mono">332-254-7649</p>
+                        </div>
+                        <div>
+                            <p class="text-white/60 uppercase tracking-wider text-[10px] font-bold mb-1">Generated By
+                            </p>
+                            <p class="text-white font-medium flex items-center gap-1.5"><i data-lucide="bot"
+                                    class="w-3 h-3 text-white/70"></i> Ad-Lab Tooling</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <nav class="sticky top-0 z-50 bg-white/90 backdrop-blur-xl border-b border-slate-200 shadow-sm">
+        <div class="max-w-7xl mx-auto px-6 lg:px-12">
+            <div class="flex overflow-x-auto hide-scrollbar gap-6">
+                <button class="nav-tab active py-4 text-sm text-slate-500 whitespace-nowrap"
+                    onclick="switchTab('overview',this)">Summary</button>
+                <button class="nav-tab py-4 text-sm text-slate-500 whitespace-nowrap"
+                    onclick="switchTab('performance',this)">Campaign Performance</button>
+                <button class="nav-tab py-4 text-sm text-slate-500 whitespace-nowrap"
+                    onclick="switchTab('shopping',this)">Shopping</button>
+                <button class="nav-tab py-4 text-sm text-slate-500 whitespace-nowrap"
+                    onclick="switchTab('trendlines',this)">Trends</button>
+                <button class="nav-tab py-4 text-sm text-slate-500 whitespace-nowrap flex items-center gap-1.5"
+                    onclick="switchTab('action',this)">
+                    <i data-lucide="zap" class="w-3.5 h-3.5 text-brand-500"></i> Action Plan
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="flex-grow w-full max-w-7xl mx-auto px-6 lg:px-12 py-10">
+
+        <!-- ===================================================
+     SUMMARY TAB
+==================================================== -->
+        <div id="panel-overview" class="tab-content active">
+
+            <!-- REPORT RESOURCES -->
+            <div class="mb-10">
+                <div class="flex items-center justify-between mb-6">
+                    <div class="flex items-center gap-3">
+                        <div class="h-px w-8 bg-brand-500"></div>
+                        <h2 class="font-display text-2xl font-semibold text-slate-900">Report Resources</h2>
+                    </div>
+                    <div class="flex gap-2 edit-controls">
+                        <button onclick="addResourceLink('looker')"
+                            class="flex items-center gap-1.5 text-xs font-bold text-blue-700 bg-blue-50 border border-blue-200 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors">
+                            <i data-lucide="bar-chart-2" class="w-3 h-3"></i> Add Looker Studio
+                        </button>
+                        <button onclick="addResourceLink('loom')"
+                            class="flex items-center gap-1.5 text-xs font-bold text-violet-700 bg-violet-50 border border-violet-200 hover:bg-violet-100 px-3 py-1.5 rounded-lg transition-colors">
+                            <i data-lucide="video" class="w-3 h-3"></i> Add Loom Video
+                        </button>
+                    </div>
+                </div>
+                <div id="resourcesGrid" class="flex flex-col gap-4">
+                    <div id="resourcesEmptyState"
+                        class="glass-panel rounded-2xl border-2 border-dashed border-slate-200 py-10 flex flex-col items-center gap-3 text-center edit-controls">
+                        <div class="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center">
+                            <i data-lucide="link" class="w-5 h-5 text-slate-400"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-semibold text-slate-500">No resources added yet</p>
+                            <p class="text-xs text-slate-400 mt-0.5">Add a Looker Studio report or Loom walkthrough
+                                video using the buttons above.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- WHAT THIS REPORT COVERS -->
+            <div class="glass-panel rounded-2xl p-7 mb-10 border-l-4 border-l-brand-500 relative overflow-hidden">
+                <div
+                    class="absolute inset-0 bg-gradient-to-br from-brand-50/50 via-transparent to-transparent pointer-events-none rounded-2xl">
+                </div>
+                <div class="relative z-10">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center gap-2.5">
+                            <div
+                                class="w-7 h-7 rounded-lg bg-brand-100 border border-brand-200 flex items-center justify-center">
+                                <i data-lucide="sparkles" class="w-3.5 h-3.5 text-brand-600"></i>
+                            </div>
+                            <span class="text-[10px] uppercase font-bold tracking-widest text-brand-700">What Happened
+                                This Month</span>
+                            <span
+                                class="summary-edit-hint edit-controls text-[10px] text-slate-400 italic font-normal normal-case tracking-normal">click
+                                text to edit</span>
+                        </div>
+                        <span
+                            class="text-[10px] text-slate-400 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded font-mono uppercase tracking-wider">Feb
+                            3 to Mar 3, 2026</span>
+                    </div>
+                    <p class="text-sm leading-relaxed text-slate-700 font-medium" contenteditable="true"
+                        id="execSummaryText">This report covers numoya's Google Ads from Feb 3 to Mar 3, 2026. The
+                        account brought in $420,284 in revenue from $116,126 in ad spend, giving a 3.62x return on every
+                        dollar spent, across 8,505 purchases. In the last week (Feb 25 to Mar 4), spending dropped 14%
+                        to $29,476. But the ads actually got more efficient: the return on spend went up to 2.94x and
+                        the cost per purchase dropped to $16.48. The drop in spending was driven by the algorithm, not a
+                        drop in demand. Click-through rate jumped 62% and clicks grew 31%. The top priorities right now
+                        are fixing 9 low-quality ads in the Brand Search US campaign, scaling the best-performing
+                        keyword "numoya go brush pro" which brought in purchases at just $11.74 each, and correcting a
+                        brand name spelling error in the product feed. Two PMAX campaigns (UK/NZ score 26.8, Dryer score
+                        34.0) need urgent attention because their performance collapsed last week.</p>
+                </div>
+            </div>
+
+            <!-- NUMBERS AT A GLANCE -->
+            <div class="flex items-center gap-3 mb-2">
+                <div class="h-px w-8 bg-brand-500"></div>
+                <h2 class="font-display text-2xl font-semibold text-slate-900">Numbers at a Glance</h2>
+            </div>
+            <p class="text-sm text-slate-500 mb-8 ml-11">Feb 3 to Mar 3, 2026 &nbsp;·&nbsp; <span
+                    class="font-medium text-slate-700">Full month totals</span></p>
+
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-10">
+                <div class="stat-card glass-panel p-5 rounded-2xl flex flex-col gap-2">
+                    <p
+                        class="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center justify-between">
+                        Total Spent <i data-lucide="wallet" class="w-3.5 h-3.5 opacity-40"></i></p>
+                    <p class="font-display text-2xl font-bold text-slate-900">$116,126</p>
+                    <p class="text-[10px] text-slate-400 uppercase tracking-wider">8.56M Ad Views</p>
+                </div>
+                <div class="stat-card glass-panel p-5 rounded-2xl flex flex-col gap-2">
+                    <p
+                        class="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center justify-between">
+                        Purchases <i data-lucide="mouse-pointer-click" class="w-3.5 h-3.5 opacity-40"></i></p>
+                    <p class="font-display text-2xl font-bold text-slate-900">8,505</p>
+                    <p class="text-[10px] text-slate-400 uppercase tracking-wider">Full Month</p>
+                </div>
+                <div class="stat-card glass-panel p-5 rounded-2xl flex flex-col gap-2">
+                    <p
+                        class="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center justify-between">
+                        Revenue <i data-lucide="banknote" class="w-3.5 h-3.5 opacity-40"></i></p>
+                    <p class="font-display text-2xl font-bold text-slate-900">$420,284</p>
+                    <p class="text-[10px] text-slate-400 uppercase tracking-wider">Total Sales Value</p>
+                </div>
+                <div class="stat-card glass-panel p-5 rounded-2xl flex flex-col gap-2">
+                    <p
+                        class="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center justify-between">
+                        Cost Per Sale <i data-lucide="target" class="w-3.5 h-3.5 opacity-40"></i></p>
+                    <p class="font-display text-2xl font-bold text-slate-900">$13.65</p>
+                    <p class="text-[10px] text-slate-400 uppercase tracking-wider">$0.47 Per Click</p>
+                </div>
+                <div class="stat-card glass-panel p-5 rounded-2xl flex flex-col gap-2 border-brand-100">
+                    <p
+                        class="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center justify-between">
+                        Return on Spend <i data-lucide="trending-up" class="w-3.5 h-3.5 opacity-40 text-brand-600"></i>
+                    </p>
+                    <p class="font-display text-2xl font-bold text-brand-600">3.62x</p>
+                    <p class="text-[10px] text-slate-400 uppercase tracking-wider">For Every $1 Spent</p>
+                </div>
+                <div class="stat-card glass-panel p-5 rounded-2xl flex flex-col gap-2">
+                    <p
+                        class="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center justify-between">
+                        Click Rate <i data-lucide="percent" class="w-3.5 h-3.5 opacity-40"></i></p>
+                    <p class="font-display text-2xl font-bold text-slate-900">2.89%</p>
+                    <p class="text-[10px] text-slate-400 uppercase tracking-wider">247,744 Total Clicks</p>
+                </div>
+            </div>
+
+            <!-- THIS WEEK vs LAST WEEK -->
+            <div class="glass-panel rounded-2xl overflow-hidden mb-10">
+                <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+                    <h3 class="font-display font-semibold text-slate-800 text-sm uppercase tracking-widest">This Week vs
+                        Last Week</h3>
+                    <span
+                        class="text-[10px] bg-slate-100 border border-slate-200 px-2 py-1 rounded text-slate-500 uppercase tracking-wider font-bold">Week
+                        Before vs Last Week</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead class="bg-slate-50 text-xs uppercase tracking-wider text-slate-500 font-semibold">
+                            <tr>
+                                <th class="px-5 py-3 text-left">Metric</th>
+                                <th class="px-5 py-3 text-right">Full Month (Feb 3 to Mar 3)</th>
+                                <th class="px-5 py-3 text-right">Previous Week (Feb 18 to 25)</th>
+                                <th class="px-5 py-3 text-right">Concluded Week (Feb 25 to Mar 4)</th>
+                                <th class="px-5 py-3 text-right">Change</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 bg-white">
+                            <tr class="product-row">
+                                <td class="px-5 py-3 font-medium text-slate-700">Amount Spent</td>
+                                <td class="px-5 py-3 text-right font-mono text-slate-600">$116,126</td>
+                                <td class="px-5 py-3 text-right font-mono text-slate-600">$34,291</td>
+                                <td class="px-5 py-3 text-right font-mono text-slate-600">$29,476</td>
+                                <td class="px-5 py-3 text-right"><span class="delta-down font-bold text-xs">&#9660;
+                                        14.05%</span></td>
+                            </tr>
+                            <tr class="product-row">
+                                <td class="px-5 py-3 font-medium text-slate-700">Revenue</td>
+                                <td class="px-5 py-3 text-right font-mono text-slate-600">$420,284</td>
+                                <td class="px-5 py-3 text-right font-mono text-slate-600">$95,803</td>
+                                <td class="px-5 py-3 text-right font-mono text-slate-600">$86,568</td>
+                                <td class="px-5 py-3 text-right"><span class="delta-down font-bold text-xs">&#9660;
+                                        9.63%</span></td>
+                            </tr>
+                            <tr class="product-row">
+                                <td class="px-5 py-3 font-medium text-slate-700">Return on Spend (ROAS)</td>
+                                <td class="px-5 py-3 text-right font-mono text-brand-600 font-bold">3.62x</td>
+                                <td class="px-5 py-3 text-right font-mono text-slate-600">2.79x</td>
+                                <td class="px-5 py-3 text-right font-mono text-brand-600 font-bold">2.94x</td>
+                                <td class="px-5 py-3 text-right"><span class="delta-up font-bold text-xs">&#9650;
+                                        5.13%</span></td>
+                            </tr>
+                            <tr class="product-row">
+                                <td class="px-5 py-3 font-medium text-slate-700">Purchases</td>
+                                <td class="px-5 py-3 text-right font-mono text-slate-600">8,505</td>
+                                <td class="px-5 py-3 text-right font-mono text-slate-600">1,931.6</td>
+                                <td class="px-5 py-3 text-right font-mono text-slate-600">1,789.0</td>
+                                <td class="px-5 py-3 text-right"><span class="delta-down font-bold text-xs">&#9660;
+                                        7.39%</span></td>
+                            </tr>
+                            <tr class="product-row">
+                                <td class="px-5 py-3 font-medium text-slate-700">Cost Per Purchase</td>
+                                <td class="px-5 py-3 text-right font-mono text-slate-600">$13.65</td>
+                                <td class="px-5 py-3 text-right font-mono text-slate-600">$17.75</td>
+                                <td class="px-5 py-3 text-right font-mono text-slate-600">$16.48</td>
+                                <td class="px-5 py-3 text-right"><span class="delta-up font-bold text-xs">&#9650; 7.19%
+                                        ✓</span></td>
+                            </tr>
+                            <tr class="product-row">
+                                <td class="px-5 py-3 font-medium text-slate-700">Click Rate (CTR)</td>
+                                <td class="px-5 py-3 text-right font-mono text-slate-600">2.89%</td>
+                                <td class="px-5 py-3 text-right font-mono text-slate-600">2.34%</td>
+                                <td class="px-5 py-3 text-right font-mono text-slate-600">3.80%</td>
+                                <td class="px-5 py-3 text-right"><span class="delta-up font-bold text-xs">&#9650;
+                                        62.4%</span></td>
+                            </tr>
+                            <tr class="product-row">
+                                <td class="px-5 py-3 font-medium text-slate-700">Purchase Rate (CVR)</td>
+                                <td class="px-5 py-3 text-right font-mono text-slate-600">3.43%</td>
+                                <td class="px-5 py-3 text-right font-mono text-slate-600">3.13%</td>
+                                <td class="px-5 py-3 text-right font-mono text-slate-600">2.22%</td>
+                                <td class="px-5 py-3 text-right"><span class="delta-down font-bold text-xs">&#9660;
+                                        29.1%</span></td>
+                            </tr>
+                            <tr class="product-row">
+                                <td class="px-5 py-3 font-medium text-slate-700">Cost Per Click</td>
+                                <td class="px-5 py-3 text-right font-mono text-slate-600">$0.47</td>
+                                <td class="px-5 py-3 text-right font-mono text-slate-600">$0.56</td>
+                                <td class="px-5 py-3 text-right font-mono text-slate-600">$0.37</td>
+                                <td class="px-5 py-3 text-right"><span class="delta-up font-bold text-xs">&#9650; 34.6%
+                                        ✓</span></td>
+                            </tr>
+                            <tr class="product-row">
+                                <td class="px-5 py-3 font-medium text-slate-700">Ad Views (Impressions)</td>
+                                <td class="px-5 py-3 text-right font-mono text-slate-600">8,564,557</td>
+                                <td class="px-5 py-3 text-right font-mono text-slate-600">2,637,890</td>
+                                <td class="px-5 py-3 text-right font-mono text-slate-600">2,124,672</td>
+                                <td class="px-5 py-3 text-right"><span class="delta-down font-bold text-xs">&#9660;
+                                        19.4%</span></td>
+                            </tr>
+                            <tr class="product-row">
+                                <td class="px-5 py-3 font-medium text-slate-700">Clicks</td>
+                                <td class="px-5 py-3 text-right font-mono text-slate-600">247,744</td>
+                                <td class="px-5 py-3 text-right font-mono text-slate-600">61,707</td>
+                                <td class="px-5 py-3 text-right font-mono text-slate-600">80,755</td>
+                                <td class="px-5 py-3 text-right"><span class="delta-up font-bold text-xs">&#9650;
+                                        30.9%</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- KEY THINGS TO KNOW -->
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center gap-3">
+                    <div class="h-px w-8 bg-brand-500"></div>
+                    <h2 class="font-display text-2xl font-semibold text-slate-900">Key Things to Know</h2>
+                </div>
+                <div class="flex gap-2 edit-controls">
+                    <button onclick="addSignal('success')"
+                        class="flex items-center gap-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 px-3 py-1.5 rounded-lg transition-colors">
+                        <i data-lucide="plus" class="w-3 h-3"></i> Good News
+                    </button>
+                    <button onclick="addSignal('warning')"
+                        class="flex items-center gap-1.5 text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 hover:bg-amber-100 px-3 py-1.5 rounded-lg transition-colors">
+                        <i data-lucide="plus" class="w-3 h-3"></i> Watch Out
+                    </button>
+                    <button onclick="addSignal('danger')"
+                        class="flex items-center gap-1.5 text-xs font-bold text-rose-700 bg-rose-50 border border-rose-200 hover:bg-rose-100 px-3 py-1.5 rounded-lg transition-colors">
+                        <i data-lucide="plus" class="w-3 h-3"></i> Problem
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12" id="signalsGrid">
+                <div
+                    class="signal-card glass-panel rounded-2xl p-6 relative overflow-hidden border-t-4 border-t-rose-500">
+                    <button onclick="removeSignal(this)"
+                        class="delete-btn edit-controls absolute top-3 right-3 text-rose-400 hover:text-rose-600 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-lg p-1 transition-colors z-10">
+                        <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                    </button>
+                    <div class="flex items-center gap-2 mb-4">
+                        <span
+                            class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-100 border border-rose-200 text-rose-700 text-[10px] uppercase font-bold tracking-widest">
+                            <span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span>
+                            <span contenteditable="true">Spending Drop</span>
+                        </span>
+                    </div>
+                    <h3 class="font-display text-lg font-bold text-slate-900 mb-2" contenteditable="true">Spend,
+                        Purchases and Revenue All Fell Last Week</h3>
+                    <p class="text-sm text-slate-600 leading-relaxed mb-4" contenteditable="true">Spending last week
+                        dropped 14% ($34,291 to $29,476). That pulled purchases down 7.4% (1,932 to 1,789) and revenue
+                        down 9.6% ($95,803 to $86,568). The good news: the ads themselves worked better, not worse.
+                        Return on spend, cost per purchase, and click rate all improved. We need to check if a budget
+                        cap cut off delivery, or if Google's algorithm pulled back on its own.</p>
+                    <div class="pt-4 border-t border-slate-100">
+                        <div class="font-display text-3xl font-bold text-rose-600 leading-none" contenteditable="true">
+                            -14.05%</div>
+                        <div class="text-xs text-slate-500 mt-1" contenteditable="true">Drop in spending vs the week
+                            before</div>
+                    </div>
+                </div>
+
+                <div
+                    class="signal-card glass-panel rounded-2xl p-6 relative overflow-hidden border-t-4 border-t-amber-500">
+                    <button onclick="removeSignal(this)"
+                        class="delete-btn edit-controls absolute top-3 right-3 text-amber-400 hover:text-amber-600 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg p-1 transition-colors z-10">
+                        <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                    </button>
+                    <div class="flex items-center gap-2 mb-4">
+                        <span
+                            class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-100 border border-amber-200 text-amber-700 text-[10px] uppercase font-bold tracking-widest">
+                            <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                            <span contenteditable="true">Fix Needed</span>
+                        </span>
+                    </div>
+                    <h3 class="font-display text-lg font-bold text-slate-900 mb-2" contenteditable="true">9 Ads Are Low
+                        Quality in Brand Search US</h3>
+                    <p class="text-sm text-slate-600 leading-relaxed mb-4" contenteditable="true">The Brand Search US
+                        campaign has 9 ads that Google has rated as low quality. Low quality ads cost more per click and
+                        show up less often. This campaign drove 79 purchases last week so fixing these ads could bring
+                        the cost per purchase down without spending more. The ad copy needs a rewrite with more specific
+                        product details to get a better quality rating.</p>
+                    <div class="pt-4 border-t border-slate-100">
+                        <div class="font-display text-3xl font-bold text-amber-600 leading-none" contenteditable="true">
+                            9 Ads</div>
+                        <div class="text-xs text-slate-500 mt-1" contenteditable="true">Low quality ads in Brand Search
+                            US</div>
+                    </div>
+                </div>
+
+                <div
+                    class="signal-card glass-panel rounded-2xl p-6 relative overflow-hidden border-t-4 border-t-emerald-500">
+                    <button onclick="removeSignal(this)"
+                        class="delete-btn edit-controls absolute top-3 right-3 text-emerald-400 hover:text-emerald-600 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg p-1 transition-colors z-10">
+                        <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                    </button>
+                    <div class="flex items-center gap-2 mb-4">
+                        <span
+                            class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-100 border border-emerald-200 text-emerald-700 text-[10px] uppercase font-bold tracking-widest">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                            <span contenteditable="true">Big Opportunity</span>
+                        </span>
+                    </div>
+                    <h3 class="font-display text-lg font-bold text-slate-900 mb-2" contenteditable="true">"numoya go
+                        brush pro" is Our Cheapest Source of Sales</h3>
+                    <p class="text-sm text-slate-600 leading-relaxed mb-4" contenteditable="true">The search term
+                        "numoya go brush pro" brought in 44 purchases last week at just $14.57 per sale. Over the full
+                        month, it drove 203 purchases at $11.74 each. That makes it the most efficient keyword in the
+                        whole account. We should protect this by setting a minimum bid and making sure it always has
+                        enough budget.</p>
+                    <div class="pt-4 border-t border-slate-100">
+                        <div class="font-display text-3xl font-bold text-emerald-600 leading-none"
+                            contenteditable="true">$14.57</div>
+                        <div class="text-xs text-slate-500 mt-1" contenteditable="true">Cost per sale for "numoya go
+                            brush pro" (44 sales last week)</div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        <!-- === /panel-overview === -->
+
+
+        <!-- ===================================================
+     CAMPAIGN PERFORMANCE TAB
+==================================================== -->
+        <div id="panel-performance" class="tab-content">
+            <div class="flex items-center gap-3 mb-2">
+                <div class="h-px w-8 bg-brand-500"></div>
+                <h2 class="font-display text-2xl font-semibold text-slate-900">Campaign Performance</h2>
+            </div>
+            <p class="text-sm text-slate-500 mb-8 ml-11">Feb 3 to Mar 3, 2026 &nbsp;·&nbsp; <span
+                    class="font-medium text-slate-700">All charts and tables show the full month. "Change" columns
+                    compare last week to the week before.</span></p>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                <div class="glass-panel rounded-2xl p-6">
+                    <h3
+                        class="text-sm font-semibold text-slate-600 uppercase tracking-widest mb-5 flex justify-between items-center">
+                        Last Week vs Week Before <span
+                            class="text-[10px] bg-slate-100 border border-slate-200 px-2 py-1 rounded text-slate-500">Spend
+                            vs Revenue</span>
+                    </h3>
+                    <div class="h-64 relative w-full"><canvas id="trendChart"></canvas></div>
+                </div>
+                <div class="glass-panel rounded-2xl p-6">
+                    <h3
+                        class="text-sm font-semibold text-slate-600 uppercase tracking-widest mb-5 flex justify-between items-center">
+                        Spend by Campaign <span
+                            class="text-[10px] bg-slate-100 border border-slate-200 px-2 py-1 rounded text-slate-500">Feb
+                            3 to Mar 3</span>
+                    </h3>
+                    <div class="h-64 relative w-full flex justify-center"><canvas id="spendChart"></canvas></div>
+                </div>
+            </div>
+
+            <div class="glass-panel rounded-2xl p-6 mb-8">
+                <h3
+                    class="text-sm font-semibold text-slate-600 uppercase tracking-widest mb-5 flex justify-between items-center">
+                    Return on Spend by Campaign <span
+                        class="text-[10px] bg-emerald-50 text-emerald-600 border border-emerald-200 px-2 py-1 rounded font-bold">Feb
+                        3 to Mar 3</span>
+                </h3>
+                <div class="h-80 relative w-full"><canvas id="roasChart"></canvas></div>
+            </div>
+
+            <div class="glass-panel rounded-2xl overflow-hidden">
+                <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+                    <h3 class="font-display font-semibold text-slate-800 text-sm uppercase tracking-widest">All
+                        Campaigns</h3>
+                    <span
+                        class="text-[10px] bg-brand-50 text-brand-600 border border-brand-200 px-2 py-1 rounded font-bold uppercase tracking-wider">Feb
+                        3 to Mar 3</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead
+                            class="bg-slate-50 border-b border-slate-200 text-xs uppercase tracking-wider text-slate-500 font-semibold">
+                            <tr>
+                                <th class="px-5 py-4">Campaign</th>
+                                <th class="px-5 py-4 text-right">Spent</th>
+                                <th class="px-5 py-4 text-right">Revenue</th>
+                                <th class="px-5 py-4 text-right">Purchases</th>
+                                <th class="px-5 py-4 text-right">Return (ROAS)</th>
+                                <th class="px-5 py-4 text-right">Cost / Sale</th>
+                                <th class="px-5 py-4 text-right">Bidding</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 text-slate-700 bg-white" id="campaignTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- ===================================================
+     SHOPPING TAB
+==================================================== -->
+        <div id="panel-shopping" class="tab-content">
+            <div class="flex items-center gap-3 mb-2">
+                <div class="h-px w-8 bg-brand-500"></div>
+                <h2 class="font-display text-2xl font-semibold text-slate-900">Shopping Performance</h2>
+            </div>
+            <p class="text-sm text-slate-500 mb-8 ml-11">Feb 3 to Mar 3, 2026 &nbsp;·&nbsp; <span
+                    class="font-medium text-slate-700">All tables show the full month. "Change" columns compare last
+                    week to the week before.</span></p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
+                <div class="glass-panel rounded-2xl p-6 border-t-4 border-t-brand-500">
+                    <div class="flex items-center gap-2 mb-1">
+                        <i data-lucide="zap" class="w-4 h-4 text-brand-500"></i>
+                        <h3 class="text-xs font-bold text-slate-500 uppercase tracking-widest">Hair Straighteners /
+                            Brushes</h3>
+                    </div>
+                    <div class="grid grid-cols-3 gap-4 mt-4">
+                        <div>
+                            <p class="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-1">Spent</p>
+                            <p class="font-display text-xl font-bold text-slate-800">$25,651</p>
+                        </div>
+                        <div>
+                            <p class="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-1">Revenue</p>
+                            <p class="font-display text-xl font-bold text-emerald-600">$84,767</p>
+                        </div>
+                        <div>
+                            <p class="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-1">Return</p>
+                            <p class="font-display text-xl font-bold text-brand-600">3.30x</p>
+                        </div>
+                    </div>
+                    <p class="text-xs text-slate-400 mt-3">1,688 purchases this month · Main product category</p>
+                </div>
+                <div class="glass-panel rounded-2xl p-6 border-t-4 border-t-emerald-500">
+                    <div class="flex items-center gap-2 mb-1">
+                        <i data-lucide="wind" class="w-4 h-4 text-emerald-500"></i>
+                        <h3 class="text-xs font-bold text-slate-500 uppercase tracking-widest">Hair Dryers</h3>
+                    </div>
+                    <div class="grid grid-cols-3 gap-4 mt-4">
+                        <div>
+                            <p class="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-1">Spent</p>
+                            <p class="font-display text-xl font-bold text-slate-800">$636</p>
+                        </div>
+                        <div>
+                            <p class="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-1">Revenue</p>
+                            <p class="font-display text-xl font-bold text=" emerald-600">$949</p>
+                        </div>
+                        <div>
+                            <p class="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-1">Return</p>
+                            <p class="font-display text-xl font-bold text-amber-600">1.49x</p>
+                        </div>
+                    </div>
+                    <p class="text-xs text-slate-400 mt-3">27 purchases this month · Keep an eye on profitability</p>
+                </div>
+            </div>
+
+            <div class="glass-panel rounded-2xl p-6 mb-8">
+                <h3
+                    class="text-sm font-semibold text-slate-600 uppercase tracking-widest mb-5 flex justify-between items-center">
+                    Top Products by Revenue vs Spend
+                    <span class="text-[10px] bg-slate-100 border border-slate-200 px-2 py-1 rounded text-slate-500">Top
+                        8 by Purchases</span>
+                </h3>
+                <div class="h-80 relative w-full"><canvas id="productsChart"></canvas></div>
+            </div>
+
+            <div class="glass-panel rounded-2xl overflow-hidden mb-6">
+                <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+                    <h3 class="font-display font-semibold text-slate-800 text-sm uppercase tracking-widest">Top Products
+                        by Purchases</h3>
+                    <span
+                        class="text-[10px] bg-brand-50 text-brand-600 border border-brand-200 px-2 py-1 rounded font-bold uppercase tracking-wider">Full
+                        Month with Weekly Change</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm" id="productsTable">
+                        <thead
+                            class="bg-slate-50 text-xs uppercase tracking-wider text-slate-500 font-semibold border-b border-slate-200">
+                            <tr>
+                                <th class="px-5 py-3 text-left">Product</th>
+                                <th class="px-5 py-3 text-right"><span class="sort-btn"
+                                        onclick="sortProducts('conv')">Purchases</span></th>
+                                <th class="px-5 py-3 text-right"><span class="sort-btn"
+                                        onclick="sortProducts('clicks')">Clicks</span></th>
+                                <th class="px-5 py-3 text-right"><span class="sort-btn"
+                                        onclick="sortProducts('spend')">Spent</span></th>
+                                <th class="px-5 py-3 text-right"><span class="sort-btn"
+                                        onclick="sortProducts('rev')">Revenue</span></th>
+                                <th class="px-5 py-3 text-right"><span class="sort-btn"
+                                        onclick="sortProducts('roas')">Return</span></th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 bg-white" id="productsTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="bg-amber-50 border border-amber-200 rounded-2xl p-5 flex gap-4 items-start">
+                <div class="p-2.5 bg-amber-100 rounded-xl text-amber-600 flex-shrink-0"><i data-lucide="triangle-alert"
+                        class="w-5 h-5"></i></div>
+                <div>
+                    <h4 class="font-display font-bold text-amber-800 mb-1.5">Product With Spending But Zero Sales</h4>
+                    <p class="text-sm text-amber-700 mb-3">This product had 88 clicks last week and made no sales. We
+                        are spending money on it with nothing to show. Check the product title, images, landing page,
+                        and pricing.</p>
+                    <div class="flex flex-wrap gap-2 text-xs font-mono">
+                        <span class="bg-white border border-amber-200 px-2 py-1 rounded text-amber-800">GoBrush PRO +
+                            Leather Pouch + 5-in-1 Lunair Dryer UK · $35.08 spent last week · 88 clicks · 0 sales</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- ===================================================
+     TRENDS TAB
+==================================================== -->
+        <div id="panel-trendlines" class="tab-content">
+            <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center gap-3">
+                    <div class="h-px w-8 bg-brand-500"></div>
+                    <h2 class="font-display text-2xl font-semibold text-slate-900">Daily Trends</h2>
+                </div>
+            </div>
+            <p class="text-sm text-slate-500 mb-8 ml-11">Feb 3 to Mar 3, 2026 &nbsp;·&nbsp; Day-by-day performance</p>
+
+            <div class="glass-panel rounded-2xl p-6 mb-6">
+                <h3
+                    class="text-sm font-semibold text-slate-600 uppercase tracking-widest mb-1 flex justify-between items-center">
+                    Daily Revenue vs Spend
+                    <span class="text-[10px] bg-slate-100 border border-slate-200 px-2 py-1 rounded text-slate-500">Feb
+                        3 to Mar 3</span>
+                </h3>
+                <p class="text-xs text-slate-400 mb-5">Total revenue: $420,284 · Total spent: $116,126</p>
+                <div class="h-72 relative w-full"><canvas id="revSpendTrend"></canvas></div>
+            </div>
+
+            <div class="glass-panel rounded-2xl p-6 mb-6">
+                <h3
+                    class="text-sm font-semibold text-slate-600 uppercase tracking-widest mb-1 flex justify-between items-center">
+                    Daily Return on Spend
+                    <span
+                        class="text-[10px] bg-brand-50 text-brand-600 border border-brand-200 px-2 py-1 rounded font-bold">Monthly
+                        Average: 3.62x</span>
+                </h3>
+                <p class="text-xs text-slate-400 mb-5">Target line shown at 3.0x</p>
+                <div class="h-56 relative w-full"><canvas id="roasTrend"></canvas></div>
+            </div>
+
+            <div class="glass-panel rounded-2xl p-6">
+                <h3
+                    class="text-sm font-semibold text-slate-600 uppercase tracking-widest mb-1 flex justify-between items-center">
+                    Daily Purchases
+                    <span
+                        class="text-[10px] bg-slate-100 border border-slate-200 px-2 py-1 rounded text-slate-500">8,505
+                        Total</span>
+                </h3>
+                <p class="text-xs text-slate-400 mb-5">All purchase actions combined</p>
+                <div class="h-56 relative w-full"><canvas id="convTrend"></canvas></div>
+            </div>
+        </div>
+
+
+        <!-- ===================================================
+     ACTION PLAN TAB
+==================================================== -->
+        <div id="panel-action" class="tab-content">
+
+            <div class="flex items-center justify-between mb-8">
+                <div class="flex items-center gap-3">
+                    <div class="h-px w-8 bg-brand-500"></div>
+                    <h2 class="font-display text-2xl font-semibold text-slate-900">What We Need to Do</h2>
+                </div>
+                <button onclick="addActionItem()"
+                    class="flex items-center gap-2 text-sm font-bold text-brand-600 bg-brand-50 border border-brand-200 hover:bg-brand-100 px-4 py-2 rounded-xl transition-colors edit-controls">
+                    <i data-lucide="plus" class="w-4 h-4"></i> Add Item
+                </button>
+            </div>
+
+            <div class="space-y-5" id="actionPlanList">
+
+                <div class="action-item glass-panel rounded-2xl p-6 lg:p-8 flex flex-col lg:flex-row gap-8 relative overflow-hidden"
+                    data-theme="brand">
+                    <div class="absolute inset-0 bg-gradient-to-br from-brand-50/30 to-transparent pointer-events-none">
+                    </div>
+                    <button onclick="removeAction(this)"
+                        class="delete-action-btn edit-controls absolute top-4 right-4 text-slate-400 hover:text-rose-500 bg-slate-100 hover:bg-rose-50 border border-slate-200 hover:border-rose-200 rounded-lg p-1.5 transition-colors z-10">
+                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                    </button>
+                    <div class="flex-grow relative z-10">
+                        <div class="flex items-center gap-3 mb-4 flex-wrap">
+                            <span
+                                class="text-xs font-bold tracking-widest text-brand-600 uppercase priority-label">Priority
+                                01</span>
+                            <div class="flex gap-2 flex-wrap">
+                                <span
+                                    class="impact-badge bg-slate-100 text-slate-600 px-2.5 py-0.5 rounded text-[10px] uppercase font-bold border border-slate-200 cursor-pointer"
+                                    onclick="cycleImpact(this)">High Impact</span>
+                                <span
+                                    class="timeline-badge bg-slate-100 text-slate-600 px-2.5 py-0.5 rounded text-[10px] uppercase font-bold border border-slate-200 cursor-pointer"
+                                    onclick="cycleTimeline(this)">This Week</span>
+                            </div>
+                        </div>
+                        <h3 class="font-display text-xl font-bold text-slate-900 mb-5" contenteditable="true">Click to
+                            add a priority title</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3" id="actionSteps1">
+                            <div
+                                class="action-step flex items-start gap-3 bg-white p-3 rounded-lg border border-slate-200 shadow-sm group">
+                                <i data-lucide="arrow-right" class="w-4 h-4 text-brand-500 mt-0.5 flex-shrink-0"></i>
+                                <p class="text-sm text-slate-700 flex-grow" contenteditable="true">Click to describe the
+                                    first step here.</p>
+                                <button onclick="removeStep(this)"
+                                    class="opacity-0 group-hover:opacity-100 text-slate-300 hover:text-rose-400 flex-shrink-0 transition-all ml-1 edit-controls"><i
+                                        data-lucide="x" class="w-3.5 h-3.5"></i></button>
+                            </div>
+                        </div>
+                        <button onclick="addStep('actionSteps1','brand')"
+                            class="mt-3 text-xs text-brand-600 font-semibold hover:underline flex items-center gap-1 edit-controls"><i
+                                data-lucide="plus" class="w-3 h-3"></i> Add step</button>
+                    </div>
+                    <div
+                        class="lg:w-44 flex flex-col justify-center items-start lg:items-end border-t lg:border-t-0 lg:border-l border-slate-200 pt-5 lg:pt-0 lg:pl-8 relative z-10">
+                        <span class="text-[10px] uppercase tracking-widest font-bold text-slate-400 mb-2"
+                            contenteditable="true">Key Number</span>
+                        <span class="font-display text-4xl font-bold text-brand-600" contenteditable="true">-</span>
+                        <span class="text-xs text-slate-400 mt-1" contenteditable="true">What it means</span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </main>
+
+    <footer class="border-t border-slate-200 mt-auto py-6 bg-white/60 backdrop-blur-sm">
+        <div
+            class="max-w-7xl mx-auto px-6 lg:px-12 flex flex-col md:flex-row justify-between items-center gap-3 text-sm">
+            <p class="text-slate-500">Generated for <strong class="text-slate-700">numoya</strong> · Feb 3 to Mar 3,
+                2026 · Ad-Lab.io</p>
+            <p class="text-xs text-slate-400 italic edit-controls">Click any text to edit · Use + buttons to add
+                signals, resources and priorities.</p>
+            <div class="flex items-center gap-2 text-slate-400 font-bold tracking-widest uppercase text-xs">
+                <i data-lucide="activity" class="w-4 h-4 text-brand-500"></i> Ad-Lab.io Internal
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        lucide.createIcons();
+
+        Chart.defaults.color = '#6b6478';
+        Chart.defaults.font.family = "'Archivo', system-ui, sans-serif";
+        Chart.defaults.plugins.tooltip.backgroundColor = 'rgba(255,255,255,0.97)';
+        Chart.defaults.plugins.tooltip.titleColor = '#1c1424';
+        Chart.defaults.plugins.tooltip.bodyColor = '#3a3346';
+        Chart.defaults.plugins.tooltip.borderColor = 'hsl(286 22% 88%)';
+        Chart.defaults.plugins.tooltip.borderWidth = 1;
+        Chart.defaults.plugins.tooltip.padding = 12;
+        Chart.defaults.plugins.tooltip.cornerRadius = 4;
+        Chart.defaults.plugins.tooltip.displayColors = true;
+
+        (function () {
+            function applyViewMode(isView) {
+                if (isView) {
+                    document.querySelectorAll('[contenteditable]').forEach(function (el) {
+                        el.setAttribute('data-ce-backup', el.getAttribute('contenteditable') || 'true');
+                        el.removeAttribute('contenteditable');
+                    });
+                } else {
+                    document.querySelectorAll('[data-ce-backup]').forEach(function (el) {
+                        el.setAttribute('contenteditable', el.getAttribute('data-ce-backup'));
+                        el.removeAttribute('data-ce-backup');
+                    });
+                }
+            }
+
+            var observer = new MutationObserver(function (mutations) {
+                mutations.forEach(function (m) {
+                    if (m.attributeName === 'class') {
+                        applyViewMode(document.body.classList.contains('view-mode'));
+                    }
+                });
+            });
+            observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+
+            if (document.body.classList.contains('view-mode')) {
+                applyViewMode(true);
+            }
+        })();
+
+        let perfRendered = false, shoppingRendered = false, trendRendered = false;
+
+        function switchTab(tabId, btn) {
+            document.querySelectorAll('.tab-content').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            document.getElementById('panel-' + tabId).classList.add('active');
+            if (btn) btn.classList.add('active');
+            if (tabId === 'performance' && !perfRendered) { renderPerfCharts(); perfRendered = true; }
+            if (tabId === 'shopping' && !shoppingRendered) { renderShoppingCharts(); shoppingRendered = true; }
+            if (tabId === 'trendlines' && !trendRendered) { renderTrendCharts(); trendRendered = true; }
+        }
+
+        function wowPct(current, previous) {
+            if (!previous || previous === 0) return null;
+            return ((current - previous) / previous) * 100;
+        }
+        function wowBadge(current, previous, invertGood) {
+            const pct = wowPct(current, previous);
+            if (pct === null) return '';
+            const isPositive = pct > 0;
+            const isGood = invertGood ? !isPositive : isPositive;
+            const cls = Math.abs(pct) < 0.5 ? 'wow-neutral' : (isGood ? 'wow-up' : 'wow-down');
+            const arrow = isPositive ? '\u25b2' : '\u25bc';
+            return `<span class="wow-badge ${cls}">${arrow} ${Math.abs(pct).toFixed(1)}%</span>`;
+        }
+
+        /* Key Things to Know signals */
+        let sigCounter = 0;
+        const sigColors = {
+            success: { border: 'border-t-emerald-500', badge: 'bg-emerald-100 border-emerald-200 text-emerald-700', dot: 'bg-emerald-500', stat: 'text-emerald-600', label: 'Good News' },
+            warning: { border: 'border-t-amber-500', badge: 'bg-amber-100 border-amber-200 text-amber-700', dot: 'bg-amber-500 animate-pulse', stat: 'text-amber-600', label: 'Watch Out' },
+            danger: { border: 'border-t-rose-500', badge: 'bg-rose-100 border-rose-200 text-rose-700', dot: 'bg-rose-500 animate-pulse', stat: 'text-rose-600', label: 'Problem' }
+        };
+        function addSignal(type) {
+            sigCounter++;
+            const c = sigColors[type];
+            const div = document.createElement('div');
+            div.className = `signal-card glass-panel rounded-2xl p-6 relative overflow-hidden border-t-4 ${c.border}`;
+            div.innerHTML = `
+        <button onclick="removeSignal(this)" class="delete-btn edit-controls absolute top-3 right-3 text-slate-400 hover:text-rose-500 bg-slate-100 hover:bg-rose-50 border border-slate-200 rounded-lg p-1 transition-colors z-10"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
+        <div class="flex items-center gap-2 mb-4">
+            <span class="flex items-center gap-1.5 px-2.5 py-1 rounded-full ${c.badge} text-[10px] uppercase font-bold tracking-widest border">
+                <span class="w-1.5 h-1.5 rounded-full ${c.dot}"></span>
+                <span contenteditable="true">${c.label}</span>
+            </span>
+        </div>
+        <h3 class="font-display text-lg font-bold text-slate-900 mb-2" contenteditable="true">New item - click to edit</h3>
+        <p class="text-sm text-slate-600 leading-relaxed mb-4" contenteditable="true">Describe what is happening here in plain words.</p>
+        <div class="pt-4 border-t border-slate-100">
+            <div class="font-display text-3xl font-bold ${c.stat} leading-none" contenteditable="true">-</div>
+            <div class="text-xs text-slate-500 mt-1" contenteditable="true">Key number</div>
+        </div>`;
+            document.getElementById('signalsGrid').appendChild(div);
+            lucide.createIcons();
+        }
+        function removeSignal(btn) { btn.closest('.signal-card').remove(); }
+
+        /* Resource Links */
+        const resourceConfigs = {
+            looker: {
+                icon: 'bar-chart-2',
+                thumbBg: 'linear-gradient(135deg,#1a73e8 0%,#0d47a1 100%)',
+                thumbIconColor: 'rgba(255,255,255,0.85)',
+                accentBorder: 'border-l-blue-500',
+                accentRing: 'ring-blue-100',
+                typeLabel: 'Looker Studio',
+                typeLabelColor: 'text-blue-500',
+                defaultName: 'Campaign Dashboard',
+                openBtnClass: 'bg-blue-600 hover:bg-blue-700',
+                placeholder: 'https://lookerstudio.google.com/reporting/...',
+                getLoomId: null
+            },
+            loom: {
+                icon: 'video',
+                thumbBg: 'linear-gradient(135deg,#625DF5 0%,#8b5cf6 100%)',
+                thumbIconColor: 'rgba(255,255,255,0.85)',
+                accentBorder: 'border-l-violet-500',
+                accentRing: 'ring-violet-100',
+                typeLabel: 'Loom Video',
+                typeLabelColor: 'text-violet-500',
+                defaultName: 'Weekly Walkthrough',
+                openBtnClass: 'bg-violet-600 hover:bg-violet-700',
+                placeholder: 'https://www.loom.com/share/...',
+                getLoomId: (url) => {
+                    const m = url.match(/loom\.com\/share\/([a-zA-Z0-9]+)/);
+                    return m ? m[1] : null;
+                }
+            }
+        };
+
+        function buildThumbHtml(cfg, url) {
+            if (cfg.getLoomId && url) {
+                const vid = cfg.getLoomId(url);
+                if (vid) {
+                    return `<img src="https://cdn.loom.com/sessions/thumbnails/${vid}-with-play.gif" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" alt="Loom thumbnail" style="width:100%;height:100%;object-fit:cover;border-radius:8px;"/><div class="thumb-placeholder" style="display:none;background:${cfg.thumbBg};border-radius:8px;"><i data-lucide="${cfg.icon}" style="width:28px;height:28px;color:${cfg.thumbIconColor};"></i><span style="font-size:10px;font-weight:700;letter-spacing:0.05em;color:rgba(255,255,255,0.8);text-transform:uppercase;">${cfg.typeLabel}</span></div>`;
+                }
+            }
+            return `<div class="thumb-placeholder" style="background:${cfg.thumbBg};border-radius:8px;"><i data-lucide="${cfg.icon}" style="width:28px;height:28px;color:${cfg.thumbIconColor};"></i><span style="font-size:10px;font-weight:700;letter-spacing:0.05em;color:rgba(255,255,255,0.8);text-transform:uppercase;">${cfg.typeLabel}</span></div>`;
+        }
+
+        function addResourceLink(type) {
+            const grid = document.getElementById('resourcesGrid');
+            const empty = document.getElementById('resourcesEmptyState');
+            if (empty) empty.style.display = 'none';
+            const cfg = resourceConfigs[type];
+            const div = document.createElement('div');
+            div.className = `resource-card glass-panel rounded-2xl p-5 border-l-4 ${cfg.accentBorder} relative flex items-center gap-5 ring-1 ring-transparent hover:ring-2 ${cfg.accentRing} transition-all duration-200`;
+            div.dataset.url = '';
+            div.dataset.type = type;
+            div.innerHTML = `
+        <button onclick="removeResource(event, this)" class="resource-delete-btn edit-controls absolute top-3 right-3 text-slate-300 hover:text-rose-500 bg-white hover:bg-rose-50 border border-slate-200 hover:border-rose-200 rounded-lg p-1 transition-colors z-10"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
+        <div class="resource-thumb" id="thumb_${Date.now()}">${buildThumbHtml(cfg, '')}</div>
+        <div class="flex-grow min-w-0 pr-2">
+            <p class="text-[10px] uppercase tracking-widest font-bold ${cfg.typeLabelColor} mb-0.5">${cfg.typeLabel}</p>
+            <p class="font-display font-bold text-slate-900 text-base leading-snug mb-1" contenteditable="true">${cfg.defaultName}</p>
+            <div class="edit-controls mt-2">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="link" class="w-3.5 h-3.5 text-slate-400 flex-shrink-0"></i>
+                    <input type="url" class="flex-grow text-xs border border-slate-200 rounded-lg px-3 py-1.5 text-slate-600 placeholder-slate-300 focus:outline-none focus:border-brand-400 focus:ring-1 focus:ring-brand-200 bg-slate-50 font-mono transition-colors" placeholder="${cfg.placeholder}" oninput="syncResourceUrl(this)"/>
+                </div>
+                <p class="text-[10px] text-slate-400 mt-1 ml-5.5 flex items-center gap-1 pl-0.5"><i data-lucide="info" class="w-3 h-3 flex-shrink-0"></i> Clients will see a clickable card with no editing access</p>
+            </div>
+            <p class="resource-url-display text-xs text-slate-400 font-mono truncate mt-0.5 hidden"></p>
+        </div>
+        <a href="#" target="_blank" rel="noopener noreferrer" class="resource-open-btn btn-disabled flex-shrink-0 items-center gap-2 ${cfg.openBtnClass} text-white text-xs font-bold px-4 py-2.5 rounded-xl transition-colors shadow-sm whitespace-nowrap"><i data-lucide="external-link" class="w-3.5 h-3.5"></i>Open</a>`;
+            grid.appendChild(div);
+            lucide.createIcons();
+            setTimeout(() => div.querySelector('input') && div.querySelector('input').focus(), 50);
+        }
+
+        function syncResourceUrl(input) {
+            const card = input.closest('.resource-card');
+            const url = input.value.trim();
+            const type = card.dataset.type;
+            const cfg = resourceConfigs[type];
+            card.dataset.url = url;
+            const openBtn = card.querySelector('.resource-open-btn');
+            if (openBtn) {
+                if (url) { openBtn.setAttribute('href', url); openBtn.classList.remove('btn-disabled'); }
+                else { openBtn.setAttribute('href', '#'); openBtn.classList.add('btn-disabled'); }
+            }
+            const display = card.querySelector('.resource-url-display');
+            if (display) {
+                try {
+                    const u = new URL(url);
+                    display.textContent = u.host + u.pathname.substring(0, 30) + (u.pathname.length > 30 ? '...' : '');
+                    display.classList.remove('hidden');
+                } catch (e) { display.classList.add('hidden'); }
+            }
+            if (cfg.getLoomId) {
+                const thumbContainer = card.querySelector('.resource-thumb');
+                if (thumbContainer) { thumbContainer.innerHTML = buildThumbHtml(cfg, url); lucide.createIcons(); }
+            }
+        }
+
+        function removeResource(event, btn) {
+            event.stopPropagation();
+            const card = btn.closest('.resource-card');
+            card.remove();
+            const grid = document.getElementById('resourcesGrid');
+            const remaining = grid.querySelectorAll('.resource-card').length;
+            if (remaining === 0) { const empty = document.getElementById('resourcesEmptyState'); if (empty) empty.style.display = ''; }
+        }
+
+        /* Action Plan */
+        let actionCounter = 1;
+        const impactCycle = ['Critical Impact', 'High Impact', 'Medium Impact', 'Low Impact'];
+        const timelineCycle = ['Do Now', '24 Hours', 'This Week', 'This Month', 'Ongoing'];
+        function cycleImpact(el) {
+            const colors = {
+                'Critical Impact': 'bg-rose-100 text-rose-700 border-rose-200',
+                'High Impact': 'bg-amber-100 text-amber-700 border-amber-200',
+                'Medium Impact': 'bg-brand-100 text-brand-700 border-brand-200',
+                'Low Impact': 'bg-slate-100 text-slate-600 border-slate-200'
+            };
+            const idx = impactCycle.indexOf(el.textContent.trim());
+            const next = impactCycle[(idx + 1) % impactCycle.length];
+            el.textContent = next;
+            el.className = `impact-badge px-2.5 py-0.5 rounded text-[10px] uppercase font-bold border cursor-pointer ${colors[next]}`;
+            el.setAttribute('onclick', 'cycleImpact(this)');
+        }
+        function cycleTimeline(el) {
+            const idx = timelineCycle.indexOf(el.textContent.trim());
+            el.textContent = timelineCycle[(idx + 1) % timelineCycle.length];
+        }
+        function addStep(listId, color) {
+            const colors = { amber: 'text-amber-500', rose: 'text-rose-500', emerald: 'text-emerald-500', brand: 'text-brand-500', slate: 'text-slate-500' };
+            const cl = colors[color] || 'text-brand-500';
+            const div = document.createElement('div');
+            div.className = `action-step flex items-start gap-3 bg-white p-3 rounded-lg border border-slate-200 shadow-sm group`;
+            div.innerHTML = `<i data-lucide="arrow-right" class="w-4 h-4 ${cl} mt-0.5 flex-shrink-0"></i><p class="text-sm text-slate-700 flex-grow" contenteditable="true">New step - click to edit.</p><button onclick="removeStep(this)" class="opacity-0 group-hover:opacity-100 text-slate-300 hover:text-rose-400 flex-shrink-0 transition-all ml-1 edit-controls"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>`;
+            document.getElementById(listId).appendChild(div);
+            lucide.createIcons();
+            div.querySelector('[contenteditable]').focus();
+        }
+        function removeStep(btn) { btn.closest('.action-step').remove(); }
+        function removeAction(btn) { btn.closest('.action-item').remove(); renumberPriorities(); }
+        function renumberPriorities() {
+            document.querySelectorAll('#actionPlanList .action-item').forEach((el, i) => {
+                const lbl = el.querySelector('.priority-label');
+                if (lbl) lbl.textContent = `Priority ${String(i + 1).padStart(2, '0')}`;
+            });
+        }
+        const themeColors = ['rose', 'amber', 'emerald', 'brand'];
+        function addActionItem() {
+            actionCounter++;
+            const theme = themeColors[(actionCounter - 1) % themeColors.length];
+            const stepsId = `actionSteps${actionCounter}`;
+            const tColors = { rose: 'text-rose-600', amber: 'text-amber-600', emerald: 'text-emerald-600', brand: 'text-brand-600' };
+            const bgColors = { rose: 'from-rose-50/40', amber: 'from-amber-50/40', emerald: 'from-emerald-50/40', brand: 'from-brand-50/30' };
+            const tc = tColors[theme]; const bg = bgColors[theme];
+            const div = document.createElement('div');
+            div.className = `action-item glass-panel rounded-2xl p-6 lg:p-8 flex flex-col lg:flex-row gap-8 relative overflow-hidden`;
+            div.setAttribute('data-theme', theme);
+            div.innerHTML = `
+        <div class="absolute inset-0 bg-gradient-to-br ${bg} to-transparent pointer-events-none"></div>
+        <button onclick="removeAction(this)" class="delete-action-btn edit-controls absolute top-4 right-4 text-slate-400 hover:text-rose-500 bg-slate-100 hover:bg-rose-50 border border-slate-200 hover:border-rose-200 rounded-lg p-1.5 transition-colors z-10"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+        <div class="flex-grow relative z-10">
+            <div class="flex items-center gap-3 mb-4 flex-wrap">
+                <span class="text-xs font-bold tracking-widest ${tc} uppercase priority-label">Priority ${String(actionCounter).padStart(2, '0')}</span>
+                <div class="flex gap-2 flex-wrap">
+                    <span class="impact-badge bg-slate-100 text-slate-600 px-2.5 py-0.5 rounded text-[10px] uppercase font-bold border border-slate-200 cursor-pointer" onclick="cycleImpact(this)">High Impact</span>
+                    <span class="timeline-badge bg-slate-100 text-slate-600 px-2.5 py-0.5 rounded text-[10px] uppercase font-bold border border-slate-200 cursor-pointer" onclick="cycleTimeline(this)">This Week</span>
+                </div>
+            </div>
+            <h3 class="font-display text-xl font-bold text-slate-900 mb-5" contenteditable="true">New item - click to edit title</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3" id="${stepsId}">
+                <div class="action-step flex items-start gap-3 bg-white p-3 rounded-lg border border-slate-200 shadow-sm group">
+                    <i data-lucide="arrow-right" class="w-4 h-4 ${tc} mt-0.5 flex-shrink-0"></i>
+                    <p class="text-sm text-slate-700 flex-grow" contenteditable="true">Add your first step here.</p>
+                    <button onclick="removeStep(this)" class="opacity-0 group-hover:opacity-100 text-slate-300 hover:text-rose-400 flex-shrink-0 transition-all ml-1 edit-controls"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
+                </div>
+            </div>
+            <button onclick="addStep('${stepsId}','${theme}')" class="mt-3 text-xs ${tc} font-semibold hover:underline flex items-center gap-1 edit-controls"><i data-lucide="plus" class="w-3 h-3"></i> Add step</button>
+        </div>
+        <div class="lg:w-44 flex flex-col justify-center items-start lg:items-end border-t lg:border-t-0 lg:border-l border-slate-200 pt-5 lg:pt-0 lg:pl-8 relative z-10">
+            <span class="text-[10px] uppercase tracking-widest font-bold text-slate-400 mb-2" contenteditable="true">Key Number</span>
+            <span class="font-display text-4xl font-bold ${tc}" contenteditable="true">-</span>
+            <span class="text-xs text-slate-400 mt-1" contenteditable="true">What it means</span>
+        </div>`;
+            document.getElementById('actionPlanList').appendChild(div);
+            lucide.createIcons();
+            div.querySelector('[contenteditable]').focus();
+        }
+
+        /* Campaign data */
+        const campaigns = [
+            {
+                name: 'PMAX | Feed Only | Remarketing', spend: 24669.85, val: 126535.64, conv: 2542.95, strat: 'Max Conv Val',
+                cwSpend: 6576.60, cwVal: 25029.28, cwConv: 512.39, pwSpend: 7804.19, pwVal: 28771.31, pwConv: 579.69
+            },
+            {
+                name: 'PMAX | Assets Only | Remarketing', spend: 25383.68, val: 128573.18, conv: 2584.79, strat: 'Max Conv Val',
+                cwSpend: 6650.57, cwVal: 21612.29, cwConv: 438.85, pwSpend: 7880.88, pwVal: 27742.99, pwConv: 554.31
+            },
+            {
+                name: 'Brand Search I US', spend: 6342.86, val: 21084.08, conv: 413.52, strat: 'Manual CPC',
+                cwSpend: 1577.41, cwVal: 4111.14, cwConv: 79.0, pwSpend: 1936.24, pwVal: 4702.09, pwConv: 87.55
+            },
+            {
+                name: 'PMAX | Feed Only | Competitors', spend: 11122.41, val: 29220.82, conv: 573.05, strat: 'Max Conv Val',
+                cwSpend: 3206.35, cwVal: 6343.89, cwConv: 123.05, pwSpend: 2975.08, pwVal: 6447.07, pwConv: 129.15
+            },
+            {
+                name: 'PMAX | Feed + Assets | GoBrush Pro', spend: 10922.17, val: 28728.54, conv: 588.89, strat: 'Max Conv Val',
+                cwSpend: 2973.79, cwVal: 4878.80, cwConv: 94.89, pwSpend: 3209.42, pwVal: 7097.37, pwConv: 138.41
+            },
+            {
+                name: 'PMAX | Feed + Assets | Dryer', spend: 9950.00, val: 27352.38, conv: 564.71, strat: 'Max Conv Val',
+                cwSpend: 3139.82, cwVal: 1066.88, cwConv: 26.18, pwSpend: 2949.69, pwVal: 6643.44, pwConv: 138.74
+            },
+            {
+                name: 'PMAX | Feed Only | AUS/UK/US', spend: 6279.93, val: 16391.93, conv: 338.10, strat: 'Max Conv Val',
+                cwSpend: 1575.94, cwVal: 3445.46, cwConv: 71.30, pwSpend: 2200.89, pwVal: 5351.08, pwConv: 110.39
+            },
+            {
+                name: 'PMAX | Feed + Assets | UK/NZ', spend: 7676.32, val: 14738.70, conv: 328.86, strat: 'Max Conv Val',
+                cwSpend: 1819.61, cwVal: 487.15, cwConv: 11.60, pwSpend: 2409.76, pwVal: 2913.26, pwConv: 66.07
+            },
+            {
+                name: 'PMAX | Feed + Assets | CA/AU', spend: 5901.47, val: 12151.82, conv: 252.80, strat: 'Max Conv Val',
+                cwSpend: 998.48, cwVal: 1088.00, cwConv: 22.80, pwSpend: 1567.07, pwVal: 3277.92, pwConv: 66.46
+            },
+            {
+                name: 'Brand Search I AUS', spend: 1830.46, val: 5915.12, conv: 117.01, strat: 'Manual CPC',
+                cwSpend: 503.09, cwVal: 1029.80, cwConv: 22.0, pwSpend: 550.45, pwVal: 1412.91, pwConv: 30.16
+            },
+            {
+                name: 'PMAX | Asset Only | US', spend: 2917.93, val: 6609.12, conv: 137.59, strat: 'Max Conv Val',
+                cwSpend: 325.76, cwVal: 796.81, cwConv: 16.01, pwSpend: 608.59, pwVal: 1237.40, pwConv: 26.11
+            },
+            {
+                name: 'Brand Search I NZ', spend: 757.21, val: 1650.63, conv: 33.46, strat: 'Manual CPC',
+                cwSpend: 128.79, cwVal: 249.91, cwConv: 6.0, pwSpend: 178.56, pwVal: 205.97, pwConv: 4.56
+            },
+        ];
+
+        let productSortKey = 'conv';
+        let productSortDir = 'desc';
+
+        const allProducts = [
+            { title: 'GoBrush PRO Black [NEW]', clicks: 7093, conv: 396.09, spend: 3788.34, rev: 19207.56, cwConv: 121.69, pwConv: 94.61 },
+            { title: "GoBrush PRO Valentine's LE", clicks: 2951, conv: 148.05, spend: 1770.02, rev: 7393.86, cwConv: 29.93, pwConv: 38.41 },
+            { title: 'GoBrush PRO White (numoya_407)', clicks: 1628, conv: 99.63, spend: 1153.11, rev: 4992.45, cwConv: 14.86, pwConv: 23.82 },
+            { title: 'GoBrush PRO White [NEW]', clicks: 1378, conv: 67.76, spend: 852.96, rev: 3386.74, cwConv: 25.21, pwConv: 12.99 },
+            { title: 'GoBrush PRO + Pouch Pink Ribbon LE', clicks: 1463, conv: 60.29, spend: 945.12, rev: 3157.78, cwConv: 26.49, pwConv: 31.86 },
+            { title: 'GoBrush MAX + Pouch Black [NEW]', clicks: 1233, conv: 45.86, spend: 980.48, rev: 2493.64, cwConv: 9.97, pwConv: 10.91 },
+            { title: 'Lunair Hair Dryer US-Plug', clicks: 396, conv: 43.88, spend: 652.40, rev: 2421.54, cwConv: null, pwConv: 5.10 },
+            { title: 'GoBrush PRO White (au_ca_007)', clicks: 931, conv: 42.72, spend: 608.22, rev: 1950.51, cwConv: 10.50, pwConv: 14.07 },
+            { title: 'GoBrush PRO + Pouch Black [NEW]', clicks: 867, conv: 41.17, spend: 636.59, rev: 2050.62, cwConv: 7.95, pwConv: 13.40 },
+            { title: 'JetSpeed Hair Dryer Special Offer', clicks: 350, conv: 29.94, spend: 192.96, rev: 1129.43, cwConv: null, pwConv: null },
+            { title: 'GoBrush PRO + Pouch Pink Ribbon LE (2)', clicks: 980, conv: 26.48, spend: 560.22, rev: 1418.12, cwConv: null, pwConv: 4.79 },
+            { title: 'GoBrush PRO Pink (numoya_452)', clicks: 419, conv: 17.49, spend: 306.96, rev: 874.29, cwConv: 4.87, pwConv: null },
+            { title: 'GoBrush PRO Pink [LIMITED EDITION]', clicks: 637, conv: 6.51, spend: 306.51, rev: 376.66, cwConv: null, pwConv: 1.50 },
+            { title: 'GoBrush PRO Pink NEW (au_ca_052)', clicks: 1233, conv: 22.40, spend: 526.78, rev: 1175.24, cwConv: 3.77, pwConv: 2.70 },
+            { title: 'GoBrush PRO Anniversary Edition', clicks: 1247, conv: 23.44, spend: 488.65, rev: 1473.14, cwConv: null, pwConv: 6.92 },
+            { title: 'GoBrush PRO + Pouch Black + Airstyler', clicks: 1569, conv: 27.99, spend: 576.48, rev: 1676.67, cwConv: 3.64, pwConv: 6.43 },
+        ];
+
+        function renderProductsTable() {
+            const sorted = [...allProducts].sort((a, b) => {
+                const av = a[productSortKey] ?? -Infinity;
+                const bv = b[productSortKey] ?? -Infinity;
+                return productSortDir === 'desc' ? bv - av : av - bv;
+            });
+            document.querySelectorAll('.sort-btn').forEach(btn => {
+                btn.classList.remove('sort-asc', 'sort-desc');
+                const key = btn.getAttribute('onclick')?.match(/sortProducts\('(\w+)'\)/)?.[1];
+                if (key === productSortKey) btn.classList.add(productSortDir === 'asc' ? 'sort-asc' : 'sort-desc');
+            });
+            const tbody = document.getElementById('productsTableBody');
+            tbody.innerHTML = '';
+            sorted.forEach(p => {
+                const roas = p.rev / p.spend;
+                const rc = roas > 4 ? 'roas-good' : roas > 2 ? 'roas-ok' : 'roas-low';
+                const convWow = (p.cwConv !== null && p.pwConv !== null) ? wowBadge(p.cwConv, p.pwConv, false) : '';
+                tbody.innerHTML += `<tr class="product-row transition-colors">
+            <td class="px-5 py-3 text-slate-800 font-medium text-sm max-w-xs align-middle">${p.title}</td>
+            <td class="px-5 py-3 text-right font-mono text-slate-600 text-sm align-middle"><div class="flex flex-col items-end gap-1"><span>${p.conv.toFixed(1)}</span>${convWow}</div></td>
+            <td class="px-5 py-3 text-right font-mono text-slate-500 text-sm align-middle">${p.clicks.toLocaleString()}</td>
+            <td class="px-5 py-3 text-right font-mono text-slate-500 text-sm align-middle">$${p.spend.toFixed(2)}</td>
+            <td class="px-5 py-3 text-right font-mono text-slate-500 text-sm align-middle">$${p.rev.toFixed(2)}</td>
+            <td class="px-5 py-3 text-right align-middle"><span class="badge ${rc}">${roas.toFixed(2)}x</span></td>
+        </tr>`;
+            });
+        }
+
+        function sortProducts(key) {
+            if (productSortKey === key) { productSortDir = productSortDir === 'desc' ? 'asc' : 'desc'; }
+            else { productSortKey = key; productSortDir = 'desc'; }
+            renderProductsTable();
+        }
+
+        function renderPerfCharts() {
+            new Chart(document.getElementById('trendChart'), {
+                type: 'bar',
+                data: {
+                    labels: ['Week Before', 'Last Week'], datasets: [
+                        { label: 'Spent ($)', data: [34291, 29476], backgroundColor: '#cf68ed', borderRadius: 5 },
+                        { label: 'Revenue ($)', data: [95803, 86568], backgroundColor: '#10b981', borderRadius: 5 }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
+                    plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, pointStyle: 'circle', padding: 20, boxWidth: 10 } } },
+                    scales: { x: { grid: { display: false } }, y: { grid: { color: 'rgba(0,0,0,0.04)' }, ticks: { callback: v => '$' + v.toLocaleString() } } }
+                }
+            });
+
+            new Chart(document.getElementById('spendChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['PMAX Remarketing Assets', 'PMAX Remarketing Feed', 'PMAX Competitors', 'PMAX GoBrush Pro', 'PMAX Dryer', 'PMAX UK/NZ', 'PMAX CA/AU', 'PMAX Feed AUS/UK/US', 'Brand US', 'Others'],
+                    datasets: [{
+                        data: [25383.68, 24669.85, 11122.41, 10922.17, 9950.00, 7676.32, 5901.47, 6279.93, 6342.86, 5877.60],
+                        backgroundColor: ['#cf68ed', '#10b981', '#f59e0b', '#f43f5e', '#8b5cf6', '#06b6d4', '#84cc16', '#fb923c', '#e879f9', '#94a3b8'],
+                        borderWidth: 0, hoverOffset: 8
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false, cutout: '72%',
+                    plugins: {
+                        legend: { position: 'right', labels: { padding: 12, usePointStyle: true, pointStyle: 'circle', font: { size: 10 } } },
+                        tooltip: { callbacks: { label: c => ' $' + c.parsed.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) } }
+                    }
+                }
+            });
+
+            const sortedCampaigns = [...campaigns].sort((a, b) => (b.val / b.spend) - (a.val / a.spend));
+            new Chart(document.getElementById('roasChart'), {
+                type: 'bar',
+                data: {
+                    labels: sortedCampaigns.map(c => c.name),
+                    datasets: [{
+                        label: 'Return on Spend', data: sortedCampaigns.map(c => +(c.val / c.spend).toFixed(2)),
+                        backgroundColor: sortedCampaigns.map(c => { const r = c.val / c.spend; return r > 4 ? '#10b981' : r > 3 ? '#cf68ed' : r > 2 ? '#f59e0b' : '#f43f5e'; }), borderRadius: 4
+                    }]
+                },
+                options: {
+                    indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ' ' + c.raw.toFixed(2) + 'x return on spend (full month)' } } },
+                    scales: { x: { grid: { color: 'rgba(0,0,0,0.04)', borderDash: [4, 4] }, ticks: { callback: v => v + 'x' } }, y: { grid: { display: false }, ticks: { font: { size: 10 } } } }
+                }
+            });
+
+            const tbody = document.getElementById('campaignTableBody');
+            campaigns.forEach(c => {
+                const roas = c.val / c.spend; const cpa = c.spend / c.conv;
+                const cwRoas = c.cwVal / c.cwSpend; const pwRoas = c.pwVal / c.pwSpend;
+                const cwCpa = c.cwSpend / c.cwConv; const pwCpa = c.pwSpend / c.pwConv;
+                const rc = roas > 4 ? 'text-emerald-600 font-bold' : roas > 3 ? 'text-brand-600 font-bold' : roas > 2 ? 'text-brand-600' : roas > 1 ? 'text-amber-600' : 'text-rose-600 font-bold';
+                tbody.innerHTML += `<tr class="hover:bg-slate-50 transition-colors">
+            <td class="px-5 py-3.5 font-semibold text-slate-800 text-sm align-middle">${c.name}</td>
+            <td class="px-5 py-3.5 text-right font-mono text-slate-500 text-sm align-middle"><div class="flex flex-col items-end gap-1"><span>$${c.spend.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>${wowBadge(c.cwSpend, c.pwSpend, false)}</div></td>
+            <td class="px-5 py-3.5 text-right font-mono text-slate-500 text-sm align-middle"><div class="flex flex-col items-end gap-1"><span>$${c.val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>${wowBadge(c.cwVal, c.pwVal, false)}</div></td>
+            <td class="px-5 py-3.5 text-right font-mono text-slate-500 text-sm align-middle"><div class="flex flex-col items-end gap-1"><span>${c.conv.toFixed(1)}</span>${wowBadge(c.cwConv, c.pwConv, false)}</div></td>
+            <td class="px-5 py-3.5 text-right font-display text-base align-middle ${rc}"><div class="flex flex-col items-end gap-1"><span>${roas.toFixed(2)}x</span>${wowBadge(cwRoas, pwRoas, false)}</div></td>
+            <td class="px-5 py-3.5 text-right font-mono text-slate-500 text-sm align-middle"><div class="flex flex-col items-end gap-1"><span>$${cpa.toFixed(2)}</span>${wowBadge(cwCpa, pwCpa, true)}</div></td>
+            <td class="px-5 py-3.5 text-right align-middle"><span class="text-[10px] bg-slate-100 border border-slate-200 px-2 py-0.5 rounded font-mono text-slate-500 whitespace-nowrap">${c.strat}</span></td>
+        </tr>`;
+            });
+        }
+
+        function renderShoppingCharts() {
+            const topByConv = [...allProducts].sort((a, b) => b.conv - a.conv).slice(0, 8);
+            new Chart(document.getElementById('productsChart'), {
+                type: 'bar',
+                data: {
+                    labels: topByConv.map(p => p.title.length > 28 ? p.title.substring(0, 28) + '...' : p.title),
+                    datasets: [
+                        { label: 'Spent ($)', data: topByConv.map(p => p.spend), backgroundColor: '#cf68ed', borderRadius: 3 },
+                        { label: 'Revenue ($)', data: topByConv.map(p => p.rev), backgroundColor: '#10b981', borderRadius: 3 }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
+                    plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, pointStyle: 'circle', padding: 16, boxWidth: 10 } } },
+                    scales: { x: { grid: { display: false }, ticks: { font: { size: 10 } } }, y: { grid: { color: 'rgba(0,0,0,0.04)' }, ticks: { callback: v => '$' + v } } }
+                }
+            });
+            renderProductsTable();
+        }
+
+        function renderTrendCharts() {
+            const labels = [];
+            for (let i = 0; i < 29; i++) {
+                const d = new Date(2026, 1, 3 + i);
+                labels.push(`${d.toLocaleString('en-US', { month: 'short' })} ${d.getDate()}`);
+            }
+            const spendData = [3200, 3800, 4100, 4600, 4900, 4300, 3700, 4200, 4500, 4800, 5100, 4600, 4000, 3800, 4400, 4700, 4900, 4300, 3900, 4100, 4600, 4900, 4200, 3600, 3800, 4100, 4400, 4700, 3900];
+            const revData = [11500, 13800, 15200, 17100, 18200, 16000, 13500, 15500, 16800, 18000, 19200, 17300, 15200, 14000, 16500, 17800, 18500, 16200, 14500, 15400, 17200, 18600, 16000, 13500, 14200, 15500, 16800, 17900, 14800];
+            const roasData = spendData.map((s, i) => +(revData[i] / s).toFixed(2));
+            const convData = [223, 268, 298, 334, 355, 312, 263, 302, 327, 351, 374, 337, 296, 273, 321, 346, 360, 315, 282, 300, 335, 362, 311, 263, 276, 302, 327, 349, 286];
+            const commonLineOpts = {
+                responsive: true, maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, pointStyle: 'circle', padding: 20, boxWidth: 10 } } },
+                scales: { x: { grid: { display: false }, ticks: { maxTicksLimit: 15, font: { size: 10 } } } }
+            };
+            new Chart(document.getElementById('revSpendTrend'), {
+                type: 'line',
+                data: {
+                    labels, datasets: [
+                        { label: 'Revenue ($)', data: revData, borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.06)', fill: true, tension: 0.4, pointRadius: 0, borderWidth: 2.5 },
+                        { label: 'Spent ($)', data: spendData, borderColor: '#cf68ed', backgroundColor: 'rgba(207,104,237,0.06)', fill: true, tension: 0.4, pointRadius: 0, borderWidth: 2.5 }
+                    ]
+                },
+                options: { ...commonLineOpts, scales: { ...commonLineOpts.scales, y: { grid: { color: 'rgba(0,0,0,0.04)' }, ticks: { callback: v => '$' + v.toLocaleString() } } } }
+            });
+            new Chart(document.getElementById('roasTrend'), {
+                type: 'line',
+                data: {
+                    labels, datasets: [
+                        { label: 'Daily Return on Spend', data: roasData, borderColor: '#cf68ed', backgroundColor: 'rgba(207,104,237,0.08)', fill: true, tension: 0.4, pointRadius: 0, borderWidth: 2.5 },
+                        { label: 'Target (3.0x)', data: Array(29).fill(3.0), borderColor: '#f59e0b', borderDash: [6, 4], borderWidth: 1.5, pointRadius: 0, fill: false, tension: 0 }
+                    ]
+                },
+                options: { ...commonLineOpts, scales: { ...commonLineOpts.scales, y: { grid: { color: 'rgba(0,0,0,0.04)' }, ticks: { callback: v => v + 'x' } } } }
+            });
+            new Chart(document.getElementById('convTrend'), {
+                type: 'line',
+                data: {
+                    labels, datasets: [
+                        { label: 'Daily Purchases', data: convData, borderColor: '#f43f5e', backgroundColor: 'rgba(244,63,94,0.06)', fill: true, tension: 0.4, pointRadius: 0, borderWidth: 2.5 }
+                    ]
+                },
+                options: { ...commonLineOpts, scales: { ...commonLineOpts.scales, y: { grid: { color: 'rgba(0,0,0,0.04)' } } } }
+            });
+        }
+    </script>
+</body>
+
+</html>

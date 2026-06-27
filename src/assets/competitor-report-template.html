@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
-        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62.5..125,300..900&family=Alumni+Sans+SC:ital,wght@0,300..700;1,400&display=swap"
         rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -17,12 +17,16 @@
             theme: {
                 extend: {
                     fontFamily: {
-                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
-                        display: ['"Space Grotesk"', 'sans-serif'],
+                        sans: ['Archivo', 'system-ui', 'sans-serif'],
+                        display: ['Archivo', 'system-ui', 'sans-serif'],
+                        micro: ['"Alumni Sans SC"', 'sans-serif'],
                     },
                     colors: {
-                        brand: { 400: '#818cf8', 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca' },
-                    }
+                        /* Blueprint Grid brand purple #CF68ED tonal ramp */
+                        brand: { 50: '#fbf3fe', 100: '#f5e1fc', 200: '#ebc2f8', 300: '#df9cf2', 400: '#d67fef', 500: '#cf68ed', 600: '#b83fd9', 700: '#9a2bb8', 800: '#7c2293', 900: '#5e1a6f' },
+                    },
+                    /* Flat 4px system across every rounded-* utility */
+                    borderRadius: { 'none': '0', 'sm': '4px', DEFAULT: '4px', 'md': '4px', 'lg': '4px', 'xl': '4px', '2xl': '4px', '3xl': '4px', 'full': '4px' },
                 }
             }
         }
@@ -34,16 +38,16 @@
         }
 
         ::-webkit-scrollbar-track {
-            background: #f8fafc;
+            background: transparent;
         }
 
         ::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
+            background: hsl(286 16% 55% / 0.4);
             border-radius: 4px;
         }
 
         ::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8;
+            background: hsl(286 35% 45% / 0.5);
         }
 
         .hide-scrollbar::-webkit-scrollbar {
@@ -56,18 +60,37 @@
         }
 
         body {
-            background-color: #f8fafc;
-            background-image: radial-gradient(circle at 15% 50%, rgba(99, 102, 241, 0.04), transparent 35%), radial-gradient(circle at 85% 30%, rgba(16, 185, 129, 0.03), transparent 35%);
+            background-color: #F4F5F7;
             background-attachment: fixed;
-            color: #0f172a;
+            color: #1c1424;
+            font-family: 'Archivo', system-ui, sans-serif;
+            letter-spacing: 0.01em;
         }
 
+        /* Engineered headings — expanded width, uppercase, wide tracking */
+        h1, h2, h3, h4, h5, h6, .font-display {
+            font-family: 'Archivo', system-ui, sans-serif !important;
+            font-variation-settings: 'wdth' 125;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Alumni Sans SC micro-labels (tiny corner/caption texts) */
+        .micro-label {
+            font-family: 'Alumni Sans SC', sans-serif;
+            font-size: 9px;
+            line-height: 1.3;
+            letter-spacing: 0.32em;
+            text-transform: uppercase;
+            font-weight: 500;
+        }
+
+        /* Flat 4px surfaces — no glass/blur, hairline borders */
         .glass-panel {
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(0, 0, 0, 0.06);
-            box-shadow: 0 8px 32px -4px rgba(0, 0, 0, 0.04), 0 4px 16px -4px rgba(0, 0, 0, 0.02);
+            background: #ffffff;
+            border: 1px solid hsl(286 22% 88%);
+            border-radius: 4px;
+            box-shadow: 0 1px 0 0 hsl(286 22% 88%);
         }
 
         .tab-content {
@@ -113,7 +136,7 @@
             left: 0;
             right: 0;
             height: 2px;
-            background: #6366f1;
+            background: #cf68ed;
             transform: scaleX(0);
             transition: transform 0.3s ease;
         }
@@ -133,7 +156,7 @@
 
         .stat-card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 12px 32px -4px rgba(99, 102, 241, 0.1);
+            box-shadow: 0 12px 32px -4px rgba(207, 104, 237, 0.1);
         }
 
         .ad-card {
@@ -150,7 +173,7 @@
             align-items: center;
             gap: 4px;
             padding: 2px 8px;
-            border-radius: 9999px;
+            border-radius: 4px;
             font-size: 10px;
             font-weight: 700;
             letter-spacing: 0.08em;
@@ -194,7 +217,7 @@
 
         .img-preview {
             background: #f1f5f9;
-            border-radius: 8px;
+            border-radius: 4px;
             overflow: hidden;
             position: relative;
         }
@@ -216,7 +239,7 @@
             background: linear-gradient(to top, rgba(0, 0, 0, 0.6) 0%, transparent 50%);
             opacity: 0;
             transition: opacity 0.3s;
-            border-radius: 8px;
+            border-radius: 4px;
         }
 
         .img-preview:hover .ad-overlay {
@@ -232,7 +255,7 @@
             font-size: 10px;
             font-weight: 700;
             padding: 2px 8px;
-            border-radius: 999px;
+            border-radius: 4px;
             backdrop-filter: blur(4px);
         }
 
@@ -276,11 +299,11 @@
 
     <!-- Ambient Grid -->
     <div class="fixed inset-0 z-[-1] pointer-events-none opacity-40"
-        style="background-image: linear-gradient(#e2e8f0 1px, transparent 1px), linear-gradient(90deg, #e2e8f0 1px, transparent 1px); background-size: 32px 32px;">
+        style="background-image: linear-gradient(hsl(286 16% 80%) 1px, transparent 1px), linear-gradient(90deg, hsl(286 16% 80%) 1px, transparent 1px); background-size: 32px 32px;">
     </div>
 
     <!-- Header -->
-    <header class="relative pt-12 pb-8 px-6 lg:px-12 z-10 bg-[#4338ca] shadow-lg overflow-hidden">
+    <header class="relative pt-12 pb-8 px-6 lg:px-12 z-10 bg-[#cf68ed] shadow-lg overflow-hidden">
         <div class="absolute inset-0 z-0 opacity-10 pointer-events-none"
             style="background-image: linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px); background-size: 32px 32px;">
         </div>

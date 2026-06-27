@@ -1,0 +1,92 @@
+/* ============================================================
+   CreativeOS — scoped design tokens.
+   Visual language from src/assets/youtube-report-template.html:
+   light glass panels, Plus Jakarta Sans + Space Grotesk, indigo brand.
+   Everything is namespaced under .cos-root so it never touches the
+   rest of the app (which uses the Archivo "Blueprint" system).
+   ============================================================ */
+
+.cos-root {
+  --cos-brand: #6366f1;
+  --cos-brand-600: #4f46e5;
+  --cos-brand-700: #4338ca;
+  --cos-ink: #0f172a;
+  --cos-bg: #f8fafc;
+  --cos-magenta: #cb5dec;
+
+  font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+  color: var(--cos-ink);
+  background-color: var(--cos-bg);
+  background-image: radial-gradient(circle at 15% 50%, rgba(99, 102, 241, 0.04), transparent 35%),
+    radial-gradient(circle at 85% 30%, rgba(244, 63, 94, 0.03), transparent 35%);
+  -webkit-font-smoothing: antialiased;
+}
+
+.cos-root .cos-display {
+  font-family: "Space Grotesk", system-ui, sans-serif;
+}
+
+/* Frosted glass panel — the signature surface from the template */
+.cos-root .cos-glass {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 8px 32px -4px rgba(0, 0, 0, 0.04), 0 4px 16px -4px rgba(0, 0, 0, 0.02);
+}
+
+.cos-root .cos-stat-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.cos-root .cos-stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px -4px rgba(99, 102, 241, 0.1);
+}
+
+/* Creative card hover lift (mirrors the template) */
+.cos-root .cos-creative-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.cos-root .cos-creative-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 18px 40px -8px rgba(15, 23, 42, 0.16);
+}
+
+/* Status badge pill */
+.cos-root .cos-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* The pink client header (only rendered when a client is selected) */
+.cos-root .cos-client-header {
+  background: #cb5dec;
+}
+
+/* Live pulse dot */
+@keyframes cosPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+.cos-root .cos-pulse {
+  animation: cosPulse 1.6s infinite;
+}
+
+/* Tab slide-up reveal */
+@keyframes cosSlideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: none; }
+}
+.cos-root .cos-reveal {
+  animation: cosSlideUp 0.35s ease-out;
+}
+
+.cos-root .cos-hide-scrollbar::-webkit-scrollbar { display: none; }
+.cos-root .cos-hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }

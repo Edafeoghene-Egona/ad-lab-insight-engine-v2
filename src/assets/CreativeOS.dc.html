@@ -1,0 +1,1166 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Inter+Tight:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; }
+  body { font-family: 'Inter', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  #cos-mount { height: 100%; }
+  [data-theme="dark"] {
+    --bg:#0E0A1B; --surface:#171231; --surface2:#201A3D; --border:#2C2650;
+    --text:#F5F3FC; --dim:#A39FC4; --faint:#6F6B92;
+    --shadow:0 10px 34px rgba(0,0,0,.40); --innerline:rgba(255,255,255,.04);
+  }
+  [data-theme="light"] {
+    --bg:#F6F6FB; --surface:#FFFFFF; --surface2:#F1EFF8; --border:#E7E4F1;
+    --text:#16121F; --dim:#6B6680; --faint:#9A95AD;
+    --shadow:0 10px 30px rgba(80,60,140,.08); --innerline:rgba(20,12,36,.02);
+  }
+  [data-theme] ::-webkit-scrollbar { width:10px; height:10px; }
+  [data-theme] ::-webkit-scrollbar-thumb { background:var(--border); border-radius:8px; border:2px solid transparent; background-clip:padding-box; }
+  [data-theme] ::-webkit-scrollbar-track { background:transparent; }
+  ::selection { background:rgba(139,92,246,.35); }
+  @keyframes cosFade { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
+  @keyframes cosPulse { 0%,100% { opacity:1; } 50% { opacity:.35; } }
+  @keyframes cosSpin { to { transform:rotate(360deg); } }
+  @keyframes cosShimmer { 0% { background-position:-400px 0; } 100% { background-position:400px 0; } }
+</style>
+</helmet>
+<div id="cos-mount">{{ app }}</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const h = React.createElement;
+const GRAD = 'linear-gradient(110deg,#C13FE0 0%,#8B5CF6 52%,#6D5DF6 100%)';
+const C = { violet:'#8B5CF6', magenta:'#C13FE0', indigo:'#6366F1', win:'#16C784', test:'#6366F1', retire:'#F4476B', warn:'#F5A623', info:'#3FA9F5', teal:'#21D4B4' };
+const STATUS = { WIN:C.win, TEST:C.test, RETIRE:C.retire, NEW:C.info, SCALING:C.magenta };
+const VIZ = ['#8B5CF6','#16C784','#F5A623','#F4476B','#3FA9F5','#C13FE0','#6366F1','#21D4B4'];
+
+const ICONS = {
+  command:[['rect',{x:3,y:3,width:7,height:9,rx:1.5}],['rect',{x:14,y:3,width:7,height:5,rx:1.5}],['rect',{x:14,y:12,width:7,height:9,rx:1.5}],['rect',{x:3,y:16,width:7,height:5,rx:1.5}]],
+  lab:[['path',{d:'M10 2v6.3L4.6 17.6A2 2 0 0 0 6.3 21h11.4a2 2 0 0 0 1.7-3.4L14 8.3V2'}],['path',{d:'M8.5 2h7'}],['path',{d:'M6.8 16h10.4'}]],
+  hook:[['path',{d:'M22 12h-4l-3 9L9 3l-3 9H2'}]],
+  vault:[['path',{d:'M6 9H4.5a2.5 2.5 0 0 1 0-5H6'}],['path',{d:'M18 9h1.5a2.5 2.5 0 0 0 0-5H18'}],['path',{d:'M4 22h16'}],['path',{d:'M10 14.7V17c0 .6-.5 1-1 1.2C7.8 18.8 7 20.2 7 22'}],['path',{d:'M14 14.7V17c0 .6.5 1 1 1.2 1.2.6 2 2 2 2.8'}],['path',{d:'M18 2H6v7a6 6 0 0 0 12 0V2Z'}]],
+  radar:[['path',{d:'M19.07 4.93A10 10 0 0 0 6.99 3.34'}],['path',{d:'M2.29 9.62A10 10 0 1 0 21.31 8.35'}],['path',{d:'M16.24 7.76A6 6 0 1 0 8.23 16.67'}],['circle',{cx:12,cy:12,r:2}],['path',{d:'m13.41 10.59 5.66-5.66'}]],
+  trend:[['polyline',{points:'22 7 13.5 15.5 8.5 10.5 2 17'}],['polyline',{points:'16 7 22 7 22 13'}]],
+  attr:[['circle',{cx:18,cy:18,r:3}],['circle',{cx:6,cy:6,r:3}],['path',{d:'M13 6h3a2 2 0 0 1 2 2v7'}],['path',{d:'M11 18H8a2 2 0 0 1-2-2V9'}]],
+  action:[['path',{d:'M12 3 13.9 8.6 19.5 8.6 14.8 12.4 16.5 18 12 14.6 7.5 18 9.2 12.4 4.5 8.6 10.1 8.6Z'}],['path',{d:'M5 3v4'}],['path',{d:'M19 17v4'}],['path',{d:'M3 5h4'}],['path',{d:'M17 19h4'}]],
+  reports:[['path',{d:'M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z'}],['path',{d:'M14 2v5h5'}],['path',{d:'M16 13H8'}],['path',{d:'M16 17H8'}],['path',{d:'M10 9H8'}]],
+  settings:[['path',{d:'M12.2 2h-.4a2 2 0 0 0-2 2v.2a2 2 0 0 1-1 1.7l-.4.3a2 2 0 0 1-2 0l-.2-.1a2 2 0 0 0-2.7.7l-.2.4a2 2 0 0 0 .7 2.7l.2.1a2 2 0 0 1 1 1.7v.5a2 2 0 0 1-1 1.7l-.2.1a2 2 0 0 0-.7 2.7l.2.4a2 2 0 0 0 2.7.7l.2-.1a2 2 0 0 1 2 0l.4.3a2 2 0 0 1 1 1.7v.2a2 2 0 0 0 2 2h.4a2 2 0 0 0 2-2v-.2a2 2 0 0 1 1-1.7l.4-.3a2 2 0 0 1 2 0l.2.1a2 2 0 0 0 2.7-.7l.2-.4a2 2 0 0 0-.7-2.7l-.2-.1a2 2 0 0 1-1-1.7v-.5a2 2 0 0 1 1-1.7l.2-.1a2 2 0 0 0 .7-2.7l-.2-.4a2 2 0 0 0-2.7-.7l-.2.1a2 2 0 0 1-2 0l-.4-.3a2 2 0 0 1-1-1.7V4a2 2 0 0 0-2-2z'}],['circle',{cx:12,cy:12,r:3}]],
+  bell:[['path',{d:'M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9'}],['path',{d:'M10.3 21a1.94 1.94 0 0 0 3.4 0'}]],
+  share:[['circle',{cx:18,cy:5,r:3}],['circle',{cx:6,cy:12,r:3}],['circle',{cx:18,cy:19,r:3}],['line',{x1:8.6,y1:13.5,x2:15.4,y2:17.5}],['line',{x1:15.4,y1:6.5,x2:8.6,y2:10.5}]],
+  search:[['circle',{cx:11,cy:11,r:8}],['path',{d:'m21 21-4.3-4.3'}]],
+  sun:[['circle',{cx:12,cy:12,r:4}],['path',{d:'M12 2v2'}],['path',{d:'M12 20v2'}],['path',{d:'m4.9 4.9 1.4 1.4'}],['path',{d:'m17.7 17.7 1.4 1.4'}],['path',{d:'M2 12h2'}],['path',{d:'M20 12h2'}],['path',{d:'m6.3 17.7-1.4 1.4'}],['path',{d:'m19.1 4.9-1.4 1.4'}]],
+  moon:[['path',{d:'M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z'}]],
+  play:[['polygon',{points:'6 3 20 12 6 21 6 3'}]],
+  external:[['path',{d:'M15 3h6v6'}],['path',{d:'M10 14 21 3'}],['path',{d:'M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6'}]],
+  chevron:[['path',{d:'m6 9 6 6 6-6'}]],
+  chevronR:[['path',{d:'m9 18 6-6-6-6'}]],
+  calendar:[['rect',{x:3,y:4,width:18,height:18,rx:2}],['path',{d:'M16 2v4'}],['path',{d:'M8 2v4'}],['path',{d:'M3 10h18'}]],
+  filter:[['polygon',{points:'22 3 2 3 10 12.5 10 19 14 21 14 12.5 22 3'}]],
+  x:[['path',{d:'M18 6 6 18'}],['path',{d:'M6 6l12 12'}]],
+  up:[['path',{d:'M7 17 17 7'}],['path',{d:'M7 7h10v10'}]],
+  down:[['path',{d:'M7 7 17 17'}],['path',{d:'M17 7v10H7'}]],
+  plus:[['path',{d:'M12 5v14'}],['path',{d:'M5 12h14'}]],
+  panel:[['rect',{x:3,y:3,width:18,height:18,rx:2}],['path',{d:'M9 3v18'}]],
+  bolt:[['path',{d:'M13 2 3 14h7l-1 8 10-12h-7l1-6z'}]],
+  check:[['path',{d:'M20 6 9 17l-5-5'}]],
+  dots:[['circle',{cx:12,cy:5,r:1.4}],['circle',{cx:12,cy:12,r:1.4}],['circle',{cx:12,cy:19,r:1.4}]],
+  fire:[['path',{d:'M12 2c1 3 4 4.5 4 8a4 4 0 0 1-8 0c0-1 .3-1.8.7-2.5C9 8 9.5 9 10.5 9 9.8 6.5 11 3.8 12 2Z'}]],
+  clock:[['circle',{cx:12,cy:12,r:9}],['path',{d:'M12 7v5l3 2'}]],
+  link:[['path',{d:'M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1'}],['path',{d:'M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1'}]],
+  layers:[['path',{d:'m12 2 9 5-9 5-9-5 9-5Z'}],['path',{d:'m3 12 9 5 9-5'}],['path',{d:'m3 17 9 5 9-5'}]],
+  flag:[['path',{d:'M4 22V4h13l-2 4 2 4H4'}]],
+  arrowR:[['path',{d:'M5 12h14'}],['path',{d:'m13 5 7 7-7 7'}]],
+  grip:[['circle',{cx:9,cy:6,r:1}],['circle',{cx:15,cy:6,r:1}],['circle',{cx:9,cy:12,r:1}],['circle',{cx:15,cy:12,r:1}],['circle',{cx:9,cy:18,r:1}],['circle',{cx:15,cy:18,r:1}]],
+  eye:[['path',{d:'M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z'}],['circle',{cx:12,cy:12,r:3}]],
+  db:[['ellipse',{cx:12,cy:5,rx:9,ry:3}],['path',{d:'M3 5v14a9 3 0 0 0 18 0V5'}],['path',{d:'M3 12a9 3 0 0 0 18 0'}]]
+};
+function icon(name, size){ size = size||18; const d = ICONS[name]||ICONS.command; return h('svg',{width:size,height:size,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:1.9,strokeLinecap:'round',strokeLinejoin:'round'}, d.map((p,i)=>h(p[0],Object.assign({key:i},p[1])))); }
+
+const TABS = [
+  {id:'command',label:'Command Center',subs:['Portfolio','Account Health','Alerts','This Week']},
+  {id:'lab',label:'Creative Testing Lab',subs:['Leaderboard','Test Pipeline','By Angle','By Hook','Compare','Concepts & Scripts']},
+  {id:'hook',label:'Hook & Retention',subs:['Quartile Funnel','Retention Curves','Hook Rate Ranking','Drop-off Map']},
+  {id:'vault',label:'Winning Vault',subs:['Winners','By Niche','Swipe & Replicate','Templates']},
+  {id:'radar',label:'Competitor Radar',subs:['Discover','Saved Boards','Brand Tracker','Angle Trends']},
+  {id:'trend',label:'Trendlines',subs:['Views vs Spend','View Rate','Conversions','Custom']},
+  {id:'attr',label:'Attribution',subs:['Triple Whale vs Google','View-Through','True ROAS Lift','Window Settings']},
+  {id:'action',label:'Action Plan',subs:['Recommendations','Kill List','Scale List','Weekly Story']},
+  {id:'reports',label:'Client Reports',subs:['Live Dashboard','Weekly Snapshots','Share Links','Branding']},
+  {id:'settings',label:'Integrations & Settings',subs:['Data Sources','Accounts','Thresholds & Rules','Team','Billing']}
+];
+
+const CLIENTS = [
+  {id:'glowora', name:'glowora.com', niche:'Skincare', acct:'711-060-6646', roas:3.2, twRoas:3.2, gRoas:1.8, spend:12166, winRate:41, trend:0.4, health:'good', tested:24, winners:5 },
+  {id:'koriderm', name:'koriderm.com', niche:'Supplements', acct:'492-118-3320', roas:2.4, twRoas:2.4, gRoas:1.4, spend:8900, winRate:33, trend:0.1, health:'watch', tested:18, winners:3 },
+  {id:'saint', name:'saintbrand.com', niche:'Beauty', acct:'305-771-9012', roas:4.1, twRoas:4.1, gRoas:2.3, spend:21400, winRate:52, trend:0.6, health:'good', tested:31, winners:9 },
+  {id:'relivex', name:'relivex.com', niche:'Supplements', acct:'660-204-8841', roas:1.6, twRoas:1.6, gRoas:0.9, spend:15200, winRate:22, trend:-0.3, health:'risk', tested:21, winners:2 },
+  {id:'histrips', name:'histrips.com', niche:'Oral care', acct:'128-553-7700', roas:2.9, twRoas:2.9, gRoas:1.7, spend:6700, winRate:38, trend:0.2, health:'good', tested:14, winners:4 },
+  {id:'flown', name:'flown.com', niche:'Sleep', acct:'577-339-1265', roas:1.9, twRoas:1.9, gRoas:1.1, spend:4300, winRate:27, trend:-0.1, health:'watch', tested:12, winners:2 }
+];
+
+function cr(id,name,fmt,len,impr,views,vvr,hook,compl,cpv,conv,result,angle,line,stage,days,spend,ret){
+  return {id,name,fmt,len,impr,views,vvr,hook,compl,cpv,conv,result,angle,line,stage,days,spend,ret};
+}
+const CREATIVES = [
+  cr(1,'GLOW 200 1beter','In-stream','0:49',355000,170361,47.9,60.5,41.2,0.009,14.56,'WIN','Better skin','One bottle, better skin in 28 days','Scaling',22,1620,[100,60,50,46,42]),
+  cr(2,'#236 Botox Alternative H3','In-stream','0:16',112000,51425,45.9,68.5,44.7,0.009,6.11,'WIN','Botox alternative','The botox alternative dermatologists quietly use','Scaling',19,980,[100,68,53,47,45]),
+  cr(3,'#237 10 Jaar Jonger Dylan V2','In-stream','0:16',376000,130968,34.8,56.1,33.3,0.011,9.95,'WIN','10 years younger','Look 10 years younger by Friday','Winning',16,1440,[100,56,43,37,33]),
+  cr(4,'261 ClaymationStyle 4','In-stream','1:32',507000,149769,29.6,31.0,14.4,0.015,17.42,'WIN','Claymation explainer','Watch what retinol actually does to skin','Winning',12,2240,[100,31,22,18,14]),
+  cr(5,'258 Verjaardagssale 3','In-stream','0:58',8000,2171,27.6,36.4,20.3,0.024,1.71,'TEST','Birthday sale','Our birthday, your 40% off','Live',4,190,[100,36,28,23,20]),
+  cr(6,'GLOW 208 1beter','In-stream','1:07',116000,28775,24.7,30.7,15.2,0.021,5.13,'TEST','Better skin','The 1% of routines that actually fix skin','Live',7,610,[100,31,23,18,15]),
+  cr(7,'GLOW 210 2','In-stream','1:01',167000,34141,20.4,23.4,9.4,0.017,5.57,'TEST','Better skin','Stop wasting money on serums','Live',6,580,[100,23,15,11,9]),
+  cr(8,'274 LivedInSeoul 2','In-stream','2:40',12000,2435,20.2,16.0,6.0,0.031,1.32,'TEST','Lived-in Seoul','I lived in Seoul, here is the real secret','Live',3,75,[100,16,11,8,6]),
+  cr(9,'254 IT2 IngredientsAnimation 3','In-stream','1:45',227000,45247,19.9,16.8,6.4,0.019,7.34,'TEST','Ingredient animation','What is really inside your serum','Live',8,860,[100,17,11,8,6]),
+  cr(10,'GLOW 204 2','In-stream','1:06',399000,37605,9.4,10.4,5.1,0.027,16.53,'RETIRE','Better skin','A calmer, clearer complexion','Retired',14,1010,[100,10,7,6,5]),
+  cr(11,'246 AnimatedMask 1','In-stream','0:55',59000,4661,7.9,9.7,5.2,0.046,1.0,'RETIRE','Animated mask','The mask your skin has been missing','Retired',11,215,[100,10,7,6,5]),
+  cr(12,'268 IT1 KoreanSkincareSong','In-stream','1:12',143000,38221,26.7,28.4,12.1,0.018,6.2,'TEST','Korean skincare','The Korean skincare song you cannot unhear','Live',9,690,[100,28,19,15,12]),
+  cr(13,'262 2','In-stream','0:42',98000,22310,22.8,25.1,10.8,0.020,4.1,'TEST','Birthday sale','48 hours, then the sale is gone','Live',5,450,[100,25,17,13,11]),
+  cr(14,'239 Skin Industry Scam Dylan H2','In-stream','0:16',288000,98640,34.3,52.0,30.1,0.012,8.9,'WIN','10 years younger','The skincare industry does not want you to see this','Winning',15,1180,[100,52,40,34,30]),
+  cr(15,'271 UGC Morning Routine 2','In-stream','0:38',76000,19380,25.5,29.0,13.4,0.019,3.8,'TEST','UGC routine','My honest 30-second morning routine','Live',6,370,[100,29,20,16,13]),
+  cr(16,'233 Dermatologist Reacts 1','In-stream','1:20',201000,52260,26.0,27.5,11.9,0.018,7.0,'TEST','Expert reaction','A dermatologist reacts to your routine','Live',10,940,[100,27,18,14,12]),
+  cr(17,'248 Before After Split 3','In-stream','0:24',134000,33500,25.0,31.2,16.0,0.016,5.4,'TEST','Before/after','28 days, real before and after','Live',7,540,[100,31,23,19,16]),
+  cr(18,'255 IngredientScience 2','In-stream','1:50',88000,12320,14.0,13.5,5.5,0.030,2.1,'RETIRE','Ingredient animation','The science most brands skip','Retired',9,370,[100,14,9,7,6]),
+  cr(19,'263 Birthday Countdown 1','In-stream','0:30',45000,9450,21.0,24.0,11.0,0.022,2.4,'TEST','Birthday sale','The countdown is on','Live',4,210,[100,24,16,13,11]),
+  cr(20,'269 Seoul Glass Skin 3','In-stream','1:05',159000,41340,26.0,28.8,12.6,0.017,6.6,'TEST','Lived-in Seoul','Glass skin, finally explained','Live',8,700,[100,29,20,16,13]),
+  cr(21,'241 10 Jaar Jonger H4','In-stream','0:18',210000,71400,34.0,54.0,31.0,0.011,7.8,'WIN','10 years younger','Look 10 years younger by Friday','Winning',13,790,[100,54,41,35,31]),
+  cr(22,'252 AnimatedMask 3','In-stream','0:50',67000,5360,8.0,9.0,4.8,0.045,1.1,'RETIRE','Animated mask','A mask that finally works','Retired',8,240,[100,9,6,5,5]),
+  cr(23,'266 ClaymationStyle 6','In-stream','1:28',312000,84240,27.0,29.5,13.8,0.016,11.2,'TEST','Claymation explainer','Watch what retinol actually does to skin','Live',9,1350,[100,30,21,17,14]),
+  cr(24,'273 LivedInSeoul 4','In-stream','2:20',21000,4200,20.0,16.5,6.2,0.030,1.6,'TEST','Lived-in Seoul','Seoul taught me one thing about skin','Live',3,130,[100,17,11,8,6])
+];
+const BENCH = { vvr:24.8, hook:30.1, mid:22.6, q3:19.0, compl:16.5 };
+const TOTALS = { views:783005, spend:12166, conv:136.7 };
+
+const DAYS = ['Jun 16','Jun 17','Jun 18','Jun 19','Jun 20','Jun 21','Jun 22','Jun 23'];
+const D_VIEWS = [140000,128000,112000,95000,72000,65000,73000,80000];
+const D_SPEND = [2000,1850,1650,1400,1200,1150,1180,1260];
+const D_VR = [23.4,24.1,24.8,25.2,24.0,25.6,28.2,30.1];
+const D_CONV = [26,24,20,16,11,7,5,5];
+
+const ANGLES = [
+  {name:'10 years younger', tests:9, wins:4, hit:44, best:'#239 Skin Industry Scam', avgHook:46.2, status:'hot'},
+  {name:'Botox alternative', tests:5, wins:2, hit:40, best:'#236 Botox Alternative H3', avgHook:51.0, status:'hot'},
+  {name:'Better skin', tests:7, wins:2, hit:29, best:'GLOW 200 1beter', avgHook:32.1, status:'steady'},
+  {name:'Claymation explainer', tests:6, wins:1, hit:33, best:'261 ClaymationStyle 4', avgHook:30.2, status:'steady'},
+  {name:'Korean skincare', tests:4, wins:0, hit:0, best:'268 KoreanSkincareSong', avgHook:28.4, status:'cold'},
+  {name:'Lived-in Seoul', tests:5, wins:0, hit:0, best:'269 Seoul Glass Skin 3', avgHook:21.4, status:'cold'},
+  {name:'Birthday sale', tests:4, wins:0, hit:0, best:'258 Verjaardagssale 3', avgHook:28.5, status:'cold'},
+  {name:'Ingredient animation', tests:5, wins:0, hit:0, best:'254 IngredientsAnimation 3', avgHook:15.4, status:'cold'},
+  {name:'Animated mask', tests:3, wins:0, hit:0, best:'246 AnimatedMask 1', avgHook:9.6, status:'dead'}
+];
+const HOOKS = [
+  {concept:'10 Jaar Jonger', variant:'H2', line:'The skincare industry scam', hook:52.0, skip:48.0, result:'WIN'},
+  {concept:'10 Jaar Jonger', variant:'H4', line:'Look 10 years younger by Friday', hook:54.0, skip:46.0, result:'WIN'},
+  {concept:'10 Jaar Jonger', variant:'V2', line:'Dylan, 10 years younger', hook:56.1, skip:43.9, result:'WIN'},
+  {concept:'Botox Alternative', variant:'H3', line:'The botox alternative dermatologists use', hook:68.5, skip:31.5, result:'WIN'},
+  {concept:'Botox Alternative', variant:'H1', line:'Skip the needles', hook:41.2, skip:58.8, result:'TEST'},
+  {concept:'Better skin', variant:'1beter', line:'One bottle, better skin', hook:60.5, skip:39.5, result:'WIN'},
+  {concept:'Better skin', variant:'V2', line:'Stop wasting money on serums', hook:23.4, skip:76.6, result:'TEST'},
+  {concept:'Korean skincare', variant:'IT1', line:'The Korean skincare song', hook:28.4, skip:71.6, result:'TEST'},
+  {concept:'Claymation', variant:'4', line:'Watch what retinol actually does', hook:31.0, skip:69.0, result:'WIN'},
+  {concept:'Animated mask', variant:'1', line:'The mask your skin has been missing', hook:9.7, skip:90.3, result:'RETIRE'}
+];
+
+const COMPETITORS = [
+  {brand:'Lumora', niche:'Skincare', hook:'Dermatologists are furious', len:'0:22', seen:'May 28', spend:'$50–100k', market:'NL', fmt:'In-stream'},
+  {brand:'Seoulé', niche:'Skincare', hook:'I moved to Seoul for this', len:'0:45', seen:'Jun 02', spend:'$20–50k', market:'US', fmt:'In-stream'},
+  {brand:'Pluमाre', niche:'Beauty', hook:'The 8-second glass skin test', len:'0:15', seen:'Jun 11', spend:'$100k+', market:'UK', fmt:'Shorts'},
+  {brand:'Reveau', niche:'Skincare', hook:'Stop buying retinol until you see this', len:'0:31', seen:'Jun 09', spend:'$20–50k', market:'NL', fmt:'In-stream'},
+  {brand:'Noviqa', niche:'Supplements', hook:'Your collagen is fake', len:'0:28', seen:'Jun 14', spend:'$10–20k', market:'DE', fmt:'In-stream'},
+  {brand:'Gljust', niche:'Beauty', hook:'My esthetician quit over this', len:'0:38', seen:'Jun 06', spend:'$50–100k', market:'US', fmt:'In-stream'},
+  {brand:'Hydroné', niche:'Skincare', hook:'Botox vs this $39 serum', len:'0:19', seen:'Jun 15', spend:'$20–50k', market:'NL', fmt:'Shorts'},
+  {brand:'Saint Aera', niche:'Beauty', hook:'The birthday glow protocol', len:'0:52', seen:'Jun 03', spend:'$10–20k', market:'FR', fmt:'In-stream'},
+  {brand:'Korské', niche:'Skincare', hook:'Korean grandmas knew this', len:'1:02', seen:'Jun 08', spend:'$20–50k', market:'US', fmt:'In-stream'},
+  {brand:'Velour Co', niche:'Beauty', hook:'Claymation: how serums absorb', len:'1:14', seen:'Jun 12', spend:'$50–100k', market:'UK', fmt:'In-stream'},
+  {brand:'Dewlux', niche:'Skincare', hook:'10 years younger in one ad', len:'0:24', seen:'Jun 16', spend:'$100k+', market:'NL', fmt:'In-stream'},
+  {brand:'Aurae', niche:'Supplements', hook:'The scam in your supplement', len:'0:33', seen:'Jun 13', spend:'$10–20k', market:'DE', fmt:'In-stream'}
+];
+
+const RECOS = [
+  {kind:'scale', title:'Scale GLOW 200 1beter', body:'47.9% view rate and 41.2% completion at €0.009 CPV. It is your most efficient asset and budget is the only ceiling.', metric:'+€600/day', conf:92, action:'Add to Scale List'},
+  {kind:'iterate', title:'Iterate the Botox alternative hook', body:'H3 hits a 68.5% hook rate, far above the 30.1% floor. Spawn three hook variants on the same angle before it fatigues.', metric:'68.5% hook', conf:84, action:'Open in Swipe & Replicate'},
+  {kind:'retire', title:'Retire these three', body:'GLOW 204 2, 246 AnimatedMask 1 and 252 AnimatedMask 3 all sit below the 30.1% hook floor and crossed the kill threshold.', metric:'3 below floor', conf:96, action:'Send to Kill List'},
+  {kind:'test', title:'Test Lumora\u2019s "dermatologists are furious" angle', body:'Competitor Radar shows it scaling in NL skincare. It rhymes with your 10-years-younger winners. Brief one variant.', metric:'$50\u2013100k spend', conf:71, action:'Create concept brief'}
+];
+
+const INTEGRATIONS = [
+  {name:'Google Ads API', icon:'g', status:'connected', sync:'2 min ago', detail:'6 accounts mapped'},
+  {name:'YouTube Data', icon:'yt', status:'connected', sync:'2 min ago', detail:'Creative + retention pulls'},
+  {name:'Triple Whale', icon:'tw', status:'connected', sync:'14 min ago', detail:'Blended ROAS source'},
+  {name:'BigQuery', icon:'bq', status:'connected', sync:'1 hr ago', detail:'Warehouse exports'},
+  {name:'Looker Studio', icon:'lk', status:'warn', sync:'3 days ago', detail:'Legacy weekly reports'},
+  {name:'Ads Transparency Center', icon:'tc', status:'connected', sync:'21 min ago', detail:'Competitor ad library'}
+];
+
+class Component extends DCLogic {
+  constructor(props){
+    super(props);
+    this.state = {
+      theme:'dark', tab:'command', sub:'Portfolio', collapsed:false,
+      acctId:'glowora', acctOpen:false, dateOpen:false, range:'Last 14 days', live:true,
+      drawer:null, share:false, sortKey:'vvr', sortDir:'desc', statusFilter:'All',
+      search:'', compare:[2,1,3], pipeline:null, niche:'All', clientMode:false
+    };
+    this.go = this.go.bind(this);
+  }
+  acct(){ return CLIENTS.find(c=>c.id===this.state.acctId) || CLIENTS[0]; }
+  go(tab, sub){ const t = TABS.find(x=>x.id===tab); this.setState({tab, sub: sub || t.subs[0], drawer:null}); }
+  setSub(sub){ this.setState({sub}); }
+  toggleTheme(){ this.setState(s=>({theme: s.theme==='dark'?'light':'dark'})); }
+  fmtN(n){ return n>=1000 ? (n>=100000? Math.round(n/1000)+'k' : (n/1000).toFixed(n>=10000?0:1)+'k') : (''+n); }
+  fmtFull(n){ return n.toLocaleString('en-US'); }
+  sortRows(rows){ const {sortKey,sortDir}=this.state; const f=sortDir==='desc'?-1:1; return rows.slice().sort((a,b)=>{ const av=a[sortKey],bv=b[sortKey]; if(typeof av==='string') return f*av.localeCompare(bv); return f*(av-bv); }); }
+  toggleSort(k){ this.setState(s=>({sortKey:k, sortDir: s.sortKey===k && s.sortDir==='desc' ? 'asc':'desc'})); }
+
+  // ---------- chart helpers ----------
+  lineChart(o){
+    const w=o.w||760, ht=o.h||220, pad={l:o.noAxis?6:42,r:14,t:14,b:24};
+    const iw=w-pad.l-pad.r, ih=ht-pad.t-pad.b;
+    const series=o.series, n=series[0].values.length;
+    const max=o.yMax || Math.max(...series.flatMap(s=>s.values), o.benchmark?o.benchmark.value:0)*1.12;
+    const X=i=> pad.l + (n===1?0:iw*i/(n-1));
+    const Y=v=> pad.t+ih-(v/max)*ih;
+    const grid=[]; const gn=4;
+    for(let g=0;g<=gn;g++){ const yy=pad.t+ih*g/gn; const val=Math.round(max*(1-g/gn)); grid.push(h('line',{key:'g'+g,x1:pad.l,x2:w-pad.r,y1:yy,y2:yy,stroke:'var(--border)',strokeWidth:1,opacity:.6})); if(!o.noAxis) grid.push(h('text',{key:'t'+g,x:pad.l-8,y:yy+3,textAnchor:'end',fontSize:9,fill:'var(--faint)'}, o.fmtY?o.fmtY(val):val)); }
+    const labels=(o.labels||DAYS).map((l,i)=> h('text',{key:'l'+i,x:X(i),y:ht-6,textAnchor:'middle',fontSize:9,fill:'var(--faint)'}, l));
+    const layers=[];
+    series.forEach((s,si)=>{
+      const pts=s.values.map((v,i)=>[X(i),Y(v)]);
+      const dPath='M'+pts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' L');
+      if(s.area){ const ar=dPath+` L${X(n-1).toFixed(1)},${(pad.t+ih).toFixed(1)} L${X(0).toFixed(1)},${(pad.t+ih).toFixed(1)} Z`; layers.push(h('path',{key:'a'+si,d:ar,fill:s.color,opacity:.12})); }
+      layers.push(h('path',{key:'p'+si,d:dPath,fill:'none',stroke:s.color,strokeWidth:2.4,strokeDasharray:s.dashed?'5 5':'0',strokeLinecap:'round'}));
+      if(!o.noDots) pts.forEach((p,i)=> layers.push(h('circle',{key:'d'+si+'-'+i,cx:p[0],cy:p[1],r:2.6,fill:'var(--surface)',stroke:s.color,strokeWidth:1.8},h('title',null,(s.name?s.name+': ':'')+(o.fmtY?o.fmtY(s.values[i]):s.values[i])))));
+    });
+    if(o.benchmark){ const by=Y(o.benchmark.value); layers.push(h('line',{key:'bm',x1:pad.l,x2:w-pad.r,y1:by,y2:by,stroke:C.warn,strokeWidth:1.4,strokeDasharray:'6 4'})); layers.push(h('text',{key:'bml',x:w-pad.r,y:by-5,textAnchor:'end',fontSize:9,fill:C.warn},o.benchmark.label)); }
+    return h('svg',{viewBox:`0 0 ${w} ${ht}`,width:'100%',height:ht,style:{display:'block'}}, grid, labels, layers);
+  }
+  donut(segs,total,label){
+    const size=180, r=66, cx=size/2, cy=size/2, circ=2*Math.PI*r; let off=0;
+    const arcs=segs.map((s,i)=>{ const frac=s.value/total; const el=h('circle',{key:i,cx,cy,r,fill:'none',stroke:s.color,strokeWidth:18,strokeDasharray:`${(frac*circ).toFixed(2)} ${circ.toFixed(2)}`,strokeDashoffset:(-off*circ).toFixed(2),transform:`rotate(-90 ${cx} ${cy})`,strokeLinecap:'butt'},h('title',null,`${s.label}: ${s.value}`)); off+=frac; return el; });
+    return h('svg',{viewBox:`0 0 ${size} ${size}`,width:size,height:size},
+      h('circle',{cx,cy,r,fill:'none',stroke:'var(--border)',strokeWidth:18}), arcs,
+      h('text',{x:cx,y:cy-2,textAnchor:'middle',fontSize:26,fontWeight:800,fill:'var(--text)',style:{fontFamily:'Inter Tight'}}, label),
+      h('text',{x:cx,y:cy+18,textAnchor:'middle',fontSize:10,fill:'var(--faint)'}, 'total'));
+  }
+  hbars(items,opts){
+    opts=opts||{}; const max=opts.max||Math.max(...items.map(i=>i.value)); const rowH=opts.rowH||30;
+    return h('div',{style:{display:'flex',flexDirection:'column',gap:8}}, items.map((it,i)=>
+      h('div',{key:i,style:{display:'grid',gridTemplateColumns:'150px 1fr 52px',alignItems:'center',gap:10}},
+        h('div',{style:{fontSize:11.5,color:'var(--dim)',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}, it.label),
+        h('div',{style:{height:rowH-12,background:'var(--surface2)',borderRadius:6,overflow:'hidden'}}, h('div',{style:{height:'100%',width:Math.max(2,(it.value/max)*100)+'%',background:it.color||C.violet,borderRadius:6,transition:'width .3s'}})),
+        h('div',{style:{fontSize:12,fontWeight:700,textAlign:'right',color:it.flag?C.retire:'var(--text)',fontVariantNumeric:'tabular-nums'}}, opts.fmt?opts.fmt(it.value):it.value))));
+  }
+  spark(values,color){
+    const w=84,ht=26,max=Math.max(...values),min=Math.min(...values),rng=max-min||1;
+    const pts=values.map((v,i)=>[i/(values.length-1)*w, ht-2-((v-min)/rng)*(ht-4)]);
+    const d='M'+pts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' L');
+    return h('svg',{viewBox:`0 0 ${w} ${ht}`,width:w,height:ht},h('path',{d,fill:'none',stroke:color,strokeWidth:2,strokeLinecap:'round'}));
+  }
+
+  // ---------- ui atoms ----------
+  card(children,extra){ return h('div',{style:Object.assign({background:'var(--surface)',border:'1px solid var(--border)',borderRadius:18,boxShadow:'var(--shadow)',padding:18},extra)}, children); }
+  lbl(t,extra){ return h('div',{style:Object.assign({fontSize:10.5,letterSpacing:'.09em',textTransform:'uppercase',color:'var(--faint)',fontWeight:600},extra)}, t); }
+  pill(status){ const col=STATUS[status]||C.test; return h('span',{style:{display:'inline-flex',alignItems:'center',gap:5,padding:'3px 9px',borderRadius:999,background:col+'22',color:col,fontSize:10.5,fontWeight:700,letterSpacing:'.04em'}}, h('span',{style:{width:6,height:6,borderRadius:9,background:col}}), status); }
+  delta(v,suffix){ const up=v>=0; const col=up?C.win:C.retire; return h('span',{style:{display:'inline-flex',alignItems:'center',gap:3,color:col,fontSize:11.5,fontWeight:700}}, icon(up?'up':'down',12), (up?'+':'')+v+(suffix||'')); }
+  statCard(o){
+    return this.card([
+      h('div',{key:'l',style:{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}, this.lbl(o.label), o.spark? this.spark(o.spark,o.sparkColor||C.violet):null),
+      h('div',{key:'v',style:{fontFamily:'Inter Tight',fontWeight:800,fontSize:o.big?40:30,letterSpacing:'-.02em',marginTop:8,color:o.color||'var(--text)',fontVariantNumeric:'tabular-nums'}}, o.value),
+      h('div',{key:'f',style:{display:'flex',gap:8,alignItems:'center',marginTop:6}}, o.delta!=null?this.delta(o.delta,o.deltaSuffix):null, h('span',{style:{fontSize:11,color:'var(--faint)'}}, o.foot))
+    ],{padding:16});
+  }
+  chartCard(title,period,children,legend){
+    return this.card([
+      h('div',{key:'h',style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}},
+        h('div',{style:{fontSize:14,fontWeight:700,color:'var(--text)'}}, title),
+        period? h('span',{style:{fontSize:10.5,color:'var(--dim)',background:'var(--surface2)',border:'1px solid var(--border)',padding:'4px 10px',borderRadius:999}}, period):null),
+      h('div',{key:'b'}, children),
+      legend? h('div',{key:'lg',style:{display:'flex',flexWrap:'wrap',gap:14,marginTop:12}}, legend.map((l,i)=>h('span',{key:i,style:{display:'inline-flex',alignItems:'center',gap:6,fontSize:11,color:'var(--dim)'}}, h('span',{style:{width:10,height:3,borderRadius:2,background:l.color}}), l.label))):null
+    ]);
+  }
+  insight(o){
+    const col=o.kind==='retire'?C.retire:o.kind==='scale'?C.win:o.kind==='iterate'?C.magenta:C.indigo;
+    return h('div',{style:{borderRadius:16,padding:1,background:GRAD,boxShadow:'var(--shadow)'}},
+      h('div',{style:{background:'var(--surface)',borderRadius:15,padding:16,height:'100%'}},
+        h('div',{style:{display:'flex',gap:10,alignItems:'flex-start'}},
+          h('div',{style:{width:30,height:30,borderRadius:9,background:col+'22',color:col,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}, icon('bolt',16)),
+          h('div',{style:{flex:1}},
+            h('div',{style:{display:'flex',justifyContent:'space-between',gap:8,alignItems:'center'}},
+              h('div',{style:{fontSize:13.5,fontWeight:700,color:'var(--text)'}}, o.title),
+              h('span',{style:{fontSize:10,fontWeight:700,color:'var(--dim)',whiteSpace:'nowrap'}}, o.conf+'% conf')),
+            h('div',{style:{fontSize:12.5,color:'var(--dim)',marginTop:5,lineHeight:1.5}}, o.body),
+            h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:10}},
+              h('span',{style:{fontSize:11.5,fontWeight:700,color:col}}, o.metric),
+              h('button',{style:{fontSize:11.5,fontWeight:600,color:'var(--text)',background:'var(--surface2)',border:'1px solid var(--border)',padding:'5px 11px',borderRadius:8,cursor:'pointer'}}, o.action))))));
+  }
+  thumb(c,size){ size=size||44; const hue=(c.id*47)%360; return h('div',{style:{width:size,height:size*0.62,borderRadius:7,background:`linear-gradient(135deg, hsl(${hue} 55% 30%), hsl(${(hue+40)%360} 50% 22%))`,position:'relative',flexShrink:0,overflow:'hidden',border:'1px solid var(--border)'}},
+    h('div',{style:{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',color:'rgba(255,255,255,.85)'}}, icon('play',size*0.3)),
+    h('div',{style:{position:'absolute',right:3,bottom:2,fontSize:8,fontWeight:700,color:'#fff',background:'rgba(0,0,0,.55)',padding:'1px 4px',borderRadius:3}}, c.len)); }
+  segBar(items,active,onPick){
+    return h('div',{style:{display:'inline-flex',gap:2,background:'var(--surface2)',border:'1px solid var(--border)',borderRadius:11,padding:3}}, items.map((it,i)=>{
+      const on=it===active; return h('button',{key:i,onClick:()=>onPick(it),style:{padding:'7px 14px',borderRadius:8,border:'none',cursor:'pointer',fontSize:12.5,fontWeight:on?700:500,whiteSpace:'nowrap',color:on?'#fff':'var(--dim)',background:on?GRAD:'transparent'}}, it); }));
+  }
+
+  // ---------- shell ----------
+  renderApp(){
+    const s=this.state;
+    return h('div',{'data-theme':s.theme,style:{height:'100%',background:'var(--bg)',color:'var(--text)',display:'flex',flexDirection:'column',fontSize:14}},
+      this.topbar(),
+      h('div',{style:{flex:1,display:'flex',minHeight:0}}, this.sidebar(), this.main()),
+      s.drawer? this.drawer():null,
+      s.share? this.shareModal():null);
+  }
+  topbar(){
+    const s=this.state, a=this.acct();
+    return h('div',{style:{height:58,flexShrink:0,borderBottom:'1px solid var(--border)',background:'var(--surface)',display:'flex',alignItems:'center',gap:14,padding:'0 16px',position:'relative',zIndex:30}},
+      h('div',{style:{display:'flex',alignItems:'center',gap:10}},
+        h('div',{style:{width:30,height:30,borderRadius:9,background:GRAD,display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:800,fontFamily:'Inter Tight',fontSize:15}}, 'A'),
+        h('div',{style:{lineHeight:1.05}},
+          h('div',{style:{fontWeight:800,fontFamily:'Inter Tight',fontSize:15,letterSpacing:'-.01em'}}, 'Ad-Lab'),
+          h('div',{style:{fontSize:8.5,letterSpacing:'.12em',color:'var(--faint)',fontWeight:600}}, 'CREATIVEOS · YOUTUBE'))),
+      h('div',{style:{width:1,height:26,background:'var(--border)'}}),
+      // account switcher
+      h('div',{style:{position:'relative'}},
+        h('button',{onClick:()=>this.setState(x=>({acctOpen:!x.acctOpen,dateOpen:false})),style:{display:'flex',alignItems:'center',gap:9,background:'var(--surface2)',border:'1px solid var(--border)',borderRadius:10,padding:'7px 11px',cursor:'pointer',color:'var(--text)'}},
+          h('div',{style:{width:20,height:20,borderRadius:6,background:GRAD,display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:10,fontWeight:800}}, a.name[0].toUpperCase()),
+          h('div',{style:{textAlign:'left',lineHeight:1.1}}, h('div',{style:{fontSize:12.5,fontWeight:700}}, a.name), h('div',{style:{fontSize:9.5,color:'var(--faint)'}}, a.acct)),
+          h('span',{style:{color:'var(--faint)'}}, icon('chevron',14))),
+        s.acctOpen? h('div',{style:{position:'absolute',top:46,left:0,width:248,background:'var(--surface)',border:'1px solid var(--border)',borderRadius:12,boxShadow:'var(--shadow)',padding:6,zIndex:40}},
+          h('div',{style:{position:'relative',marginBottom:4}}, h('span',{style:{position:'absolute',left:9,top:8,color:'var(--faint)'}},icon('search',13)), h('input',{placeholder:'Search clients',style:{width:'100%',padding:'7px 9px 7px 28px',background:'var(--surface2)',border:'1px solid var(--border)',borderRadius:8,color:'var(--text)',fontSize:12,outline:'none'}})),
+          CLIENTS.map(c=>h('button',{key:c.id,onClick:()=>this.setState({acctId:c.id,acctOpen:false}),style:{display:'flex',alignItems:'center',gap:9,width:'100%',padding:'8px 8px',border:'none',background:c.id===s.acctId?'var(--surface2)':'transparent',borderRadius:8,cursor:'pointer',color:'var(--text)',textAlign:'left'}},
+            h('div',{style:{width:20,height:20,borderRadius:6,background:GRAD,display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:10,fontWeight:800}}, c.name[0].toUpperCase()),
+            h('div',{style:{flex:1}}, h('div',{style:{fontSize:12.5,fontWeight:600}}, c.name), h('div',{style:{fontSize:10,color:'var(--faint)'}}, c.niche)),
+            h('span',{style:{width:7,height:7,borderRadius:9,background:c.health==='good'?C.win:c.health==='watch'?C.warn:C.retire}})))):null),
+      // date range
+      h('div',{style:{position:'relative'}},
+        h('button',{onClick:()=>this.setState(x=>({dateOpen:!x.dateOpen,acctOpen:false})),style:{display:'flex',alignItems:'center',gap:8,background:'var(--surface2)',border:'1px solid var(--border)',borderRadius:10,padding:'8px 11px',cursor:'pointer',color:'var(--text)',fontSize:12.5,fontWeight:600}}, h('span',{style:{color:'var(--dim)'}},icon('calendar',14)), s.range, h('span',{style:{color:'var(--faint)'}}, icon('chevron',13))),
+        s.dateOpen? h('div',{style:{position:'absolute',top:46,left:0,width:180,background:'var(--surface)',border:'1px solid var(--border)',borderRadius:12,boxShadow:'var(--shadow)',padding:6,zIndex:40}},
+          ['Last 7 days','Last 14 days','Last 28 days','Month to date','Custom'].map(r=>h('button',{key:r,onClick:()=>this.setState({range:r,dateOpen:false}),style:{display:'block',width:'100%',textAlign:'left',padding:'8px 10px',border:'none',background:r===s.range?'var(--surface2)':'transparent',borderRadius:8,cursor:'pointer',color:'var(--text)',fontSize:12.5,fontWeight:r===s.range?700:500}}, r))):null),
+      h('div',{style:{flex:1}}),
+      // live toggle
+      h('button',{onClick:()=>this.setState(x=>({live:!x.live})),style:{display:'flex',alignItems:'center',gap:7,background:'var(--surface2)',border:'1px solid var(--border)',borderRadius:10,padding:'7px 11px',cursor:'pointer',color:'var(--text)',fontSize:12}},
+        h('span',{style:{width:7,height:7,borderRadius:9,background:s.live?C.win:C.warn,animation:s.live?'cosPulse 1.6s infinite':'none'}}),
+        h('span',{style:{fontWeight:600}}, s.live?'Live':'Scan'), h('span',{style:{color:'var(--faint)',fontSize:11}}, s.live?'':'· 14 min ago')),
+      h('button',{onClick:()=>this.toggleTheme(),title:'Toggle theme',style:this.iconBtn()}, icon(s.theme==='dark'?'sun':'moon',17)),
+      h('button',{style:this.iconBtn(),title:'Notifications'}, h('span',{style:{position:'relative',display:'flex'}}, icon('bell',17), h('span',{style:{position:'absolute',top:-2,right:-2,width:7,height:7,borderRadius:9,background:C.retire,border:'2px solid var(--surface)'}}))),
+      h('button',{onClick:()=>this.setState({share:true}),style:{display:'flex',alignItems:'center',gap:7,background:GRAD,border:'none',borderRadius:10,padding:'9px 14px',cursor:'pointer',color:'#fff',fontSize:12.5,fontWeight:700,boxShadow:'0 4px 14px rgba(139,92,246,.4)'}}, icon('share',15), 'Share'),
+      h('div',{style:{width:30,height:30,borderRadius:9,background:'var(--surface2)',border:'1px solid var(--border)',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700,fontSize:12,marginLeft:2}}, 'FK'));
+  }
+  iconBtn(){ return {width:34,height:34,borderRadius:10,background:'transparent',border:'1px solid var(--border)',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',color:'var(--dim)'}; }
+  sidebar(){
+    const s=this.state, col=s.collapsed;
+    return h('div',{style:{width:col?62:218,flexShrink:0,borderRight:'1px solid var(--border)',background:'var(--surface)',display:'flex',flexDirection:'column',padding:'12px 10px',gap:3,transition:'width .18s',overflowY:'auto'}},
+      TABS.map(t=>{ const on=t.id===s.tab; return h('button',{key:t.id,onClick:()=>this.go(t.id),title:t.label,style:{display:'flex',alignItems:'center',gap:11,padding:col?'11px 0':'10px 12px',justifyContent:col?'center':'flex-start',borderRadius:11,border:'none',cursor:'pointer',background:on?'var(--surface2)':'transparent',color:on?'var(--text)':'var(--dim)',position:'relative',textAlign:'left'}},
+        on? h('span',{style:{position:'absolute',left:0,top:9,bottom:9,width:3,borderRadius:3,background:GRAD}}):null,
+        h('span',{style:{color:on?C.violet:'var(--dim)',display:'flex'}}, icon(t.id,18)),
+        col?null:h('span',{style:{fontSize:12.5,fontWeight:on?700:500,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}, t.label)); }),
+      h('div',{style:{flex:1}}),
+      h('button',{onClick:()=>this.setState(x=>({collapsed:!x.collapsed})),style:{display:'flex',alignItems:'center',gap:11,padding:col?'11px 0':'10px 12px',justifyContent:col?'center':'flex-start',borderRadius:11,border:'none',cursor:'pointer',background:'transparent',color:'var(--faint)'}}, icon('panel',18), col?null:h('span',{style:{fontSize:12}},'Collapse')));
+  }
+  main(){
+    const t=TABS.find(x=>x.id===this.state.tab);
+    const gradientPage = (this.state.tab==='command' && this.state.sub==='Portfolio') || (this.state.tab==='reports' && this.state.sub==='Live Dashboard');
+    return h('div',{style:{flex:1,minWidth:0,display:'flex',flexDirection:'column',overflow:'hidden'}},
+      this.pageHeader(t,gradientPage),
+      this.filterBar(),
+      h('div',{key:this.state.tab+this.state.sub,style:{flex:1,overflowY:'auto',padding:'20px 22px 60px'}}, h('div',{style:{maxWidth:1440,margin:'0 auto'}}, this.content())));
+  }
+  pageHeader(t,gradient){
+    const s=this.state, a=this.acct();
+    const titleMap={Portfolio:'Portfolio overview',Leaderboard:'Creative leaderboard'};
+    return h('div',{style:{flexShrink:0,background:gradient?GRAD:'var(--surface)',borderBottom:'1px solid var(--border)',padding:gradient?'18px 22px 0':'14px 22px 0',color:gradient?'#fff':'var(--text)',position:'relative',overflow:'hidden'}},
+      gradient? h('div',{style:{position:'absolute',inset:0,background:'radial-gradient(60% 120% at 85% -20%, rgba(255,255,255,.18), transparent)'}}):null,
+      h('div',{style:{maxWidth:1440,margin:'0 auto',position:'relative'}},
+        h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'flex-end',gap:16}},
+          h('div',null,
+            gradient? h('div',{style:{display:'flex',alignItems:'baseline',gap:2}}, h('span',{style:{fontFamily:'Inter Tight',fontWeight:800,fontSize:30,letterSpacing:'-.02em'}}, a.name.replace(/\.com$/,'')), h('span',{style:{fontFamily:'Inter Tight',fontWeight:600,fontSize:24,opacity:.7}}, '.com')) :
+              h('div',{style:{fontFamily:'Inter Tight',fontWeight:800,fontSize:22,letterSpacing:'-.01em'}}, t.label),
+            h('div',{style:{display:'flex',gap:16,marginTop:6,flexWrap:'wrap'}},
+              gradient? [['Report period','Jun 16 – 23, 2026'],['Window','Rolling 14d · last 3 excluded'],['Account ID',a.acct],['Generated by','Ad-Lab Tooling']].map((m,i)=>h('div',{key:i},h('div',{style:{fontSize:8.5,letterSpacing:'.1em',textTransform:'uppercase',opacity:.7,fontWeight:600}},m[0]),h('div',{style:{fontSize:12,fontWeight:600}},m[1]))) :
+                h('div',{style:{fontSize:11.5,color:'var(--dim)'}}, 'Rolling 14 days, last 3 excluded for attribution lag'))),
+          gradient? h('div',{style:{textAlign:'right'}}, h('div',{style:{fontSize:9,letterSpacing:'.12em',opacity:.8,fontWeight:600}},'AD-LAB.IO · CREATIVEOS'), h('div',{style:{display:'inline-flex',alignItems:'center',gap:6,marginTop:6,background:'rgba(255,255,255,.16)',padding:'5px 10px',borderRadius:999,fontSize:11,fontWeight:600}}, h('span',{style:{width:6,height:6,borderRadius:9,background:'#fff',animation:'cosPulse 1.6s infinite'}}),'Live')):null),
+        h('div',{style:{display:'flex',gap:2,marginTop:16,overflowX:'auto'}}, t.subs.map(sub=>{ const on=sub===s.sub; return h('button',{key:sub,onClick:()=>this.setSub(sub),style:{padding:'10px 14px',border:'none',background:'transparent',cursor:'pointer',fontSize:12.5,fontWeight:on?700:500,color:on?(gradient?'#fff':'var(--text)'):(gradient?'rgba(255,255,255,.7)':'var(--dim)'),borderBottom:on?(gradient?'2px solid #fff':'2px solid '+C.violet):'2px solid transparent',whiteSpace:'nowrap'}}, sub); })) ));
+  }
+  filterBar(){
+    const chips=[['Account',this.acct().name],['Campaign','All campaigns'],['Format','All formats'],['Status', this.state.statusFilter],['Angle','All angles']];
+    return h('div',{style:{flexShrink:0,borderBottom:'1px solid var(--border)',background:'var(--surface)',padding:'9px 22px',display:'flex',alignItems:'center',gap:9,overflowX:'auto'}},
+      h('div',{style:{maxWidth:1440,margin:'0 auto',width:'100%',display:'flex',alignItems:'center',gap:9}},
+        h('span',{style:{color:'var(--faint)',display:'flex'}}, icon('filter',14)),
+        chips.map((c,i)=>h('button',{key:i,style:{display:'flex',alignItems:'center',gap:7,background:'var(--surface2)',border:'1px solid var(--border)',borderRadius:9,padding:'6px 10px',cursor:'pointer',color:'var(--text)',fontSize:11.5,whiteSpace:'nowrap'}}, h('span',{style:{color:'var(--faint)',fontSize:10}}, c[0]), h('span',{style:{fontWeight:600}}, c[1]), h('span',{style:{color:'var(--faint)'}}, icon('chevron',12)))),
+        h('div',{style:{flex:1}}),
+        h('div',{style:{position:'relative'}}, h('span',{style:{position:'absolute',left:9,top:7,color:'var(--faint)'}},icon('search',14)), h('input',{value:this.state.search,onChange:e=>this.setState({search:e.target.value}),placeholder:'Search creatives',style:{width:190,padding:'7px 10px 7px 30px',background:'var(--surface2)',border:'1px solid var(--border)',borderRadius:9,color:'var(--text)',fontSize:12,outline:'none'}}))));
+  }
+
+  content(){
+    const s=this.state;
+    if(s.tab==='command') return this.cCommand();
+    if(s.tab==='lab') return this.cLab();
+    if(s.tab==='hook') return this.cHook();
+    if(s.tab==='vault') return this.cVault();
+    if(s.tab==='radar') return this.cRadar();
+    if(s.tab==='trend') return this.cTrend();
+    if(s.tab==='attr') return this.cAttr();
+    if(s.tab==='action') return this.cAction();
+    if(s.tab==='reports') return this.cReports();
+    if(s.tab==='settings') return this.cSettings();
+    return this.stub();
+  }
+  // ===== HOOK & RETENTION =====
+  cHook(){
+    const sub=this.state.sub;
+    if(sub==='Quartile Funnel') return this.hookFunnel();
+    if(sub==='Retention Curves') return this.hookCurves();
+    if(sub==='Hook Rate Ranking') return this.hookRanking();
+    if(sub==='Drop-off Map') return this.hookDropoff();
+    return this.stub();
+  }
+  hookFunnel(){
+    const q=[['Hook 25%',BENCH.hook,30.1,C.violet],['Midpoint 50%',BENCH.mid,22.6,C.indigo],['Third quartile 75%',BENCH.q3,19.0,C.magenta],['Completion 100%',BENCH.compl,16.5,C.win]];
+    const acctTop=[24.8,18.2,15.1,13.0];
+    return h('div',{style:{display:'flex',flexDirection:'column',gap:16}},
+      h('div',{style:{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:14}}, q.map((m,i)=>
+        this.statCard({label:m[0],value:m[1]+'%',foot:'account avg '+acctTop[i]+'%',delta:+(m[1]-acctTop[i]).toFixed(1),deltaSuffix:'pt',color:m[3],big:true}))),
+      this.chartCard('Average quartile funnel','Jun 16 – 23', h('div',{style:{display:'flex',flexDirection:'column',gap:10,padding:'6px 0'}},
+        q.map((m,i)=>{ const w=(m[1]/q[0][1])*100; return h('div',{key:i,style:{display:'grid',gridTemplateColumns:'150px 1fr 60px',alignItems:'center',gap:14}},
+          h('div',{style:{fontSize:12,color:'var(--dim)'}}, m[0]),
+          h('div',{style:{height:26,background:'var(--surface2)',borderRadius:8,overflow:'hidden'}}, h('div',{style:{height:'100%',width:w+'%',background:m[3],borderRadius:8,display:'flex',alignItems:'center',justifyContent:'flex-end',paddingRight:8,color:'#fff',fontSize:11,fontWeight:700}}, m[1]+'%')),
+          h('div',{style:{fontSize:11,color:'var(--faint)',textAlign:'right'}}, 'avg '+acctTop[i]+'%')); }))));
+  }
+  hookCurves(){
+    const top=this.sortRows(CREATIVES.filter(c=>c.result==='WIN')).slice(0,5);
+    return h('div',{style:{display:'flex',flexDirection:'column',gap:16}},
+      h('div',{style:{display:'flex',alignItems:'center',gap:10}}, h('div',{style:{fontSize:15,fontWeight:700}},'% still watching'), h('div',{style:{flex:1}}), this.segBar(['Top 5 by VVR','Top 5 by Hook'], 'Top 5 by VVR', ()=>{})),
+      this.chartCard('Retention curves','Top 5 creatives', this.lineChart({series:top.map((c,i)=>({values:c.ret,color:VIZ[i],name:c.name})),labels:['0%','25%','50%','75%','100%'],yMax:100,h:300,fmtY:v=>v+'%'}), top.map((c,i)=>({label:c.name,color:VIZ[i]}))),
+      this.card([h('div',{key:'h',style:{fontSize:13,fontWeight:700,marginBottom:10}},'Holds best to completion'),
+        h('div',{key:'b',style:{display:'flex',gap:10,flexWrap:'wrap'}}, top.map((c,i)=>h('div',{key:c.id,style:{flex:'1 1 160px',background:'var(--surface2)',borderRadius:11,padding:12}},
+          h('div',{style:{fontSize:11.5,fontWeight:600,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}, c.name),
+          h('div',{style:{display:'flex',alignItems:'baseline',gap:6,marginTop:6}}, h('span',{style:{fontFamily:'Inter Tight',fontWeight:800,fontSize:22,color:VIZ[i]}}, c.ret[4]+'%'), h('span',{style:{fontSize:10,color:'var(--faint)'}}, 'completion')))))]));
+  }
+  hookRanking(){
+    const items=CREATIVES.slice().sort((a,b)=>b.hook-a.hook).map(c=>({label:c.name,value:c.hook,color:c.hook>=BENCH.hook?C.win:C.retire,flag:c.hook<BENCH.hook}));
+    const below=CREATIVES.filter(c=>c.hook<BENCH.hook).length;
+    return h('div',{style:{display:'flex',flexDirection:'column',gap:16}},
+      h('div',{style:{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:14}},
+        this.statCard({label:'Account hook floor',value:BENCH.hook+'%',foot:'retirement threshold',color:C.warn}),
+        this.statCard({label:'Above floor',value:''+(CREATIVES.length-below),foot:'healthy creatives',color:C.win}),
+        this.statCard({label:'Below floor',value:''+below,foot:'flagged for retirement',color:C.retire})),
+      this.chartCard('Hook rate ranking','every creative · 30.1% floor', h('div',{style:{maxHeight:520,overflowY:'auto'}}, this.hbars(items,{fmt:v=>v+'%',max:72}))));
+  }
+  hookDropoff(){
+    const rows=this.sortRows(CREATIVES).slice(0,12);
+    const pts=['0%','25%','50%','75%','100%'];
+    const heatCol=v=> v>=70?'#16C784':v>=45?'#A7D84B':v>=28?'#F5A623':v>=15?'#F47C3C':'#F4476B';
+    return h('div',{style:{display:'flex',flexDirection:'column',gap:14}},
+      h('div',{style:{fontSize:13,color:'var(--dim)'}}, 'Where each creative loses the viewer. ', h('span',{style:{color:'var(--text)',fontWeight:600}},'\u21B3 Fix the second that kills retention.')),
+      this.card([
+        h('div',{key:'hd',style:{display:'grid',gridTemplateColumns:'220px repeat(5,1fr)',gap:6,marginBottom:8}}, h('div',null,this.lbl('Creative')), pts.map(p=>h('div',{key:p,style:{textAlign:'center'}},this.lbl(p)))),
+        rows.map((c,ri)=>h('div',{key:c.id,style:{display:'grid',gridTemplateColumns:'220px repeat(5,1fr)',gap:6,alignItems:'center',marginBottom:5}},
+          h('div',{style:{display:'flex',alignItems:'center',gap:8,minWidth:0}}, this.thumb(c,30), h('div',{style:{fontSize:11.5,fontWeight:600,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}, c.name)),
+          c.ret.map((v,i)=>{ const drop=i>0? c.ret[i-1]-v:0; return h('div',{key:i,title:v+'% watching'+(drop?' · -'+drop+'pt':''),style:{height:34,borderRadius:7,background:heatCol(v),display:'flex',alignItems:'center',justifyContent:'center',color:'rgba(0,0,0,.7)',fontSize:11,fontWeight:700}}, v+'%'); }))),
+        h('div',{key:'lg',style:{display:'flex',alignItems:'center',gap:8,marginTop:12,fontSize:10.5,color:'var(--faint)'}}, 'Held', h('div',{style:{display:'flex',gap:0,borderRadius:5,overflow:'hidden'}}, ['#16C784','#A7D84B','#F5A623','#F47C3C','#F4476B'].map((c,i)=>h('div',{key:i,style:{width:24,height:10,background:c}}))), 'Lost')]));
+  }
+  stub(){
+    return this.card([
+      h('div',{key:1,style:{display:'flex',alignItems:'center',gap:10,color:'var(--dim)'}}, icon('layers',18), h('div',{style:{fontWeight:700,color:'var(--text)'}}, this.state.sub)),
+      h('div',{key:2,style:{fontSize:13,color:'var(--dim)',marginTop:8}}, 'This view is wired into the navigation. Detailed layout coming next.')
+    ]);
+  }
+
+  // ===== COMMAND CENTER =====
+  cCommand(){
+    const sub=this.state.sub;
+    if(sub==='Portfolio') return this.cmdPortfolio();
+    if(sub==='Account Health') return this.cmdHealth();
+    if(sub==='Alerts') return this.cmdAlerts();
+    if(sub==='This Week') return this.cmdWeek();
+    return this.stub();
+  }
+  cmdPortfolio(){
+    const totSpend=CLIENTS.reduce((a,c)=>a+c.spend,0);
+    const avgRoas=(CLIENTS.reduce((a,c)=>a+c.roas,0)/CLIENTS.length).toFixed(1);
+    return h('div',{style:{display:'flex',flexDirection:'column',gap:18}},
+      h('div',{style:{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:14}},
+        this.statCard({label:'Clients live',value:'6',foot:'all accounts active',delta:0,deltaSuffix:'',spark:[3,4,4,5,5,6,6],sparkColor:C.violet}),
+        this.statCard({label:'Portfolio spend',value:'€'+(totSpend/1000).toFixed(1)+'k',foot:'last 14 days',delta:6.2,deltaSuffix:'%',spark:D_SPEND,sparkColor:C.magenta}),
+        this.statCard({label:'Blended ROAS',value:avgRoas+'×',foot:'Triple Whale',delta:0.3,spark:[2.4,2.5,2.6,2.7,2.6,2.7,2.8],sparkColor:C.win,color:C.win}),
+        this.statCard({label:'Win rate',value:'37%',foot:'creatives reaching WIN',delta:4,deltaSuffix:'pt',spark:[30,32,33,35,34,36,37],sparkColor:C.violet})),
+      h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center'}}, h('div',{style:{fontSize:15,fontWeight:700}},'Clients'), h('div',{style:{fontSize:11.5,color:'var(--faint)'}},'Sorted by churn risk')),
+      h('div',{style:{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:14}},
+        CLIENTS.slice().sort((a,b)=>a.roas-b.roas).map(c=>this.clientCard(c))));
+  }
+  clientCard(c){
+    const col=c.health==='good'?C.win:c.health==='watch'?C.warn:C.retire;
+    return h('div',{key:c.id,onClick:()=>this.setState({acctId:c.id}),style:{background:'var(--surface)',border:'1px solid var(--border)',borderRadius:16,padding:16,cursor:'pointer',boxShadow:'var(--shadow)',position:'relative'}},
+      h('div',{style:{display:'flex',alignItems:'center',gap:10,marginBottom:14}},
+        h('div',{style:{width:34,height:34,borderRadius:9,background:GRAD,display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:800,fontSize:14}}, c.name[0].toUpperCase()),
+        h('div',{style:{flex:1}}, h('div',{style:{fontWeight:700,fontSize:13.5}}, c.name), h('div',{style:{fontSize:10.5,color:'var(--faint)'}}, c.niche+' · '+c.acct)),
+        h('span',{style:{width:9,height:9,borderRadius:9,background:col,boxShadow:'0 0 0 4px '+col+'22'}})),
+      h('div',{style:{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8}},
+        [['ROAS',c.roas+'×',c.roas>=3?C.win:c.roas>=2?'var(--text)':C.retire],['Spend','€'+(c.spend/1000).toFixed(1)+'k','var(--text)'],['Win rate',c.winRate+'%','var(--text)']].map((m,i)=>
+          h('div',{key:i,style:{background:'var(--surface2)',borderRadius:10,padding:'9px 10px'}}, this.lbl(m[0],{fontSize:9}), h('div',{style:{fontFamily:'Inter Tight',fontWeight:800,fontSize:18,marginTop:3,color:m[2],fontVariantNumeric:'tabular-nums'}}, m[1])))),
+      h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:12}},
+        h('div',{style:{fontSize:11,color:'var(--faint)'}}, c.tested+' tested · '+c.winners+' winners'),
+        this.delta(c.trend,'×')));
+  }
+  cmdHealth(){
+    const metrics=['ROAS','Hook rate','Completion','Win rate','Fatigue'];
+    const valFor=(c,m)=>{ if(m==='ROAS')return c.roas; if(m==='Hook rate')return (c.winRate*0.8+8).toFixed(0); if(m==='Completion')return (c.winRate*0.45+5).toFixed(0); if(m==='Win rate')return c.winRate; if(m==='Fatigue')return (c.health==='risk'?72:c.health==='watch'?44:21); };
+    const colFor=(c,m)=>{ const v=parseFloat(valFor(c,m)); if(m==='ROAS')return v>=3?C.win:v>=2?C.warn:C.retire; if(m==='Fatigue')return v>=60?C.retire:v>=40?C.warn:C.win; const lim=m==='Win rate'?35:m==='Hook rate'?30:14; return v>=lim?C.win:v>=lim*0.7?C.warn:C.retire; };
+    return h('div',{style:{display:'flex',flexDirection:'column',gap:16}},
+      h('div',{style:{fontSize:13,color:'var(--dim)'}}, 'Red cells flag accounts drifting below benchmark. ', h('span',{style:{color:'var(--text)',fontWeight:600}},'\u21B3 Catch churn risk before the client feels it.')),
+      this.card([
+        h('div',{key:'hd',style:{display:'grid',gridTemplateColumns:'180px repeat(5,1fr)',gap:8,paddingBottom:10,borderBottom:'1px solid var(--border)',marginBottom:8}}, h('div',null,this.lbl('Client')), metrics.map(m=>h('div',{key:m,style:{textAlign:'center'}},this.lbl(m)))),
+        CLIENTS.map(c=>h('div',{key:c.id,style:{display:'grid',gridTemplateColumns:'180px repeat(5,1fr)',gap:8,alignItems:'center',padding:'8px 0'}},
+          h('div',{style:{display:'flex',alignItems:'center',gap:8}}, h('div',{style:{width:24,height:24,borderRadius:7,background:GRAD,display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:10,fontWeight:800}},c.name[0].toUpperCase()), h('span',{style:{fontSize:12.5,fontWeight:600}},c.name)),
+          metrics.map(m=>{ const col=colFor(c,m); return h('div',{key:m,style:{textAlign:'center'}}, h('div',{style:{margin:'0 auto',width:'82%',background:col+'1f',color:col,borderRadius:8,padding:'8px 0',fontWeight:700,fontSize:13,fontVariantNumeric:'tabular-nums'}}, valFor(c,m)+(m==='ROAS'?'×':m==='Fatigue'?'':'%'))); })))]));
+  }
+  cmdAlerts(){
+    const alerts=[
+      {t:'retire',ic:'flag',title:'GLOW 204 2 crossed the kill threshold',meta:'glowora.com · €1,010 spent · ROAS 0.7 vs 1.4 floor',time:'12 min ago'},
+      {t:'warn',ic:'fire',title:'Creative fatigue detected on 261 ClaymationStyle 4',meta:'glowora.com · hook rate down 6pt over 3 days',time:'38 min ago'},
+      {t:'retire',ic:'down',title:'Hook rate dropped below 30% on 3 ReliveX creatives',meta:'relivex.com · below the retirement floor',time:'1 hr ago'},
+      {t:'warn',ic:'up',title:'Spend spike on saintbrand.com',meta:'+38% day over day · check pacing',time:'2 hr ago'},
+      {t:'win',ic:'check',title:'#236 Botox Alternative H3 reached WIN',meta:'glowora.com · 68.5% hook rate · ready to scale',time:'3 hr ago'},
+      {t:'win',ic:'check',title:'New winner found on histrips.com',meta:'248 Before After Split 3 · 31.2% hook',time:'5 hr ago'}
+    ];
+    const colT=t=>t==='retire'?C.retire:t==='warn'?C.warn:C.win;
+    return h('div',{style:{display:'flex',flexDirection:'column',gap:10}},
+      h('div',{style:{display:'flex',gap:10}}, [['6','Open alerts',C.violet],['2','Need action',C.retire],['3','Resolved today',C.win]].map((m,i)=>h('div',{key:i,style:{flex:1}},this.statCard({label:m[1],value:m[0],foot:'',color:m[2]})))),
+      this.card(alerts.map((a,i)=>h('div',{key:i,style:{display:'flex',alignItems:'center',gap:12,padding:'12px 4px',borderBottom:i<alerts.length-1?'1px solid var(--border)':'none'}},
+        h('div',{style:{width:32,height:32,borderRadius:9,background:colT(a.t)+'22',color:colT(a.t),display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}, icon(a.ic,16)),
+        h('div',{style:{flex:1}}, h('div',{style:{fontSize:13,fontWeight:600}}, a.title), h('div',{style:{fontSize:11.5,color:'var(--faint)',marginTop:2}}, a.meta)),
+        h('div',{style:{fontSize:11,color:'var(--faint)',whiteSpace:'nowrap'}}, a.time),
+        h('button',{style:{fontSize:11.5,fontWeight:600,color:'var(--text)',background:'var(--surface2)',border:'1px solid var(--border)',padding:'6px 11px',borderRadius:8,cursor:'pointer'}}, 'Review')))));
+  }
+  cmdWeek(){
+    return h('div',{style:{display:'flex',flexDirection:'column',gap:18}},
+      h('div',{style:{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:14}},
+        this.statCard({label:'Creatives tested',value:'142',foot:'across 6 clients',delta:18,big:true}),
+        this.statCard({label:'Winners found',value:'9',foot:'reached WIN status',delta:2,color:C.win,big:true}),
+        this.statCard({label:'Retirements',value:'6',foot:'killed on threshold',delta:-1,color:C.retire,big:true}),
+        this.statCard({label:'Net ROAS movement',value:'+0.4×',foot:'portfolio blended',delta:0.4,color:C.win,big:true})),
+      h('div',{style:{display:'grid',gridTemplateColumns:'1.4fr 1fr',gap:14}},
+        this.chartCard('Portfolio views vs spend','This week', this.lineChart({series:[{values:D_VIEWS,color:C.violet,area:true,name:'Views'},{values:D_SPEND.map(v=>v*35),color:C.magenta,name:'Spend'}],fmtY:v=>this.fmtN(v)}), [{label:'Views',color:C.violet},{label:'Spend (scaled)',color:C.magenta}]),
+        this.card([h('div',{key:1,style:{fontSize:14,fontWeight:700,marginBottom:6}},'The week in one line'),
+          h('div',{key:2,style:{fontSize:13,color:'var(--dim)',lineHeight:1.6}}, 'Tested 142 creatives, found 9 winners and killed 6. The botox-alternative and 10-years-younger angles are carrying skincare. ', h('span',{style:{color:'var(--text)',fontWeight:600}},'\u21B3 Replicate both across Koriderm and Saint before they fatigue.')),
+          h('button',{key:3,style:{marginTop:14,display:'inline-flex',alignItems:'center',gap:7,background:GRAD,border:'none',borderRadius:10,padding:'9px 14px',cursor:'pointer',color:'#fff',fontSize:12.5,fontWeight:700}}, icon('sparkles',15),'Draft weekly story')])));
+  }
+
+  // ===== CREATIVE TESTING LAB =====
+  cLab(){
+    const sub=this.state.sub;
+    if(sub==='Leaderboard') return this.labLeaderboard();
+    if(sub==='Test Pipeline') return this.labPipeline();
+    if(sub==='By Angle') return this.labAngle();
+    if(sub==='By Hook') return this.labHook();
+    if(sub==='Compare') return this.labCompare();
+    if(sub==='Concepts & Scripts') return this.labConcepts();
+    return this.stub();
+  }
+  labPipeline(){
+    const stages=[['Queued','#6F6B92'],['Live','#6366F1'],['Winning','#16C784'],['Scaling','#C13FE0'],['Retired','#F4476B']];
+    const stageMap={Queued:['Birthday sale','Korean skincare'],Live:'Live',Winning:'Winning',Scaling:'Scaling',Retired:'Retired'};
+    const colFor=st=> CREATIVES.filter(c=> st==='Queued'? false : c.stage===st);
+    const queued=[{name:'277 GlassSkinTest 1',angle:'Lived-in Seoul',len:'0:21'},{name:'278 BotoxAlt H5',angle:'Botox alternative',len:'0:17'},{name:'279 DermReacts 2',angle:'Expert reaction',len:'1:05'}];
+    return h('div',{style:{display:'flex',flexDirection:'column',gap:14}},
+      h('div',{style:{fontSize:13,color:'var(--dim)'}}, 'Drag-style lifecycle from queue to retirement. ', h('span',{style:{color:'var(--text)',fontWeight:600}},'\u21B3 Each card carries its kill-threshold progress.')),
+      h('div',{style:{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:12,alignItems:'start'}},
+        stages.map(([st,col])=>{
+          const items = st==='Queued'? queued : colFor(st);
+          return h('div',{key:st,style:{background:'var(--surface2)',border:'1px solid var(--border)',borderRadius:14,padding:10,minHeight:200}},
+            h('div',{style:{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:10,padding:'2px 4px'}},
+              h('span',{style:{display:'flex',alignItems:'center',gap:7,fontSize:12,fontWeight:700}}, h('span',{style:{width:8,height:8,borderRadius:9,background:col}}), st),
+              h('span',{style:{fontSize:11,color:'var(--faint)',fontWeight:700}}, items.length)),
+            h('div',{style:{display:'flex',flexDirection:'column',gap:8}}, items.map((c,i)=>{
+              const real = c.id!=null;
+              const prog = real? Math.min(100, Math.round((c.spend/2000)*100)) : 0;
+              const roasOk = real? c.result!=='RETIRE' : true;
+              return h('div',{key:i,onClick:()=> real&&this.setState({drawer:c.id}),style:{background:'var(--surface)',border:'1px solid var(--border)',borderRadius:11,padding:11,cursor:real?'pointer':'default'}},
+                h('div',{style:{display:'flex',alignItems:'flex-start',gap:7}}, h('span',{style:{color:'var(--faint)',marginTop:1}},icon('grip',13)), h('div',{style:{flex:1}}, h('div',{style:{fontSize:11.5,fontWeight:600,lineHeight:1.25}}, c.name), h('div',{style:{fontSize:10,color:'var(--faint)',marginTop:2}}, c.angle))),
+                real? h('div',{style:{marginTop:9}},
+                  h('div',{style:{display:'flex',justifyContent:'space-between',fontSize:9.5,color:'var(--faint)',marginBottom:3}}, h('span',null,'€'+c.spend+' · '+c.days+'d'), h('span',{style:{color:roasOk?C.win:C.retire,fontWeight:700}}, roasOk?'ROAS ok':'kill')),
+                  h('div',{style:{height:5,background:'var(--surface2)',borderRadius:5,overflow:'hidden'}}, h('div',{style:{height:'100%',width:prog+'%',background:roasOk?col:C.retire,borderRadius:5}}))) :
+                  h('div',{style:{marginTop:8,fontSize:9.5,color:'var(--faint)'}}, c.len+' · awaiting launch')); })));
+        })));
+  }
+  labAngle(){
+    const max=Math.max(...ANGLES.map(a=>a.tests));
+    const sCol=s=>s==='hot'?C.win:s==='steady'?C.warn:s==='dead'?C.retire:'var(--faint)';
+    return h('div',{style:{display:'flex',flexDirection:'column',gap:16}},
+      h('div',{style:{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:14}},
+        this.statCard({label:'Angles in play',value:''+ANGLES.length,foot:'this account'}),
+        this.statCard({label:'Best hit rate',value:'44%',foot:'10 years younger',color:C.win}),
+        this.statCard({label:'Winning angles',value:'4',foot:'\u2265 1 WIN creative',color:C.win}),
+        this.statCard({label:'Cold angles',value:'5',foot:'0 wins, retire or rework',color:C.retire})),
+      this.card([
+        h('div',{key:'h',style:{fontSize:14,fontWeight:700,marginBottom:14}},'Angle success rate'),
+        h('div',{key:'b',style:{display:'flex',flexDirection:'column',gap:4}}, ANGLES.map((a,i)=>
+          h('div',{key:i,style:{display:'grid',gridTemplateColumns:'170px 70px 1fr 130px',gap:14,alignItems:'center',padding:'10px 0',borderTop:i?'1px solid var(--border)':'none'}},
+            h('div',null, h('div',{style:{fontSize:12.5,fontWeight:600}}, a.name), h('div',{style:{fontSize:10,color:'var(--faint)'}}, a.tests+' tested · '+a.wins+' won')),
+            h('div',{style:{fontFamily:'Inter Tight',fontWeight:800,fontSize:18,color:a.hit>=35?C.win:a.hit>0?C.warn:C.retire,fontVariantNumeric:'tabular-nums'}}, a.hit+'%'),
+            h('div',{style:{height:10,background:'var(--surface2)',borderRadius:6,overflow:'hidden'}}, h('div',{style:{height:'100%',width:(a.tests/max*100)+'%',background:sCol(a.status),borderRadius:6}})),
+            h('div',{style:{fontSize:11,color:'var(--dim)',textAlign:'right',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}, 'Best: '+a.best))))]));
+  }
+  labHook(){
+    const items=HOOKS.slice().sort((a,b)=>b.hook-a.hook).map(hk=>({label:hk.concept+' '+hk.variant, value:hk.hook, color:hk.hook>=BENCH.hook?C.win:C.retire, flag:hk.hook<BENCH.hook}));
+    return h('div',{style:{display:'flex',flexDirection:'column',gap:16}},
+      h('div',{style:{fontSize:13,color:'var(--dim)'}}, '5\u201310 hook variants per concept. Bars below the 30.1% floor are flagged coral. ', h('span',{style:{color:'var(--text)',fontWeight:600}},'\u21B3 Keep the winners, kill the skips.')),
+      h('div',{style:{display:'grid',gridTemplateColumns:'1.3fr 1fr',gap:14}},
+        this.chartCard('Hook rate by variant','vs 30.1% floor', this.hbars(items,{fmt:v=>v+'%',max:75})),
+        this.card([h('div',{key:'h',style:{fontSize:14,fontWeight:700,marginBottom:12}},'Skip reduction leaders'),
+          h('div',{key:'b',style:{display:'flex',flexDirection:'column',gap:10}}, HOOKS.slice().sort((a,b)=>a.skip-b.skip).slice(0,6).map((hk,i)=>
+            h('div',{key:i,style:{display:'flex',alignItems:'center',gap:10}},
+              h('div',{style:{width:22,height:22,borderRadius:7,background:i<2?C.win+'22':'var(--surface2)',color:i<2?C.win:'var(--dim)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:700}}, i+1),
+              h('div',{style:{flex:1}}, h('div',{style:{fontSize:12,fontWeight:600}}, '\u201C'+hk.line+'\u201D'), h('div',{style:{fontSize:10,color:'var(--faint)'}}, hk.concept+' '+hk.variant)),
+              h('div',{style:{textAlign:'right'}}, h('div',{style:{fontWeight:700,fontSize:13}}, hk.skip+'%'), h('div',{style:{fontSize:9,color:'var(--faint)'}}, 'skip')))))])));
+  }
+  labCompare(){
+    const sel=this.state.compare.map(id=>CREATIVES.find(c=>c.id===id)).filter(Boolean);
+    const rows=[['VVR','vvr','%'],['Hook','hook','%'],['Completion','compl','%'],['CPV','cpv','€'],['Conversions','conv',''],['Views','views','n'],['Days live','days','d']];
+    const best=(key,asc)=>{ let v=sel.map(c=>c[key]); return asc?Math.min(...v):Math.max(...v); };
+    return h('div',{style:{display:'flex',flexDirection:'column',gap:16}},
+      h('div',{style:{display:'flex',gap:8,alignItems:'center'}}, h('div',{style:{fontSize:13,color:'var(--dim)'}}, 'Comparing '+sel.length+' creatives.'), h('div',{style:{flex:1}}), h('button',{style:{display:'flex',alignItems:'center',gap:6,background:'var(--surface2)',border:'1px solid var(--border)',borderRadius:9,padding:'7px 12px',cursor:'pointer',color:'var(--text)',fontSize:12,fontWeight:600}}, icon('plus',14),'Add creative')),
+      h('div',{style:{display:'grid',gridTemplateColumns:'150px repeat('+sel.length+',1fr)',gap:0,border:'1px solid var(--border)',borderRadius:16,overflow:'hidden',background:'var(--surface)',boxShadow:'var(--shadow)'}},
+        h('div',{style:{padding:16,borderBottom:'1px solid var(--border)'}}, this.lbl('Metric')),
+        sel.map(c=>h('div',{key:c.id,style:{padding:16,borderBottom:'1px solid var(--border)',borderLeft:'1px solid var(--border)'}}, h('div',{style:{display:'flex',alignItems:'center',gap:8}}, this.thumb(c,40), h('div',null,h('div',{style:{fontSize:12,fontWeight:700}},c.name),this.pill(c.result))))),
+        rows.map((r,ri)=>[
+          h('div',{key:'l'+ri,style:{padding:'13px 16px',fontSize:12.5,color:'var(--dim)',borderBottom:ri<rows.length-1?'1px solid var(--border)':'none',display:'flex',alignItems:'center'}}, r[0]),
+          sel.map(c=>{ const asc=r[1]==='cpv'; const isBest=c[r[1]]===best(r[1],asc); const val=r[2]==='€'?'€'+c[r[1]].toFixed(3):r[2]==='n'?this.fmtN(c[r[1]]):r[2]==='d'?c[r[1]]+'d':c[r[1]]+(r[2]); return h('div',{key:c.id,style:{padding:'13px 16px',borderLeft:'1px solid var(--border)',borderBottom:ri<rows.length-1?'1px solid var(--border)':'none',fontWeight:700,fontSize:14,fontVariantNumeric:'tabular-nums',color:isBest?C.win:'var(--text)',display:'flex',alignItems:'center',gap:6}}, val, isBest?h('span',{style:{color:C.win}},icon('check',13)):null); })
+        ])),
+      this.chartCard('Retention curves overlaid','% still watching', this.lineChart({series:sel.map((c,i)=>({values:c.ret,color:VIZ[i],name:c.name})),labels:['0%','25%','50%','75%','100%'],yMax:100,fmtY:v=>v+'%'}), sel.map((c,i)=>({label:c.name,color:VIZ[i]}))),
+      this.insight({kind:'scale',title:'Verdict: scale '+sel[0].name,body:sel[0].name+' holds '+sel[0].ret[4]+'% to completion versus '+sel[sel.length-1].ret[4]+'% for the weakest in this set, at a lower CPV. It is the clear keeper.',metric:sel[0].vvr+'% VVR',conf:88,action:'Add to Scale List'}));
+  }
+  labConcepts(){
+    const concepts=[
+      {name:'10 Jaar Jonger',angle:'10 years younger',brief:'Dutch-language UGC with a confident male lead. Lead on the visible age-reversal claim, back it with the 28-day routine.',hook:'Look 10 years younger by Friday',variants:[3,14,21],script:'[0:00] Direct address: "Look 10 years younger by Friday." [0:03] Before shot, then the routine. [0:09] Ingredient proof. [0:14] Offer + urgency.'},
+      {name:'Botox Alternative',angle:'Botox alternative',brief:'Position the serum as the needle-free alternative. Authority tone, dermatologist framing.',hook:'The botox alternative dermatologists quietly use',variants:[2],script:'[0:00] "The botox alternative dermatologists quietly use." [0:05] Mechanism. [0:11] Result. [0:15] CTA.'},
+      {name:'ClaymationStyle',angle:'Claymation explainer',brief:'Stop-motion explainer showing how retinol works under the skin. Educational, sharable.',hook:'Watch what retinol actually does to skin',variants:[4,23],script:'[0:00] Claymation hook. [0:20] Layer-by-layer absorption. [1:00] Product reveal. [1:25] Offer.'}
+    ];
+    return h('div',{style:{display:'flex',flexDirection:'column',gap:14}},
+      h('div',{style:{fontSize:13,color:'var(--dim)'}}, 'Every creative traces back to a concept and script. ', h('span',{style:{color:'var(--text)',fontWeight:600}},'\u21B3 This is the replication backbone.')),
+      concepts.map((cc,i)=> this.card([
+        h('div',{key:'h',style:{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:14}},
+          h('div',null, h('div',{style:{fontFamily:'Inter Tight',fontWeight:800,fontSize:17}}, cc.name), h('div',{style:{fontSize:11.5,color:'var(--faint)',marginTop:2}}, 'Angle · '+cc.angle)),
+          h('div',{style:{display:'flex',gap:6}}, cc.variants.map(vid=>{ const c=CREATIVES.find(x=>x.id===vid); return c?h('button',{key:vid,onClick:()=>this.setState({drawer:vid}),style:{display:'flex',alignItems:'center',gap:6,background:'var(--surface2)',border:'1px solid var(--border)',borderRadius:8,padding:'5px 9px',cursor:'pointer',color:'var(--text)',fontSize:11}}, this.thumb(c,26), c.result):null; }))),
+        h('div',{key:'g',style:{display:'grid',gridTemplateColumns:'1fr 1.4fr',gap:16,marginTop:14}},
+          h('div',null, this.lbl('Concept brief'), h('div',{style:{fontSize:12.5,color:'var(--dim)',lineHeight:1.55,marginTop:5}}, cc.brief), h('div',{style:{marginTop:12}}, this.lbl('Hook line'), h('div',{style:{fontSize:13,fontWeight:600,fontStyle:'italic',marginTop:4}}, '\u201C'+cc.hook+'\u201D'))),
+          h('div',{style:{background:'var(--surface2)',borderRadius:12,padding:14}}, this.lbl('Script'), h('div',{style:{fontSize:12,color:'var(--dim)',lineHeight:1.7,marginTop:6,fontFamily:'ui-monospace, monospace'}}, cc.script)))])));
+  }
+  benchColor(key,v){ const b=BENCH[key]; if(b==null)return 'var(--text)'; return v<b? C.retire : 'var(--text)'; }
+  labLeaderboard(){
+    const s=this.state;
+    let rows=CREATIVES.filter(c=>s.statusFilter==='All'||c.result===s.statusFilter).filter(c=> !s.search || c.name.toLowerCase().includes(s.search.toLowerCase()));
+    rows=this.sortRows(rows);
+    const top=this.sortRows(CREATIVES.filter(c=>c.result==='WIN')).slice(0,3);
+    const cols=[['name','Creative','left'],['impr','Impr','right'],['views','Views','right'],['vvr','VVR','right'],['hook','Hook','right'],['compl','Compl','right'],['cpv','CPV','right'],['conv','Conv','right'],['result','Result','center']];
+    const sortArrow=k=> s.sortKey===k? h('span',{style:{color:C.violet}}, s.sortDir==='desc'?' ↓':' ↑'):null;
+    return h('div',{style:{display:'flex',flexDirection:'column',gap:16}},
+      h('div',{style:{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:14}}, top.map(c=>this.creativeCard(c))),
+      h('div',{style:{display:'flex',alignItems:'center',gap:8}},
+        h('div',{style:{fontSize:15,fontWeight:700,marginRight:6}},'All creatives'),
+        this.segBar(['All','WIN','TEST','RETIRE'], s.statusFilter, v=>this.setState({statusFilter:v})),
+        h('div',{style:{flex:1}}), h('div',{style:{fontSize:11.5,color:'var(--faint)'}}, rows.length+' creatives · ranked by '+s.sortKey)),
+      this.card([
+        h('div',{key:'tbl',style:{overflowX:'auto'}}, h('table',{style:{width:'100%',borderCollapse:'collapse',fontSize:12.5}},
+          h('thead',null,h('tr',{style:{textAlign:'left'}}, cols.map(c=>h('th',{key:c[0],onClick:()=>this.toggleSort(c[0]),style:{padding:'0 10px 12px',textAlign:c[2],cursor:'pointer',position:'sticky',top:0,color:'var(--faint)',fontSize:10,letterSpacing:'.06em',textTransform:'uppercase',fontWeight:600,whiteSpace:'nowrap'}}, c[1], sortArrow(c[0]))))),
+          h('tbody',null, rows.map((c,ri)=>h('tr',{key:c.id,onClick:()=>this.setState({drawer:c.id}),style:{cursor:'pointer',borderTop:'1px solid var(--border)',background:'transparent'},onMouseEnter:e=>e.currentTarget.style.background='var(--surface2)',onMouseLeave:e=>e.currentTarget.style.background='transparent'},
+            h('td',{style:{padding:'10px'}}, h('div',{style:{display:'flex',alignItems:'center',gap:10}}, this.thumb(c,40), h('div',null, h('div',{style:{fontWeight:600,fontSize:12.5}}, c.name), h('div',{style:{fontSize:10.5,color:'var(--faint)'}}, c.fmt+' · '+c.len)))),
+            h('td',{style:this.tdR()}, this.fmtN(c.impr)),
+            h('td',{style:this.tdR()}, this.fmtFull(c.views)),
+            h('td',{style:this.tdR(this.benchColor('vvr',c.vvr))}, c.vvr+'%'),
+            h('td',{style:this.tdR(this.benchColor('hook',c.hook))}, c.hook+'%'),
+            h('td',{style:this.tdR(this.benchColor('compl',c.compl))}, c.compl+'%'),
+            h('td',{style:this.tdR()}, '€'+c.cpv.toFixed(3)),
+            h('td',{style:this.tdR()}, c.conv.toFixed(2)),
+            h('td',{style:{padding:'10px',textAlign:'center'}}, this.pill(c.result)))))))]));
+  }
+  tdR(col){ return {padding:'10px',textAlign:'right',fontVariantNumeric:'tabular-nums',color:col||'var(--text)',fontWeight:col===C.retire?700:500,whiteSpace:'nowrap'}; }
+  creativeCard(c){
+    const hue=(c.id*47)%360;
+    return h('div',{key:c.id,onClick:()=>this.setState({drawer:c.id}),style:{background:'var(--surface)',border:'1px solid var(--border)',borderRadius:16,overflow:'hidden',cursor:'pointer',boxShadow:'var(--shadow)'}},
+      h('div',{style:{height:130,background:`linear-gradient(135deg, hsl(${hue} 55% 32%), hsl(${(hue+45)%360} 50% 20%))`,position:'relative',display:'flex',alignItems:'center',justifyContent:'center'}},
+        h('div',{style:{width:46,height:46,borderRadius:999,background:'rgba(255,255,255,.16)',backdropFilter:'blur(4px)',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff'}}, icon('play',20)),
+        h('div',{style:{position:'absolute',left:10,top:10}}, this.pill(c.result)),
+        h('div',{style:{position:'absolute',right:10,bottom:10,fontSize:10,fontWeight:700,color:'#fff',background:'rgba(0,0,0,.5)',padding:'2px 7px',borderRadius:5}}, c.len)),
+      h('div',{style:{padding:14}},
+        h('div',{style:{fontWeight:700,fontSize:13.5,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}, c.name),
+        h('div',{style:{fontSize:10.5,color:'var(--faint)',marginTop:2}}, c.angle+' · '+c.fmt),
+        h('div',{style:{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:6,marginTop:12}},
+          [['VVR',c.vvr+'%','vvr'],['Hook',c.hook+'%','hook'],['Compl',c.compl+'%','compl'],['Views',this.fmtN(c.views),null],['CPV','€'+c.cpv.toFixed(3),null],['Conv',c.conv.toFixed(1),null]].map((m,i)=>
+            h('div',{key:i}, this.lbl(m[0],{fontSize:8.5}), h('div',{style:{fontWeight:700,fontSize:13,marginTop:1,color:m[2]?this.benchColor(m[2],parseFloat(m[1])):'var(--text)',fontVariantNumeric:'tabular-nums'}}, m[1])))),
+        h('button',{style:{marginTop:12,width:'100%',display:'flex',alignItems:'center',justifyContent:'center',gap:7,background:'var(--surface2)',border:'1px solid var(--border)',borderRadius:9,padding:'8px',cursor:'pointer',color:'var(--text)',fontSize:12,fontWeight:600}}, icon('play',13),'Watch on YouTube',h('span',{style:{color:'var(--faint)'}},icon('external',12)))));
+  }
+
+  // ===== DRAWER =====
+  drawer(){
+    const c=CREATIVES.find(x=>x.id===this.state.drawer); if(!c)return null;
+    return h('div',{style:{position:'fixed',inset:0,zIndex:60,display:'flex',justifyContent:'flex-end'}},
+      h('div',{onClick:()=>this.setState({drawer:null}),style:{position:'absolute',inset:0,background:'rgba(8,5,18,.55)',backdropFilter:'blur(2px)',animation:'cosFade .2s'}}),
+      h('div',{style:{position:'relative',width:440,maxWidth:'90vw',height:'100%',background:'var(--surface)',borderLeft:'1px solid var(--border)',boxShadow:'-20px 0 50px rgba(0,0,0,.4)',overflowY:'auto',animation:'cosFade .25s'}},
+        h('div',{style:{height:200,background:`linear-gradient(135deg, hsl(${(c.id*47)%360} 55% 32%), hsl(${(c.id*47+45)%360} 50% 20%))`,position:'relative',display:'flex',alignItems:'center',justifyContent:'center'}},
+          h('div',{style:{width:56,height:56,borderRadius:999,background:'rgba(255,255,255,.18)',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff'}}, icon('play',24)),
+          h('button',{onClick:()=>this.setState({drawer:null}),style:{position:'absolute',top:14,right:14,width:32,height:32,borderRadius:9,background:'rgba(0,0,0,.4)',border:'none',color:'#fff',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}, icon('x',16)),
+          h('div',{style:{position:'absolute',left:14,top:14}}, this.pill(c.result))),
+        h('div',{style:{padding:18}},
+          h('div',{style:{fontFamily:'Inter Tight',fontWeight:800,fontSize:19}}, c.name),
+          h('div',{style:{fontSize:12,color:'var(--faint)',marginTop:3}}, c.fmt+' · '+c.len+' · '+c.angle),
+          h('div',{style:{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8,marginTop:16}},
+            [['VVR',c.vvr+'%','vvr'],['Hook',c.hook+'%','hook'],['Completion',c.compl+'%','compl'],['Views',this.fmtFull(c.views),null],['CPV','€'+c.cpv.toFixed(3),null],['Conv',c.conv.toFixed(2),null],['Impr',this.fmtN(c.impr),null],['Days live',c.days+'d',null],['Spend','€'+c.spend,null]].map((m,i)=>
+              h('div',{key:i,style:{background:'var(--surface2)',borderRadius:10,padding:'9px 10px'}}, this.lbl(m[0],{fontSize:8.5}), h('div',{style:{fontWeight:700,fontSize:15,marginTop:2,color:m[2]?this.benchColor(m[2],parseFloat(m[1])):'var(--text)',fontVariantNumeric:'tabular-nums'}}, m[1])))),
+          h('div',{style:{marginTop:18,marginBottom:6,fontSize:13,fontWeight:700}}, 'Retention curve'),
+          this.lineChart({series:[{values:c.ret,color:C.violet,area:true,name:'Still watching'}],labels:['0%','25%','50%','75%','100%'],yMax:100,h:160,fmtY:v=>v+'%'}),
+          h('div',{style:{marginTop:14,padding:14,background:'var(--surface2)',borderRadius:12}},
+            this.lbl('Hook line'), h('div',{style:{fontSize:13.5,fontWeight:600,marginTop:4,fontStyle:'italic'}}, '\u201C'+c.line+'\u201D'),
+            h('div',{style:{marginTop:10}}, this.lbl('Angle'), h('div',{style:{fontSize:13,marginTop:3}}, c.angle)),
+            h('div',{style:{marginTop:10}}, this.lbl('Lifecycle'), h('div',{style:{fontSize:13,marginTop:3}}, c.stage+' · '+c.days+' days live'))),
+          h('div',{style:{display:'flex',gap:8,marginTop:16}},
+            h('button',{style:{flex:1,display:'flex',alignItems:'center',justifyContent:'center',gap:7,background:GRAD,border:'none',borderRadius:10,padding:'10px',cursor:'pointer',color:'#fff',fontSize:12.5,fontWeight:700}}, icon('play',14),'Watch on YouTube'),
+            h('button',{style:{display:'flex',alignItems:'center',gap:6,background:'var(--surface2)',border:'1px solid var(--border)',borderRadius:10,padding:'10px 14px',cursor:'pointer',color:'var(--text)',fontSize:12.5,fontWeight:600}}, icon('layers',14),'Replicate')))));
+  }
+  // ===== SHARE MODAL =====
+  shareModal(){
+    return h('div',{style:{position:'fixed',inset:0,zIndex:70,display:'flex',alignItems:'center',justifyContent:'center'}},
+      h('div',{onClick:()=>this.setState({share:false}),style:{position:'absolute',inset:0,background:'rgba(8,5,18,.6)',backdropFilter:'blur(3px)',animation:'cosFade .2s'}}),
+      h('div',{style:{position:'relative',width:460,maxWidth:'92vw',background:'var(--surface)',border:'1px solid var(--border)',borderRadius:18,boxShadow:'var(--shadow)',padding:22,animation:'cosFade .25s'}},
+        h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:4}},
+          h('div',{style:{fontFamily:'Inter Tight',fontWeight:800,fontSize:18}}, 'Share client dashboard'),
+          h('button',{onClick:()=>this.setState({share:false}),style:{width:30,height:30,borderRadius:8,background:'var(--surface2)',border:'1px solid var(--border)',cursor:'pointer',color:'var(--dim)',display:'flex',alignItems:'center',justifyContent:'center'}}, icon('x',15))),
+        h('div',{style:{fontSize:12.5,color:'var(--dim)'}}, 'A read-only, white-labeled view of '+this.acct().name),
+        h('div',{style:{display:'flex',gap:8,margintop:14,marginTop:16,alignItems:'center'}},
+          h('div',{style:{flex:1,display:'flex',alignItems:'center',gap:8,background:'var(--surface2)',border:'1px solid var(--border)',borderRadius:10,padding:'10px 12px'}}, h('span',{style:{color:'var(--faint)'}},icon('link',14)), h('span',{style:{fontSize:12,color:'var(--dim)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}, 'creativeos.ad-lab.io/r/'+this.acct().id+'-9f2a')),
+          h('button',{style:{background:GRAD,border:'none',borderRadius:10,padding:'10px 16px',cursor:'pointer',color:'#fff',fontSize:12.5,fontWeight:700}}, 'Copy')),
+        h('div',{style:{marginTop:16,display:'flex',flexDirection:'column',gap:2}},
+          [['Live data','Updates in real time as the account changes',true],['Scan-refreshed','Snapshot refreshed every scan · last 14 min ago',false],['Password protect','Require a password to open',false],['Hide cost internals','Show performance, hide CPV and spend',true]].map((r,i)=>
+            h('div',{key:i,style:{display:'flex',alignItems:'center',gap:12,padding:'11px 0',borderBottom:i<3?'1px solid var(--border)':'none'}},
+              h('div',{style:{flex:1}}, h('div',{style:{fontSize:13,fontWeight:600}}, r[0]), h('div',{style:{fontSize:11,color:'var(--faint)'}}, r[1])),
+              h('div',{style:{width:38,height:22,borderRadius:999,background:r[2]?C.violet:'var(--surface2)',border:'1px solid var(--border)',position:'relative',cursor:'pointer'}}, h('div',{style:{position:'absolute',top:2,left:r[2]?18:2,width:16,height:16,borderRadius:999,background:'#fff',transition:'left .15s'}}))))),
+        h('button',{style:{marginTop:18,width:'100%',background:GRAD,border:'none',borderRadius:11,padding:'12px',cursor:'pointer',color:'#fff',fontSize:13,fontWeight:700}}, 'Create share link')));
+  }
+
+  // ===== WINNING VAULT =====
+  cVault(){
+    const sub=this.state.sub;
+    if(sub==='Winners') return this.vaultWinners();
+    if(sub==='By Niche') return this.vaultNiche();
+    if(sub==='Swipe & Replicate') return this.vaultSwipe();
+    if(sub==='Templates') return this.vaultTemplates();
+    return this.stub();
+  }
+  winnersAll(){
+    return [
+      {c:CREATIVES[0],client:'glowora.com'},{c:CREATIVES[1],client:'glowora.com'},{c:CREATIVES[2],client:'glowora.com'},
+      {c:CREATIVES[3],client:'glowora.com'},{c:CREATIVES[13],client:'glowora.com'},{c:CREATIVES[20],client:'glowora.com'},
+      {c:Object.assign({},CREATIVES[1],{id:101,name:'SAINT 14 GlowRitual',angle:'Birthday sale',vvr:42.1,hook:58.0}),client:'saintbrand.com'},
+      {c:Object.assign({},CREATIVES[2],{id:102,name:'KORI 7 CollagenScam',angle:'Botox alternative',vvr:38.4,hook:49.5}),client:'koriderm.com'},
+      {c:Object.assign({},CREATIVES[3],{id:103,name:'HI 4 30SecWhiter',angle:'Before/after',vvr:33.0,hook:44.0}),client:'histrips.com'}
+    ];
+  }
+  vaultWinners(){
+    return h('div',{style:{display:'flex',flexDirection:'column',gap:16}},
+      h('div',{style:{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:14}},
+        this.statCard({label:'Winners in vault',value:'24',foot:'across all clients',color:C.win}),
+        this.statCard({label:'Avg winner VVR',value:'39.4%',foot:'vs 24.8% account avg',color:C.win,delta:14.6,deltaSuffix:'pt'}),
+        this.statCard({label:'Replications shipped',value:'11',foot:'winners reused on new clients'}),
+        this.statCard({label:'Replication win rate',value:'64%',foot:'reused winners that re-won',color:C.win})),
+      h('div',{style:{fontSize:15,fontWeight:700}},'Every WIN creative'),
+      h('div',{style:{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:14}}, this.winnersAll().map((w,i)=>{
+        const c=w.c; const hue=(c.id*47)%360;
+        return h('div',{key:i,onClick:()=> c.id<100&&this.setState({drawer:c.id}),style:{background:'var(--surface)',border:'1px solid var(--border)',borderRadius:16,overflow:'hidden',cursor:'pointer',boxShadow:'var(--shadow)'}},
+          h('div',{style:{height:108,background:`linear-gradient(135deg, hsl(${hue} 55% 32%), hsl(${(hue+45)%360} 50% 20%))`,position:'relative',display:'flex',alignItems:'center',justifyContent:'center'}},
+            h('div',{style:{width:40,height:40,borderRadius:999,background:'rgba(255,255,255,.18)',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff'}}, icon('play',18)),
+            h('div',{style:{position:'absolute',left:10,top:10}}, this.pill('WIN')),
+            h('div',{style:{position:'absolute',right:10,top:10,fontSize:9.5,fontWeight:700,color:'#fff',background:'rgba(0,0,0,.45)',padding:'3px 7px',borderRadius:6}}, w.client)),
+          h('div',{style:{padding:13}},
+            h('div',{style:{fontWeight:700,fontSize:13,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}, c.name),
+            h('div',{style:{fontSize:10.5,color:'var(--faint)',marginTop:2}}, 'Angle · '+c.angle),
+            h('div',{style:{display:'flex',gap:14,marginTop:10}}, [['VVR',c.vvr+'%'],['Hook',c.hook+'%'],['CPV','€'+c.cpv.toFixed(3)]].map((m,j)=>h('div',{key:j},this.lbl(m[0],{fontSize:8.5}),h('div',{style:{fontWeight:700,fontSize:13,color:C.win,fontVariantNumeric:'tabular-nums'}},m[1])))) ));
+      })));
+  }
+  vaultNiche(){
+    const niches=[['Skincare',12,'glowora.com',C.violet],['Beauty',6,'saintbrand.com',C.magenta],['Supplements',3,'koriderm.com',C.indigo],['Oral care',3,'histrips.com',C.info]];
+    return h('div',{style:{display:'flex',flexDirection:'column',gap:16}},
+      h('div',{style:{fontSize:13,color:'var(--dim)'}}, 'A winner in one account can seed another. ', h('span',{style:{color:'var(--text)',fontWeight:600}},'\u21B3 Filter the vault by vertical, then replicate across clients.')),
+      h('div',{style:{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:14}}, niches.map((n,i)=>
+        h('div',{key:i,style:{background:'var(--surface)',border:'1px solid var(--border)',borderRadius:16,padding:16,boxShadow:'var(--shadow)'}},
+          h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center'}}, h('span',{style:{width:34,height:34,borderRadius:10,background:n[3]+'22',color:n[3],display:'flex',alignItems:'center',justifyContent:'center'}}, icon('vault',17)), h('span',{style:{fontFamily:'Inter Tight',fontWeight:800,fontSize:26}}, n[1])),
+          h('div',{style:{fontSize:13.5,fontWeight:700,marginTop:10}}, n[0]), h('div',{style:{fontSize:11,color:'var(--faint)'}}, 'lead account · '+n[2])))),
+      this.chartCard('Winners by vertical',null, this.hbars(niches.map(n=>({label:n[0],value:n[1],color:n[3]})),{max:14})));
+  }
+  vaultSwipe(){
+    const w=CREATIVES[1];
+    const fields=[['Target client','Koriderm \u00B7 supplements'],['New angle','Collagen scam reveal'],['Hook variant','\u201CThe collagen scam your brand sells you\u201D'],['Format','In-stream 0:16']];
+    return h('div',{style:{display:'grid',gridTemplateColumns:'1fr 1.1fr',gap:16}},
+      this.card([
+        h('div',{key:'h',style:{fontSize:14,fontWeight:700,marginBottom:12}},'Source winner'),
+        h('div',{key:'c',style:{display:'flex',gap:12}},
+          this.thumb(w,80),
+          h('div',null,
+            h('div',{style:{fontWeight:700,fontSize:14}}, w.name),
+            h('div',{style:{fontSize:11.5,color:'var(--faint)',marginTop:2}}, 'glowora.com \u00B7 '+w.angle),
+            h('div',{style:{marginTop:8}}, this.pill('WIN')),
+            h('div',{style:{fontSize:12,color:'var(--dim)',marginTop:8}}, w.hook+'% hook \u00B7 '+w.vvr+'% VVR \u00B7 \u20AC'+w.cpv.toFixed(3)+' CPV'))),
+        h('div',{key:'l',style:{marginTop:16}},
+          this.lbl('Why it won'),
+          h('div',{style:{fontSize:12.5,color:'var(--dim)',lineHeight:1.55,marginTop:5}}, 'Needle-free authority hook in the first 3 seconds, dermatologist framing, fast payoff. Holds 45% to completion.'))]),
+      h('div',{style:{display:'flex',flexDirection:'column',gap:14}},
+        this.card([
+          h('div',{key:'h',style:{fontSize:14,fontWeight:700,marginBottom:12}},'Spin a replication brief'),
+          h('div',{key:'f',style:{display:'flex',flexDirection:'column',gap:12}},
+            fields.map((r,i)=> h('div',{key:i},
+              this.lbl(r[0]),
+              h('div',{style:{marginTop:5,background:'var(--surface2)',border:'1px solid var(--border)',borderRadius:10,padding:'10px 12px',fontSize:12.5,fontWeight:600,display:'flex',justifyContent:'space-between',alignItems:'center'}}, r[1], h('span',{style:{color:'var(--faint)'}}, icon('chevron',13))))))]),
+        this.insight({kind:'iterate',title:'3 hook variants suggested',body:'Reuse the needle-free authority frame on Koriderm. Lead with the collagen-scam reveal, keep the 16-second cut, swap the dermatologist for a nutritionist.',metric:'est. 49% hook',conf:79,action:'Generate brief'}),
+        h('button',{style:{background:GRAD,border:'none',borderRadius:11,padding:'12px',cursor:'pointer',color:'#fff',fontSize:13,fontWeight:700}}, 'Create replication brief')));
+  }
+  vaultTemplates(){
+    const tmpl=[['Authority reveal','"The [category] [experts] quietly use"',68,12],['Age reversal','"Look [N] years younger by [day]"',54,9],['Industry scam','"The [industry] does not want you to see this"',52,7],['Before / after split','"[N] days, real before and after"',31,15],['Claymation explainer','"Watch what [ingredient] actually does"',30,6]];
+    return h('div',{style:{display:'flex',flexDirection:'column',gap:14}},
+      h('div',{style:{fontSize:13,color:'var(--dim)'}}, 'Reusable hook frameworks with their historical hit rate.'),
+      this.card([h('div',{key:'hd',style:{display:'grid',gridTemplateColumns:'180px 1fr 90px 90px',gap:12,paddingBottom:10,borderBottom:'1px solid var(--border)',marginBottom:4}}, ['Template','Pattern','Avg hook','Times used'].map((t,i)=>h('div',{key:i,style:{textAlign:i>1?'right':'left'}},this.lbl(t)))),
+        tmpl.map((t,i)=>h('div',{key:i,style:{display:'grid',gridTemplateColumns:'180px 1fr 90px 90px',gap:12,alignItems:'center',padding:'12px 0',borderTop:i?'1px solid var(--border)':'none'}},
+          h('div',{style:{fontSize:13,fontWeight:700}}, t[0]),
+          h('div',{style:{fontSize:12,color:'var(--dim)',fontStyle:'italic'}}, t[1]),
+          h('div',{style:{textAlign:'right',fontWeight:800,fontFamily:'Inter Tight',fontSize:16,color:t[2]>=40?C.win:t[2]>=30?C.warn:'var(--text)'}}, t[2]+'%'),
+          h('div',{style:{textAlign:'right',fontSize:13,color:'var(--dim)'}}, t[3])))]));
+  }
+  // ===== COMPETITOR RADAR =====
+  cRadar(){
+    const sub=this.state.sub;
+    if(sub==='Discover') return this.radarDiscover();
+    if(sub==='Saved Boards') return this.radarBoards();
+    if(sub==='Brand Tracker') return this.radarBrand();
+    if(sub==='Angle Trends') return this.radarTrends();
+    return this.stub();
+  }
+  radarDiscover(){
+    return h('div',{style:{display:'flex',flexDirection:'column',gap:14}},
+      h('div',{style:{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}},
+        h('div',{style:{fontSize:13,color:'var(--dim)',flex:'1 1 auto'}}, 'Research intelligence from the Google Ads Transparency Center and YouTube.'),
+        ['Niche','Market','Format','Spend band'].map((f,i)=>h('button',{key:i,style:{display:'flex',alignItems:'center',gap:6,background:'var(--surface2)',border:'1px solid var(--border)',borderRadius:9,padding:'6px 11px',cursor:'pointer',color:'var(--text)',fontSize:11.5}}, f, h('span',{style:{color:'var(--faint)'}},icon('chevron',12))))),
+      h('div',{style:{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:14}}, COMPETITORS.map((cp,i)=>{ const hue=(i*53+20)%360;
+        return h('div',{key:i,style:{background:'var(--surface)',border:'1px solid var(--border)',borderRadius:14,overflow:'hidden',boxShadow:'var(--shadow)'}},
+          h('div',{style:{height:120,background:`linear-gradient(135deg, hsl(${hue} 50% 30%), hsl(${(hue+50)%360} 45% 18%))`,position:'relative',display:'flex',alignItems:'center',justifyContent:'center'}},
+            h('div',{style:{width:38,height:38,borderRadius:999,background:'rgba(255,255,255,.16)',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff'}}, icon('play',16)),
+            h('div',{style:{position:'absolute',left:9,top:9,fontSize:9.5,fontWeight:700,color:'#fff',background:'rgba(0,0,0,.45)',padding:'3px 8px',borderRadius:6}}, cp.brand),
+            h('div',{style:{position:'absolute',right:9,bottom:9,fontSize:9,fontWeight:700,color:'#fff',background:'rgba(0,0,0,.55)',padding:'2px 6px',borderRadius:4}}, cp.len)),
+          h('div',{style:{padding:12}},
+            h('div',{style:{fontSize:12,fontWeight:600,lineHeight:1.3,minHeight:31}}, '\u201C'+cp.hook+'\u201D'),
+            h('div',{style:{display:'flex',justifyContent:'space-between',marginTop:9,fontSize:10,color:'var(--faint)'}}, h('span',null,cp.fmt+' · '+cp.market), h('span',null,'seen '+cp.seen)),
+            h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:10}}, h('span',{style:{fontSize:10.5,fontWeight:700,color:C.warn,background:C.warn+'1f',padding:'3px 8px',borderRadius:6}}, cp.spend), h('button',{style:{display:'flex',alignItems:'center',gap:5,background:'var(--surface2)',border:'1px solid var(--border)',borderRadius:8,padding:'5px 9px',cursor:'pointer',color:'var(--text)',fontSize:10.5,fontWeight:600}}, icon('plus',12),'Save')))); })));
+  }
+  radarBoards(){
+    const boards=[['NL skincare winners',8,C.violet],['Botox-alternative swipe',5,C.magenta],['Birthday / sale angles',6,C.indigo],['Claymation explainers',4,C.info]];
+    return h('div',{style:{display:'flex',flexDirection:'column',gap:14}},
+      h('div',{style:{display:'flex',alignItems:'center'}}, h('div',{style:{fontSize:15,fontWeight:700,flex:1}},'Saved boards'), h('button',{style:{display:'flex',alignItems:'center',gap:6,background:GRAD,border:'none',borderRadius:9,padding:'8px 13px',cursor:'pointer',color:'#fff',fontSize:12,fontWeight:700}}, icon('plus',14),'New board')),
+      h('div',{style:{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:14}}, boards.map((b,i)=>
+        h('div',{key:i,style:{background:'var(--surface)',border:'1px solid var(--border)',borderRadius:16,padding:16,boxShadow:'var(--shadow)'}},
+          h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center'}}, h('div',null, h('div',{style:{fontSize:14,fontWeight:700}}, b[0]), h('div',{style:{fontSize:11,color:'var(--faint)',marginTop:2}}, b[1]+' ads · shareable')), h('button',{style:{display:'flex',alignItems:'center',gap:6,background:'var(--surface2)',border:'1px solid var(--border)',borderRadius:8,padding:'6px 10px',cursor:'pointer',color:'var(--text)',fontSize:11}}, icon('link',12),'Share')),
+          h('div',{style:{display:'flex',gap:6,marginTop:12}}, COMPETITORS.slice(i,i+4).map((cp,j)=>{ const hue=((i+j)*53+20)%360; return h('div',{key:j,style:{flex:1,height:54,borderRadius:8,background:`linear-gradient(135deg, hsl(${hue} 50% 30%), hsl(${(hue+50)%360} 45% 18%))`,position:'relative'}}, h('div',{style:{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',color:'rgba(255,255,255,.7)'}},icon('play',13))); })) ))));
+  }
+  radarBrand(){
+    const launches=[['Botox vs this $39 serum','Jun 15','scaling',C.win],['Glass skin in 8 seconds','Jun 11','new',C.info],['Dermatologists are furious','May 28','scaling',C.win],['The collagen myth','Jun 02','testing',C.warn]];
+    return h('div',{style:{display:'flex',flexDirection:'column',gap:16}},
+      h('div',{style:{display:'flex',alignItems:'center',gap:10}}, h('div',{style:{width:40,height:40,borderRadius:11,background:GRAD,display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:800}},'L'), h('div',null, h('div',{style:{fontFamily:'Inter Tight',fontWeight:800,fontSize:18}},'Lumora'), h('div',{style:{fontSize:11.5,color:'var(--faint)'}},'Skincare · NL · tracked since Apr'))),
+      h('div',{style:{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:14}},
+        this.statCard({label:'Live ads',value:'14',foot:'currently running'}),
+        this.statCard({label:'New this month',value:'5',foot:'fresh creatives',color:C.info}),
+        this.statCard({label:'Est. spend',value:'$50–100k',foot:'monthly band',color:C.warn}),
+        this.statCard({label:'Scaling',value:'3',foot:'pushing budget',color:C.win})),
+      h('div',{style:{display:'grid',gridTemplateColumns:'1.2fr 1fr',gap:14}},
+        this.chartCard('Estimated spend trend','last 8 weeks', this.lineChart({series:[{values:[20,28,34,30,42,55,68,72],color:C.magenta,area:true,name:'Spend index'}],labels:['w1','w2','w3','w4','w5','w6','w7','w8'],noDots:false})),
+        this.card([h('div',{key:'h',style:{fontSize:14,fontWeight:700,marginBottom:10}},'Recent launches'), h('div',{key:'b',style:{display:'flex',flexDirection:'column',gap:2}}, launches.map((l,i)=>h('div',{key:i,style:{display:'flex',alignItems:'center',gap:10,padding:'10px 0',borderTop:i?'1px solid var(--border)':'none'}}, h('div',{style:{flex:1}}, h('div',{style:{fontSize:12.5,fontWeight:600}}, '\u201C'+l[0]+'\u201D'), h('div',{style:{fontSize:10.5,color:'var(--faint)'}}, 'first seen '+l[1])), h('span',{style:{fontSize:10,fontWeight:700,color:l[3],background:l[3]+'1f',padding:'3px 8px',borderRadius:6,textTransform:'capitalize'}}, l[2]))))])));
+  }
+  radarTrends(){
+    const trends=[['Botox alternative',38,'up'],['10 years younger',31,'up'],['Glass skin test',24,'up'],['Collagen scam',19,'up'],['Birthday protocol',12,'flat'],['Ingredient animation',8,'down']];
+    return h('div',{style:{display:'flex',flexDirection:'column',gap:14}},
+      h('div',{style:{fontSize:13,color:'var(--dim)'}}, 'What is scaling across skincare right now. ', h('span',{style:{color:'var(--text)',fontWeight:600}},'\u21B3 Brief the rising angles before the niche saturates.')),
+      this.card([h('div',{key:'hd',style:{display:'grid',gridTemplateColumns:'1fr 100px 1fr 70px',gap:12,paddingBottom:10,borderBottom:'1px solid var(--border)',marginBottom:4}}, ['Angle','Brands using','Momentum','Trend'].map((t,i)=>h('div',{key:i},this.lbl(t)))),
+        trends.map((t,i)=>{ const dir=t[2]; const col=dir==='up'?C.win:dir==='down'?C.retire:C.warn; return h('div',{key:i,style:{display:'grid',gridTemplateColumns:'1fr 100px 1fr 70px',gap:12,alignItems:'center',padding:'12px 0',borderTop:i?'1px solid var(--border)':'none'}},
+          h('div',{style:{fontSize:13,fontWeight:600}}, t[0]),
+          h('div',{style:{fontSize:13,color:'var(--dim)'}}, t[1]+' brands'),
+          h('div',{style:{height:8,background:'var(--surface2)',borderRadius:5,overflow:'hidden'}}, h('div',{style:{height:'100%',width:(t[1]/38*100)+'%',background:col,borderRadius:5}})),
+          h('div',{style:{display:'flex',justifyContent:'flex-end'}}, h('span',{style:{color:col,display:'flex',alignItems:'center',gap:3,fontSize:11.5,fontWeight:700}}, icon(dir==='up'?'up':dir==='down'?'down':'arrowR',13), dir))); })]));
+  }
+  // ===== TRENDLINES =====
+  cTrend(){
+    const sub=this.state.sub;
+    if(sub==='Views vs Spend') return this.trendViews();
+    if(sub==='View Rate') return this.trendVR();
+    if(sub==='Conversions') return this.trendConv();
+    if(sub==='Custom') return this.trendCustom();
+    return this.stub();
+  }
+  trendViews(){
+    return h('div',{style:{display:'flex',flexDirection:'column',gap:16}},
+      h('div',{style:{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:14}},
+        this.statCard({label:'Total views',value:this.fmtFull(TOTALS.views),foot:'Jun 16 – 23',delta:-8.4,deltaSuffix:'%',big:true}),
+        this.statCard({label:'Total spend',value:'€'+this.fmtFull(TOTALS.spend),foot:'Jun 16 – 23',delta:-6.1,deltaSuffix:'%',big:true}),
+        this.statCard({label:'Blended CPV',value:'€0.0155',foot:'cost per view',delta:-2.0,deltaSuffix:'%',color:C.win,big:true})),
+      this.chartCard('Views vs spend','Jun 16 – 23', this.lineChart({series:[{values:D_VIEWS,color:C.violet,area:true,name:'Views'},{values:D_SPEND.map(v=>v*35),color:C.magenta,name:'Spend'}],h:300,fmtY:v=>this.fmtN(v)}), [{label:'Views',color:C.violet},{label:'Spend (right axis)',color:C.magenta}]));
+  }
+  trendVR(){
+    return h('div',{style:{display:'flex',flexDirection:'column',gap:16}},
+      h('div',{style:{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:14}},
+        this.statCard({label:'Avg view rate',value:BENCH.vvr+'%',foot:'period benchmark',color:C.warn,big:true}),
+        this.statCard({label:'Peak view rate',value:'30.1%',foot:'Jun 23',color:C.win,big:true}),
+        this.statCard({label:'Above benchmark',value:'4 / 8',foot:'days over 24.8%',big:true})),
+      this.chartCard('Daily view rate','vs 24.8% benchmark', this.lineChart({series:[{values:D_VR,color:C.violet,area:true,name:'View rate'}],benchmark:{value:BENCH.vvr,label:'24.8% benchmark'},h:300,yMax:36,fmtY:v=>v+'%'})));
+  }
+  trendConv(){
+    let run=0; const cum=D_CONV.map(v=>run+=v);
+    return h('div',{style:{display:'flex',flexDirection:'column',gap:16}},
+      h('div',{style:{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:14}},
+        this.statCard({label:'Total conversions',value:TOTALS.conv+'',foot:'Jun 16 – 23',delta:-12,deltaSuffix:'%',big:true}),
+        this.statCard({label:'Peak day',value:'26',foot:'Jun 16',big:true}),
+        this.statCard({label:'Cost / conversion',value:'€89',foot:'blended',color:C.win,big:true})),
+      h('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:14}},
+        this.chartCard('Daily conversions','Jun 16 – 23', this.lineChart({series:[{values:D_CONV,color:C.win,area:true,name:'Conversions'}],h:240})),
+        this.chartCard('Running total',null, this.lineChart({series:[{values:cum,color:C.magenta,area:true,name:'Cumulative'}],h:240}))));
+  }
+  trendCustom(){
+    return h('div',{style:{display:'flex',flexDirection:'column',gap:16}},
+      h('div',{style:{display:'flex',gap:10,alignItems:'center',flexWrap:'wrap'}},
+        h('span',{style:{fontSize:12.5,color:'var(--dim)'}},'Plot'),
+        h('button',{style:{display:'flex',alignItems:'center',gap:6,background:'var(--surface2)',border:'1px solid var(--border)',borderRadius:9,padding:'7px 12px',cursor:'pointer',color:C.violet,fontSize:12,fontWeight:700}}, 'Hook rate', h('span',{style:{color:'var(--faint)'}},icon('chevron',12))),
+        h('span',{style:{fontSize:12.5,color:'var(--dim)'}},'against'),
+        h('button',{style:{display:'flex',alignItems:'center',gap:6,background:'var(--surface2)',border:'1px solid var(--border)',borderRadius:9,padding:'7px 12px',cursor:'pointer',color:C.magenta,fontSize:12,fontWeight:700}}, 'CPV', h('span',{style:{color:'var(--faint)'}},icon('chevron',12)))),
+      this.chartCard('Hook rate vs CPV','custom plot', this.lineChart({series:[{values:[60.5,68.5,56.1,31,36.4,30.7,23.4,16],color:C.violet,name:'Hook rate'},{values:[9,9,11,15,24,21,17,31].map(v=>v),color:C.magenta,name:'CPV (×1000)'}],labels:CREATIVES.slice(0,8).map(c=>c.id+''),h:300})));
+  }
+  // ===== ATTRIBUTION =====
+  cAttr(){
+    const sub=this.state.sub;
+    if(sub==='Triple Whale vs Google') return this.attrCompare();
+    if(sub==='View-Through') return this.attrVT();
+    if(sub==='True ROAS Lift') return this.attrLift();
+    if(sub==='Window Settings') return this.attrWindow();
+    return this.stub();
+  }
+  attrCompare(){
+    const camps=[['YT · Botox Alternative',0.9,1.8],['YT · 10 Jaar Jonger',1.2,2.4],['YT · ClaymationStyle',0.7,1.5],['YT · Better Skin',1.1,2.1],['YT · Korean Skincare',0.6,1.3],['YT · Birthday Sale',0.8,1.6]];
+    return h('div',{style:{display:'flex',flexDirection:'column',gap:16}},
+      h('div',{style:{fontSize:13,color:'var(--dim)'}}, 'Google undercounts YouTube\u2019s influence. ', h('span',{style:{color:'var(--text)',fontWeight:600}},'\u21B3 Triple Whale captures the view-through revenue Google drops.')),
+      h('div',{style:{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:14}},
+        this.statCard({label:'Google reported ROAS',value:'0.9×',foot:'last-click view',color:C.retire,big:true}),
+        this.statCard({label:'Triple Whale ROAS',value:'1.8×',foot:'blended attribution',color:C.win,big:true}),
+        this.statCard({label:'Discrepancy',value:'2.0×',foot:'TW captures 2× more',color:C.magenta,big:true})),
+      this.card([h('div',{key:'h',style:{fontSize:14,fontWeight:700,marginBottom:14}},'Per-campaign reconciliation'),
+        h('div',{key:'b',style:{display:'flex',flexDirection:'column',gap:4}}, camps.map((c,i)=>{ const max=2.6; return h('div',{key:i,style:{display:'grid',gridTemplateColumns:'190px 1fr 80px',gap:14,alignItems:'center',padding:'11px 0',borderTop:i?'1px solid var(--border)':'none'}},
+          h('div',{style:{fontSize:12.5,fontWeight:600}}, c[0]),
+          h('div',{style:{display:'flex',flexDirection:'column',gap:5}},
+            h('div',{style:{display:'flex',alignItems:'center',gap:8}}, h('span',{style:{fontSize:9,color:'var(--faint)',width:48}},'Google'), h('div',{style:{flex:1,height:11,background:'var(--surface2)',borderRadius:5,overflow:'hidden'}}, h('div',{style:{height:'100%',width:(c[1]/max*100)+'%',background:C.retire,borderRadius:5}})), h('span',{style:{fontSize:11,fontWeight:700,width:30}}, c[1]+'×')),
+            h('div',{style:{display:'flex',alignItems:'center',gap:8}}, h('span',{style:{fontSize:9,color:'var(--faint)',width:48}},'TripleW'), h('div',{style:{flex:1,height:11,background:'var(--surface2)',borderRadius:5,overflow:'hidden'}}, h('div',{style:{height:'100%',width:(c[2]/max*100)+'%',background:C.win,borderRadius:5}})), h('span',{style:{fontSize:11,fontWeight:700,width:30}}, c[2]+'×'))),
+          h('div',{style:{textAlign:'right',fontWeight:800,fontFamily:'Inter Tight',fontSize:16,color:C.magenta}}, '+'+((c[2]/c[1]-1)*100).toFixed(0)+'%')); }))]));
+  }
+  attrVT(){
+    const segs=[{label:'Direct',value:54,color:C.violet},{label:'View-through',value:48,color:C.magenta},{label:'Cross-device',value:34,color:C.indigo}];
+    const tot=segs.reduce((a,s)=>a+s.value,0);
+    return h('div',{style:{display:'flex',flexDirection:'column',gap:16}},
+      h('div',{style:{display:'grid',gridTemplateColumns:'320px 1fr',gap:16,alignItems:'center'}},
+        this.card([h('div',{key:'h',style:{fontSize:14,fontWeight:700,marginBottom:6}},'Full YouTube impact'), h('div',{key:'d',style:{display:'flex',justifyContent:'center',padding:'10px 0'}}, this.donut(segs,tot,''+tot)), h('div',{key:'l',style:{display:'flex',flexDirection:'column',gap:8,marginTop:6}}, segs.map((s,i)=>h('div',{key:i,style:{display:'flex',alignItems:'center',gap:8}}, h('span',{style:{width:10,height:10,borderRadius:3,background:s.color}}), h('span',{style:{fontSize:12.5,flex:1}},s.label), h('span',{style:{fontWeight:700,fontSize:13}},s.value))))]),
+        h('div',{style:{display:'flex',flexDirection:'column',gap:14}},
+          h('div',{style:{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:14}},
+            this.statCard({label:'Direct conv',value:'54',foot:'last-click',color:C.violet}),
+            this.statCard({label:'View-through',value:'48',foot:'watched, converted later',color:C.magenta}),
+            this.statCard({label:'Total influenced',value:'136',foot:'full YouTube footprint',color:C.win,big:true})),
+          this.insight({kind:'scale',title:'YouTube drives 2.5× its last-click number',body:'For every 54 last-click conversions, view-through and cross-device add another 82. Judging YouTube on Google last-click alone understates it badly.',metric:'+82 hidden conv',conf:90,action:'Apply to ROAS lift'}))));
+  }
+  attrLift(){
+    const funnel=[['Impressions','3.1M',100,C.violet],['Views','783k',25,C.indigo],['Engaged (50%+)','177k',5.6,C.magenta],['Influenced conv','136',0.4,C.win],['Revenue','€63.2k',null,C.win]];
+    return h('div',{style:{display:'flex',flexDirection:'column',gap:16}},
+      h('div',{style:{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:14}},
+        this.statCard({label:'Direct ROAS',value:'0.9×',foot:'Google last-click',color:C.retire,big:true}),
+        this.statCard({label:'Total influenced ROAS',value:'4.7×',foot:'Triple Whale blended',color:C.win,big:true}),
+        this.statCard({label:'True ROAS lift',value:'5.2×',foot:'influenced ÷ direct',color:C.magenta,big:true})),
+      this.chartCard('Retention to revenue funnel',null, h('div',{style:{display:'flex',flexDirection:'column',gap:8,padding:'4px 0'}}, funnel.map((f,i)=>
+        h('div',{key:i,style:{display:'grid',gridTemplateColumns:'150px 1fr 90px',alignItems:'center',gap:14}},
+          h('div',{style:{fontSize:12.5,color:'var(--dim)'}}, f[0]),
+          f[2]!=null? h('div',{style:{height:30,background:'var(--surface2)',borderRadius:8,overflow:'hidden'}}, h('div',{style:{height:'100%',width:Math.max(6,f[2])+'%',background:f[3],borderRadius:8}})) : h('div',{style:{height:30,display:'flex',alignItems:'center',color:C.win,fontWeight:700}}, '€63.2k influenced'),
+          h('div',{style:{textAlign:'right',fontWeight:800,fontFamily:'Inter Tight',fontSize:16}}, f[1]))))));
+  }
+  attrWindow(){
+    const rows=[['Attribution window','Rolling 14 days'],['Exclude recent days','Last 3 days (attribution lag)'],['Conversion model','Triple Whale blended'],['View-through window','7 days post-view'],['Cross-device','Enabled']];
+    return h('div',{style:{display:'grid',gridTemplateColumns:'1.2fr 1fr',gap:16}},
+      this.card([h('div',{key:'h',style:{fontSize:14,fontWeight:700,marginBottom:14}},'Attribution window'),
+        h('div',{key:'b',style:{display:'flex',flexDirection:'column',gap:2}}, rows.map((r,i)=>h('div',{key:i,style:{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'13px 0',borderTop:i?'1px solid var(--border)':'none'}}, h('span',{style:{fontSize:13,color:'var(--dim)'}}, r[0]), h('span',{style:{fontSize:13,fontWeight:600,display:'flex',alignItems:'center',gap:8}}, r[1], h('span',{style:{color:'var(--faint)'}},icon('chevron',13)))))),
+        h('button',{key:'btn',style:{marginTop:16,width:'100%',background:GRAD,border:'none',borderRadius:11,padding:'12px',cursor:'pointer',color:'#fff',fontSize:13,fontWeight:700}}, 'Apply window everywhere')]),
+      this.insight({kind:'iterate',title:'Why exclude the last 3 days',body:'View-through and cross-device conversions land late. Counting the final 3 days understates ROAS and triggers false kills. The rolling 14-day window with a 3-day lag is the agency\u2019s real optimization window.',metric:'fewer false kills',conf:94,action:'Read the rule'}));
+  }
+  // ===== ACTION PLAN =====
+  cAction(){
+    const sub=this.state.sub;
+    if(sub==='Recommendations') return this.actReco();
+    if(sub==='Kill List') return this.actKill();
+    if(sub==='Scale List') return this.actScale();
+    if(sub==='Weekly Story') return this.actStory();
+    return this.stub();
+  }
+  actReco(){
+    return h('div',{style:{display:'flex',flexDirection:'column',gap:14}},
+      h('div',{style:{fontSize:13,color:'var(--dim)'}}, 'Plain-language calls, each tied to a number.'),
+      h('div',{style:{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:14}}, RECOS.map((r,i)=>h('div',{key:i}, this.insight(r)))));
+  }
+  actKill(){
+    const kill=CREATIVES.filter(c=>c.result==='RETIRE');
+    return h('div',{style:{display:'flex',flexDirection:'column',gap:14}},
+      h('div',{style:{display:'flex',alignItems:'center'}}, h('div',{style:{fontSize:15,fontWeight:700,flex:1}}, kill.length+' creatives crossed the kill threshold'), h('button',{style:{display:'flex',alignItems:'center',gap:6,background:C.retire,border:'none',borderRadius:9,padding:'8px 13px',cursor:'pointer',color:'#fff',fontSize:12,fontWeight:700}}, icon('flag',14),'Retire all')),
+      this.card(kill.map((c,i)=>h('div',{key:c.id,style:{display:'flex',alignItems:'center',gap:12,padding:'12px 4px',borderBottom:i<kill.length-1?'1px solid var(--border)':'none'}},
+        this.thumb(c,42),
+        h('div',{style:{flex:1}}, h('div',{style:{fontSize:13,fontWeight:600}}, c.name), h('div',{style:{fontSize:11,color:'var(--faint)'}}, c.angle+' · €'+c.spend+' spent · '+c.days+'d live')),
+        h('div',{style:{textAlign:'right'}}, h('div',{style:{fontSize:11,color:'var(--faint)'}},'Hook'), h('div',{style:{fontWeight:700,color:C.retire,fontSize:14}}, c.hook+'%')),
+        h('div',{style:{textAlign:'right',width:70}}, h('div',{style:{fontSize:11,color:'var(--faint)'}},'vs floor'), h('div',{style:{fontWeight:700,color:C.retire,fontSize:14}}, '-'+(BENCH.hook-c.hook).toFixed(1))),
+        h('button',{style:{display:'flex',alignItems:'center',gap:6,background:C.retire+'1f',border:'1px solid '+C.retire+'55',borderRadius:8,padding:'7px 11px',cursor:'pointer',color:C.retire,fontSize:11.5,fontWeight:700}}, icon('flag',13),'Mark retired')))));
+  }
+  actScale(){
+    const scale=CREATIVES.filter(c=>c.result==='WIN');
+    return h('div',{style:{display:'flex',flexDirection:'column',gap:14}},
+      h('div',{style:{fontSize:15,fontWeight:700}}, scale.length+' winners ready for more budget'),
+      this.card(scale.map((c,i)=>h('div',{key:c.id,style:{display:'flex',alignItems:'center',gap:12,padding:'12px 4px',borderBottom:i<scale.length-1?'1px solid var(--border)':'none'}},
+        this.thumb(c,42),
+        h('div',{style:{flex:1}}, h('div',{style:{fontSize:13,fontWeight:600}}, c.name), h('div',{style:{fontSize:11,color:'var(--faint)'}}, c.angle+' · €'+c.cpv.toFixed(3)+' CPV · '+c.conv.toFixed(1)+' conv')),
+        h('div',{style:{textAlign:'right'}}, h('div',{style:{fontSize:11,color:'var(--faint)'}},'VVR'), h('div',{style:{fontWeight:700,color:C.win,fontSize:14}}, c.vvr+'%')),
+        h('div',{style:{textAlign:'right',width:90}}, h('div',{style:{fontSize:11,color:'var(--faint)'}},'Suggested'), h('div',{style:{fontWeight:700,color:C.win,fontSize:13}}, '+€'+(c.vvr*12|0)+'/day')),
+        h('button',{style:{display:'flex',alignItems:'center',gap:6,background:C.win+'1f',border:'1px solid '+C.win+'55',borderRadius:8,padding:'7px 11px',cursor:'pointer',color:C.win,fontSize:11.5,fontWeight:700}}, icon('up',13),'Scale')))));
+  }
+  actStory(){
+    return h('div',{style:{display:'grid',gridTemplateColumns:'1.4fr 1fr',gap:16}},
+      this.card([
+        h('div',{key:'h',style:{display:'flex',alignItems:'center',gap:8,marginBottom:14}}, h('span',{style:{width:30,height:30,borderRadius:9,background:GRAD,display:'flex',alignItems:'center',justifyContent:'center',color:'#fff'}},icon('sparkles',16)), h('div',{style:{fontSize:14,fontWeight:700}},'Weekly story · draft'), h('div',{style:{flex:1}}), h('span',{style:{fontSize:11,color:'var(--faint)'}},'editable')),
+        h('div',{key:'b',style:{fontSize:13.5,lineHeight:1.75,color:'var(--dim)',display:'flex',flexDirection:'column',gap:12}},
+          h('p',{style:{margin:0}},h('strong',{style:{color:'var(--text)'}},'What we tested. '),'This week we ran 24 creatives on glowora, leaning into two angles: the botox-alternative and the 10-years-younger hook.'),
+          h('p',{style:{margin:0}},h('strong',{style:{color:'var(--text)'}},'What won. '),'GLOW 200 1beter holds a 47.9% view rate at €0.009 a view and 41.2% completion. The Botox Alternative H3 cut hit a 68.5% hook rate. Both are scaling.'),
+          h('p',{style:{margin:0}},h('strong',{style:{color:'var(--text)'}},'What we killed and why. '),'We retired GLOW 204 2 and two animated-mask cuts. Their hook rates fell below the 30% floor and they crossed the spend-vs-ROAS kill threshold.'),
+          h('p',{style:{margin:0}},h('strong',{style:{color:'var(--text)'}},'What\u2019s next. '),'We are replicating the botox-alternative frame onto two new hooks and testing one competitor angle pulled from the ad library.')),
+        h('div',{key:'f',style:{display:'flex',gap:8,marginTop:18}}, h('button',{style:{display:'flex',alignItems:'center',gap:7,background:GRAD,border:'none',borderRadius:10,padding:'10px 14px',cursor:'pointer',color:'#fff',fontSize:12.5,fontWeight:700}}, icon('share',14),'Share with client'), h('button',{style:{background:'var(--surface2)',border:'1px solid var(--border)',borderRadius:10,padding:'10px 14px',cursor:'pointer',color:'var(--text)',fontSize:12.5,fontWeight:600}}, 'Edit draft'))]),
+      h('div',{style:{display:'flex',flexDirection:'column',gap:14}},
+        h('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}, [['24','Tested'],['5','Won',C.win],['3','Killed',C.retire],['+0.4×','ROAS',C.win]].map((m,i)=>h('div',{key:i,style:{background:'var(--surface)',border:'1px solid var(--border)',borderRadius:14,padding:14,boxShadow:'var(--shadow)'}}, h('div',{style:{fontFamily:'Inter Tight',fontWeight:800,fontSize:24,color:m[2]||'var(--text)'}}, m[0]), this.lbl(m[1])))),
+        this.insight({kind:'test',title:'Voice check passed',body:'No hype words, no jargon, every claim tied to a number. Reads in the agency voice: short, declarative, specific.',metric:'client-ready',conf:88,action:'Lock draft'})));
+  }
+  // ===== CLIENT REPORTS =====
+  cReports(){
+    const sub=this.state.sub;
+    if(sub==='Live Dashboard') return this.repLive();
+    if(sub==='Weekly Snapshots') return this.repSnaps();
+    if(sub==='Share Links') return this.repLinks();
+    if(sub==='Branding') return this.repBrand();
+    return this.stub();
+  }
+  repLive(){
+    const top=this.sortRows(CREATIVES.filter(c=>c.result==='WIN')).slice(0,3);
+    return h('div',{style:{display:'flex',flexDirection:'column',gap:16}},
+      h('div',{style:{display:'flex',alignItems:'center',gap:8,fontSize:12,color:'var(--dim)',background:'var(--surface2)',border:'1px solid var(--border)',borderRadius:10,padding:'9px 12px'}}, h('span',{style:{color:C.info}},icon('eye',15)), 'Read-only client view · white-labeled · cost internals hidden', h('div',{style:{flex:1}}), h('span',{style:{display:'inline-flex',alignItems:'center',gap:6,fontWeight:700,color:C.win}}, h('span',{style:{width:7,height:7,borderRadius:9,background:C.win,animation:'cosPulse 1.6s infinite'}}),'Live')),
+      h('div',{style:{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:14}},
+        this.statCard({label:'View rate',value:'24.8%',foot:'account average',delta:1.2,deltaSuffix:'pt',big:true}),
+        this.statCard({label:'Hook rate',value:'30.1%',foot:'first quartile',delta:2.4,deltaSuffix:'pt',color:C.win,big:true}),
+        this.statCard({label:'Total views',value:'783k',foot:'this period',big:true}),
+        this.statCard({label:'Creatives tested',value:'24',foot:'5 winners',color:C.win,big:true})),
+      h('div',{style:{fontSize:14,fontWeight:700}},'Top creative performance'),
+      h('div',{style:{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:14}}, top.map(c=>this.creativeCard(c))),
+      this.chartCard('Views vs spend','Jun 16 – 23', this.lineChart({series:[{values:D_VIEWS,color:C.violet,area:true,name:'Views'}],h:240,fmtY:v=>this.fmtN(v)})),
+      this.insight({kind:'scale',title:'What we are doing next',body:'Scaling your two best performers and replicating the winning hook into three new variants. We retired three under-performers before they wasted budget.',metric:'5 winners live',conf:91,action:'See full plan'}));
+  }
+  repSnaps(){
+    const weeks=[['Jun 16 – 23','24','5','+0.4×'],['Jun 09 – 16','22','4','+0.2×'],['Jun 02 – 09','19','3','-0.1×'],['May 26 – Jun 02','21','6','+0.5×'],['May 19 – 26','18','2','+0.1×']];
+    return h('div',{style:{display:'flex',flexDirection:'column',gap:14}},
+      h('div',{style:{fontSize:15,fontWeight:700}},'Weekly snapshots · glowora.com'),
+      this.card([h('div',{key:'hd',style:{display:'grid',gridTemplateColumns:'1.4fr 1fr 1fr 1fr 90px',gap:12,paddingBottom:10,borderBottom:'1px solid var(--border)',marginBottom:4}}, ['Period','Tested','Winners','ROAS Δ',''].map((t,i)=>h('div',{key:i},this.lbl(t)))),
+        weeks.map((w,i)=>h('div',{key:i,style:{display:'grid',gridTemplateColumns:'1.4fr 1fr 1fr 1fr 90px',gap:12,alignItems:'center',padding:'13px 0',borderTop:i?'1px solid var(--border)':'none'}},
+          h('div',{style:{fontSize:13,fontWeight:600}}, w[0]),
+          h('div',{style:{fontSize:13}}, w[1]),
+          h('div',{style:{fontSize:13,color:C.win,fontWeight:700}}, w[2]),
+          h('div',{style:{fontSize:13,fontWeight:700,color:w[3][0]==='-'?C.retire:C.win}}, w[3]),
+          h('button',{style:{background:'var(--surface2)',border:'1px solid var(--border)',borderRadius:8,padding:'6px 10px',cursor:'pointer',color:'var(--text)',fontSize:11,fontWeight:600}}, 'Open')))]));
+  }
+  repLinks(){
+    const links=[['glowora.com','Live','Active',C.win],['saintbrand.com','Scan-refreshed','Active',C.win],['koriderm.com','Live','Password',C.warn],['relivex.com','Scan-refreshed','Expired',C.retire]];
+    return h('div',{style:{display:'flex',flexDirection:'column',gap:14}},
+      h('div',{style:{display:'flex',alignItems:'center'}}, h('div',{style:{fontSize:15,fontWeight:700,flex:1}},'Share links'), h('button',{onClick:()=>this.setState({share:true}),style:{display:'flex',alignItems:'center',gap:6,background:GRAD,border:'none',borderRadius:9,padding:'8px 13px',cursor:'pointer',color:'#fff',fontSize:12,fontWeight:700}}, icon('plus',14),'New link')),
+      this.card(links.map((l,i)=>h('div',{key:i,style:{display:'flex',alignItems:'center',gap:12,padding:'13px 4px',borderBottom:i<links.length-1?'1px solid var(--border)':'none'}},
+        h('span',{style:{color:'var(--faint)'}},icon('link',16)),
+        h('div',{style:{flex:1}}, h('div',{style:{fontSize:13,fontWeight:600}}, 'creativeos.ad-lab.io/r/'+l[0].replace('.com','')), h('div',{style:{fontSize:11,color:'var(--faint)'}}, l[1]+' · expires in 30 days')),
+        h('span',{style:{fontSize:10.5,fontWeight:700,color:l[3],background:l[3]+'1f',padding:'4px 9px',borderRadius:6}}, l[2]),
+        h('button',{style:{background:'var(--surface2)',border:'1px solid var(--border)',borderRadius:8,padding:'7px 11px',cursor:'pointer',color:'var(--text)',fontSize:11,fontWeight:600}}, 'Copy')))));
+  }
+  repBrand(){
+    return h('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}},
+      this.card([h('div',{key:'h',style:{fontSize:14,fontWeight:700,marginBottom:14}},'White-label · glowora.com'),
+        h('div',{key:'logo',style:{display:'flex',alignItems:'center',gap:12,marginBottom:16}}, h('div',{style:{width:54,height:54,borderRadius:12,background:GRAD,display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:800,fontSize:22}},'G'), h('button',{style:{background:'var(--surface2)',border:'1px dashed var(--border)',borderRadius:10,padding:'10px 14px',cursor:'pointer',color:'var(--dim)',fontSize:12}}, 'Upload client logo')),
+        this.lbl('Accent color'),
+        h('div',{key:'sw',style:{display:'flex',gap:8,marginTop:8}}, ['#8B5CF6','#16C784','#3FA9F5','#F4476B','#F5A623'].map((c,i)=>h('div',{key:i,style:{width:34,height:34,borderRadius:9,background:c,border:i===0?'2px solid var(--text)':'2px solid transparent',cursor:'pointer'}}))),
+        h('div',{key:'tog',style:{display:'flex',alignItems:'center',gap:12,marginTop:18,padding:'12px 0',borderTop:'1px solid var(--border)'}}, h('div',{style:{flex:1}}, h('div',{style:{fontSize:13,fontWeight:600}},'Hide cost internals'), h('div',{style:{fontSize:11,color:'var(--faint)'}},'Show performance, hide CPV and spend')), h('div',{style:{width:38,height:22,borderRadius:999,background:C.violet,position:'relative'}}, h('div',{style:{position:'absolute',top:2,left:18,width:16,height:16,borderRadius:999,background:'#fff'}})))]),
+      h('div',{style:{display:'flex',flexDirection:'column',gap:10}},
+        this.lbl('Live preview'),
+        h('div',{style:{borderRadius:14,overflow:'hidden',border:'1px solid var(--border)',boxShadow:'var(--shadow)'}},
+          h('div',{style:{background:GRAD,padding:16,color:'#fff'}}, h('div',{style:{display:'flex',alignItems:'baseline',gap:2}}, h('span',{style:{fontFamily:'Inter Tight',fontWeight:800,fontSize:22}},'glowora'), h('span',{style:{opacity:.7,fontWeight:600}},'.com')), h('div',{style:{fontSize:10,opacity:.85,marginTop:4}}, 'Jun 16 – 23 · Generated by Ad-Lab Tooling')),
+          h('div',{style:{background:'var(--surface)',padding:16,display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}, [['View rate','24.8%'],['Hook rate','30.1%']].map((m,i)=>h('div',{key:i,style:{background:'var(--surface2)',borderRadius:10,padding:12}}, this.lbl(m[0],{fontSize:9}), h('div',{style:{fontFamily:'Inter Tight',fontWeight:800,fontSize:20,marginTop:3}}, m[1])))))));
+  }
+  // ===== INTEGRATIONS & SETTINGS =====
+  cSettings(){
+    const sub=this.state.sub;
+    if(sub==='Data Sources') return this.setSources();
+    if(sub==='Accounts') return this.setAccounts();
+    if(sub==='Thresholds & Rules') return this.setRules();
+    if(sub==='Team') return this.setTeam();
+    if(sub==='Billing') return this.setBilling();
+    return this.stub();
+  }
+  setSources(){
+    return h('div',{style:{display:'flex',flexDirection:'column',gap:14}},
+      h('div',{style:{fontSize:13,color:'var(--dim)'}}, 'Connection status and last sync across every data source.'),
+      h('div',{style:{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:14}}, INTEGRATIONS.map((it,i)=>{ const ok=it.status==='connected'; const col=ok?C.win:C.warn;
+        return h('div',{key:i,style:{background:'var(--surface)',border:'1px solid var(--border)',borderRadius:16,padding:16,boxShadow:'var(--shadow)'}},
+          h('div',{style:{display:'flex',alignItems:'center',gap:10}}, h('div',{style:{width:38,height:38,borderRadius:10,background:'var(--surface2)',border:'1px solid var(--border)',display:'flex',alignItems:'center',justifyContent:'center',color:C.violet}}, icon('db',18)), h('div',{style:{flex:1}}, h('div',{style:{fontSize:13.5,fontWeight:700}}, it.name), h('div',{style:{fontSize:10.5,color:'var(--faint)'}}, it.detail)), h('span',{style:{width:9,height:9,borderRadius:9,background:col}})),
+          h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:14}}, h('span',{style:{fontSize:11,color:'var(--faint)',display:'flex',alignItems:'center',gap:5}}, icon('clock',12),'Synced '+it.sync), h('button',{style:{background:ok?'var(--surface2)':col+'1f',border:'1px solid '+(ok?'var(--border)':col+'55'),borderRadius:8,padding:'6px 11px',cursor:'pointer',color:ok?'var(--text)':col,fontSize:11,fontWeight:600}}, ok?'Manage':'Reconnect'))); })));
+  }
+  setAccounts(){
+    return h('div',{style:{display:'flex',flexDirection:'column',gap:14}},
+      h('div',{style:{fontSize:15,fontWeight:700}},'Account mapping'),
+      this.card([h('div',{key:'hd',style:{display:'grid',gridTemplateColumns:'1.3fr 1.2fr 1fr 80px',gap:12,paddingBottom:10,borderBottom:'1px solid var(--border)',marginBottom:4}}, ['Client','Google Ads account','Niche','Status'].map((t,i)=>h('div',{key:i},this.lbl(t)))),
+        CLIENTS.map((c,i)=>h('div',{key:c.id,style:{display:'grid',gridTemplateColumns:'1.3fr 1.2fr 1fr 80px',gap:12,alignItems:'center',padding:'12px 0',borderTop:i?'1px solid var(--border)':'none'}},
+          h('div',{style:{display:'flex',alignItems:'center',gap:8}}, h('div',{style:{width:26,height:26,borderRadius:7,background:GRAD,display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:11,fontWeight:800}},c.name[0].toUpperCase()), h('span',{style:{fontSize:13,fontWeight:600}},c.name)),
+          h('div',{style:{fontSize:12.5,color:'var(--dim)',fontVariantNumeric:'tabular-nums'}}, c.acct),
+          h('div',{style:{fontSize:12.5,color:'var(--dim)'}}, c.niche),
+          h('span',{style:{display:'inline-flex',alignItems:'center',gap:5,fontSize:11,fontWeight:700,color:C.win}}, h('span',{style:{width:6,height:6,borderRadius:9,background:C.win}}),'Mapped')))]));
+  }
+  setRules(){
+    const rules=[['Kill threshold','ROAS below 1.4× after €750 spend','spend vs ROAS'],['Hook-rate floor','Retire below 30.1% hook rate','quality gate'],['Fatigue trigger','Hook drops 6pt over 3 days','decay watch'],['Scale trigger','VVR above 35% and ROAS above 2.5×','budget unlock'],['Attribution window','Rolling 14 days, exclude last 3','lag control']];
+    return h('div',{style:{display:'flex',flexDirection:'column',gap:14}},
+      h('div',{style:{fontSize:13,color:'var(--dim)'}}, 'The rules engine that drives alerts and auto-statuses. ', h('span',{style:{color:'var(--text)',fontWeight:600}},'\u21B3 Set it once, it watches every creative.')),
+      this.card(rules.map((r,i)=>h('div',{key:i,style:{display:'flex',alignItems:'center',gap:14,padding:'15px 4px',borderBottom:i<rules.length-1?'1px solid var(--border)':'none'}},
+        h('div',{style:{width:34,height:34,borderRadius:9,background:C.violet+'1f',color:C.violet,display:'flex',alignItems:'center',justifyContent:'center'}}, icon('bolt',16)),
+        h('div',{style:{flex:1}}, h('div',{style:{fontSize:13.5,fontWeight:700}}, r[0]), h('div',{style:{fontSize:11.5,color:'var(--dim)',marginTop:2}}, r[1])),
+        h('span',{style:{fontSize:10,fontWeight:700,color:'var(--faint)',background:'var(--surface2)',padding:'4px 9px',borderRadius:6}}, r[2]),
+        h('div',{style:{width:38,height:22,borderRadius:999,background:C.violet,position:'relative'}}, h('div',{style:{position:'absolute',top:2,left:18,width:16,height:16,borderRadius:999,background:'#fff'}}))))));
+  }
+  setTeam(){
+    const team=[['Frederic K.','Media buyer','buyer',C.violet],['Kyle M.','Creative strategist','strategist',C.magenta],['Stephan R.','Agency lead','lead',C.win],['glowora team','Client','client',C.info]];
+    return h('div',{style:{display:'flex',flexDirection:'column',gap:14}},
+      h('div',{style:{display:'flex',alignItems:'center'}}, h('div',{style:{fontSize:15,fontWeight:700,flex:1}},'Team & roles'), h('button',{style:{display:'flex',alignItems:'center',gap:6,background:GRAD,border:'none',borderRadius:9,padding:'8px 13px',cursor:'pointer',color:'#fff',fontSize:12,fontWeight:700}}, icon('plus',14),'Invite')),
+      this.card(team.map((t,i)=>h('div',{key:i,style:{display:'flex',alignItems:'center',gap:12,padding:'13px 4px',borderBottom:i<team.length-1?'1px solid var(--border)':'none'}},
+        h('div',{style:{width:36,height:36,borderRadius:10,background:t[3]+'22',color:t[3],display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700,fontSize:13}}, t[0][0]),
+        h('div',{style:{flex:1}}, h('div',{style:{fontSize:13,fontWeight:600}}, t[0]), h('div',{style:{fontSize:11,color:'var(--faint)'}}, t[1])),
+        h('span',{style:{fontSize:10.5,fontWeight:700,color:t[3],background:t[3]+'1f',padding:'4px 10px',borderRadius:6,textTransform:'capitalize'}}, t[2])))));
+  }
+  setBilling(){
+    return h('div',{style:{display:'grid',gridTemplateColumns:'1.1fr 1fr',gap:16}},
+      h('div',{style:{borderRadius:18,padding:1,background:GRAD,boxShadow:'var(--shadow)'}}, h('div',{style:{background:'var(--surface)',borderRadius:17,padding:20}},
+        this.lbl('Current plan'), h('div',{style:{fontFamily:'Inter Tight',fontWeight:800,fontSize:26,marginTop:6}}, 'Agency · Scale'), h('div',{style:{fontSize:13,color:'var(--dim)',marginTop:4}}, '€1,490 / month · billed monthly'),
+        h('div',{style:{display:'flex',gap:20,marginTop:18}}, [['Seats','6 of 10'],['Clients','6 of 30'],['Renews','Jul 16']].map((m,i)=>h('div',{key:i}, this.lbl(m[0],{fontSize:9}), h('div',{style:{fontSize:15,fontWeight:700,marginTop:3}}, m[1])))),
+        h('button',{style:{marginTop:18,width:'100%',background:GRAD,border:'none',borderRadius:11,padding:'12px',cursor:'pointer',color:'#fff',fontSize:13,fontWeight:700}}, 'Manage plan'))),
+      this.card([h('div',{key:'h',style:{fontSize:14,fontWeight:700,marginBottom:12}},'Seats'),
+        h('div',{key:'b',style:{display:'flex',flexDirection:'column',gap:2}}, [['Media buyers','3 seats'],['Strategists','2 seats'],['Leads','1 seat'],['Client viewers','unlimited']].map((r,i)=>h('div',{key:i,style:{display:'flex',justifyContent:'space-between',padding:'12px 0',borderTop:i?'1px solid var(--border)':'none',fontSize:13}}, h('span',{style:{color:'var(--dim)'}}, r[0]), h('span',{style:{fontWeight:600}}, r[1]))))]));
+  }
+  renderVals(){ return { app: this.renderApp() }; }
+}
+</script>
+</body>
+</html>

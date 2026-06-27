@@ -14,8 +14,13 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ["Plus Jakarta Sans", "Inter", "sans-serif"],
-        display: ["Plus Jakarta Sans", "Playfair Display", "serif"],
+        sans: ["Archivo", "system-ui", "sans-serif"],
+        display: ["Archivo", "system-ui", "sans-serif"],
+        micro: ["Alumni Sans SC", "sans-serif"],
+      },
+      letterSpacing: {
+        engineered: "0.08em",
+        eyebrow: "0.22em",
       },
       colors: {
         border: "hsl(var(--border))",
@@ -60,17 +65,17 @@ export default {
         "brand-glow": "hsl(var(--brand-glow))",
         brand: {
           DEFAULT: "hsl(var(--brand))",
-          50: "#faf5ff",
-          100: "#f3e8ff",
-          200: "#e9d5ff",
-          300: "#d8b4fe",
-          400: "#c084fc",
-          500: "#cb5dec",
-          600: "#a855f7",
-          700: "#9333ea",
-          800: "#7e22ce",
-          900: "#6b21a8",
-          950: "#3b0764",
+          50: "#fbf3fe",
+          100: "#f5e1fc",
+          200: "#ebc2f8",
+          300: "#df9cf2",
+          400: "#d67fef",
+          500: "#cf68ed",
+          600: "#b83fd9",
+          700: "#9a2bb8",
+          800: "#7c2293",
+          900: "#5e1a6f",
+          950: "#3d0f49",
         },
         gold: "hsl(var(--gold))",
         sidebar: {
@@ -85,9 +90,10 @@ export default {
         },
       },
       borderRadius: {
+        /* Flat 4px system — every token resolves to 4px for consistency */
         lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
+        md: "var(--radius)",
+        sm: "var(--radius)",
       },
       keyframes: {
         "accordion-down": {
