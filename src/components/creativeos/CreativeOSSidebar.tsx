@@ -1,9 +1,10 @@
-import { BarChart3, LayoutGrid, TrendingUp, Trophy, Zap } from "lucide-react";
+import { BarChart3, Gauge, LayoutGrid, TrendingUp, Trophy, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export type TabId = "command" | "lab" | "hook" | "trend" | "vault";
+export type TabId = "overview" | "command" | "lab" | "hook" | "trend" | "vault";
 
 export const TABS: { id: TabId; label: string; icon: typeof Zap; clientOnly: boolean; subs: string[] }[] = [
+  { id: "overview", label: "Overview", icon: Gauge, clientOnly: true, subs: [] },
   { id: "command", label: "Command Center", icon: LayoutGrid, clientOnly: false, subs: ["Portfolio", "Account Health", "This Week"] },
   { id: "lab", label: "Creative Testing Lab", icon: Zap, clientOnly: true, subs: ["Leaderboard", "Test Pipeline", "Compare"] },
   { id: "hook", label: "Hook & Retention", icon: BarChart3, clientOnly: true, subs: ["Quartile Funnel", "Retention Curves", "Hook Rate Ranking", "Drop-off Map"] },

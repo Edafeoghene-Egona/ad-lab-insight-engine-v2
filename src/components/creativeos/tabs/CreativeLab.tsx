@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Check, Plus, X } from "lucide-react";
+import { Check, Plus, X, Youtube } from "lucide-react";
 import { GlassPanel } from "../GlassPanel";
 import { CreativeCard } from "../CreativeCard";
 import { StatusBadge } from "../StatusBadge";
@@ -27,6 +27,25 @@ const sortVal = (c: Creative, k: SortKey): number => {
   return c[k];
 };
 const keyOf = (c: Creative, i: number) => c.videoId ?? `idx-${i}`;
+const watchUrl = (id: string) => `https://www.youtube.com/watch?v=${id}`;
+
+/** Compact YouTube icon-link; stops propagation so it doesn't trigger the row's drawer. */
+function WatchLink({ creative }: { creative: Creative }) {
+  if (!creative.videoId) return <span className="text-slate-300">—</span>;
+  return (
+    <a
+      href={watchUrl(creative.videoId)}
+      target="_blank"
+      rel="noopener noreferrer"
+      onClick={(e) => e.stopPropagation()}
+      aria-label={`Watch ${creative.title} on YouTube`}
+      title="Watch on YouTube"
+      className="inline-flex items-center justify-center w-7 h-7 rounded-md text-red-600 hover:bg-red-50 transition-colors"
+    >
+      <Youtube className="w-4 h-4" />
+    </a>
+  );
+}
 
 // ── Leaderboard ───────────────────────────────────────────────────────────────
 function Leaderboard({
@@ -43,14 +62,22 @@ function Leaderboard({
   const [sortKey, setSortKey] = useState<SortKey>("viewRate");
   const [dir, setDir] = useState<"asc" | "desc">("desc");
 
-  const top3 = useMemo(() => [...data.creatives].sort((a, b) => b.viewRate - a.viewRate).slice(0, 3), [data.creatives]);
-  const rows = useMemo(() => {
+  // Hero cards track the active Win/Test/Retire filter + search, so "top creatives"
+  // always reflects the current view rather than the global top-by-VVR.
+  const filtered = useMemo(() => {
     const q = search.toLowerCase();
     return data.creatives
       .filter((c) => matchesStatus(c.status, statusFilter))
-      .filter((c) => !q || c.title.toLowerCase().includes(q))
-      .sort((a, b) => (dir === "desc" ? sortVal(b, sortKey) - sortVal(a, sortKey) : sortVal(a, sortKey) - sortVal(b, sortKey)));
-  }, [data.creatives, statusFilter, search, sortKey, dir]);
+      .filter((c) => !q || c.title.toLowerCase().includes(q));
+  }, [data.creatives, statusFilter, search]);
+  const top3 = useMemo(() => [...filtered].sort((a, b) => b.viewRate - a.viewRate).slice(0, 3), [filtered]);
+  const rows = useMemo(
+    () =>
+      [...filtered].sort((a, b) =>
+        dir === "desc" ? sortVal(b, sortKey) - sortVal(a, sortKey) : sortVal(a, sortKey) - sortVal(b, sortKey),
+      ),
+    [filtered, sortKey, dir],
+  );
 
   const toggleSort = (k: SortKey) => {
     if (k === sortKey) setDir((d) => (d === "desc" ? "asc" : "desc"));
@@ -87,6 +114,7 @@ function Leaderboard({
                   </th>
                 ))}
                 <th className="px-4 py-3.5 text-center">Result</th>
+                <th className="px-4 py-3.5 text-center">Watch</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-slate-700">
@@ -108,11 +136,12 @@ function Leaderboard({
                     <td className="px-4 py-3 text-right tabular-nums text-slate-500">{fmtCpv(c.avgCpv)}</td>
                     <td className="px-4 py-3 text-right tabular-nums font-semibold text-slate-700">{c.conversions.toFixed(0)}</td>
                     <td className="px-4 py-3 text-center"><StatusBadge status={c.status} /></td>
+                    <td className="px-4 py-3 text-center"><WatchLink creative={c} /></td>
                   </tr>
                 );
               })}
               {rows.length === 0 && (
-                <tr><td colSpan={9} className="px-5 py-10 text-center text-sm text-slate-400">No creatives match the current filters.</td></tr>
+                <tr><td colSpan={10} className="px-5 py-10 text-center text-sm text-slate-400">No creatives match the current filters.</td></tr>
               )}
             </tbody>
           </table>
@@ -149,19 +178,26 @@ function TestPipeline({ data, onOpenCreative }: { data: ClientResponse; onOpenCr
               </div>
               <div className="flex flex-col gap-2">
                 {items.map((c, i) => (
-                  <button
+                  <div
                     key={keyOf(c, i)}
-                    type="button"
-                    onClick={() => onOpenCreative(c)}
-                    className="bg-white border border-slate-200 rounded-xl p-3 text-left hover:border-indigo-300 transition-colors"
+                    className="relative bg-white border border-slate-200 rounded-xl hover:border-indigo-300 transition-colors"
                   >
-                    <div className="text-[12.5px] font-semibold text-slate-800 leading-tight line-clamp-2">{c.title}</div>
-                    <div className="flex items-center gap-3 mt-2 text-[10.5px] text-slate-400">
-                      <span>VVR {ratePct(c.viewRate).toFixed(1)}%</span>
-                      <span>{fmtCpv(c.avgCpv)}</span>
-                      <span>{c.conversions.toFixed(0)} conv</span>
-                    </div>
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => onOpenCreative(c)}
+                      className="block w-full text-left p-3 pr-9"
+                    >
+                      <div className="text-[12.5px] font-semibold text-slate-800 leading-tight line-clamp-2">{c.title}</div>
+                      <div className="flex items-center gap-3 mt-2 text-[10.5px] text-slate-400">
+                        <span>VVR {ratePct(c.viewRate).toFixed(1)}%</span>
+                        <span>{fmtCpv(c.avgCpv)}</span>
+                        <span>{c.conversions.toFixed(0)} conv</span>
+                      </div>
+                    </button>
+                    <span className="absolute top-2 right-2">
+                      <WatchLink creative={c} />
+                    </span>
+                  </div>
                 ))}
                 {items.length === 0 && <p className="text-xs text-slate-400 px-1 py-2">None.</p>}
               </div>

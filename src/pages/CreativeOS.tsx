@@ -109,7 +109,7 @@ const CreativeOS = () => {
         isFetching={isFetching}
       />
       <div className="flex-1 flex min-h-0">
-        <CreativeOSSidebar tab={tab} onTab={goTab} hasClient={!!selectedId} />
+        <CreativeOSSidebar tab={tab} onTab={goTab} hasClient={!!selectedId} tabs={["command", "lab", "hook", "trend", "vault"]} />
         <main className="flex-1 min-w-0 flex flex-col overflow-hidden">
           <PageHeader
             tabTitle={tabTitle}
