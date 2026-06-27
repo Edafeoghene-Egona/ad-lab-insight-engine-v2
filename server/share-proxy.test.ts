@@ -61,6 +61,19 @@ describe("resolveShareData", () => {
     expect(calledUrl).toMatch(/end=\d{4}-\d{2}-\d{2}/);
   });
 
+  it("overrides account.name with the stored friendly client_name (n8n returns the raw id)", async () => {
+    const fetchImpl = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ account: { customerId: "421-410-3450", name: "421-410-3450" }, creatives: [] }),
+    });
+    const res = await resolveShareData(
+      { token: "t" },
+      deps({ customer_id: "421-410-3450", client_name: "Aurivita New", revoked: false }, fetchImpl),
+    );
+    expect(res.status).toBe(200);
+    expect((res.body as { account: { name: string } }).account.name).toBe("Aurivita New");
+  });
+
   it("returns 502 when n8n fails", async () => {
     const fetchImpl = vi.fn().mockResolvedValue({ ok: false, status: 500 });
     const res = await resolveShareData(
