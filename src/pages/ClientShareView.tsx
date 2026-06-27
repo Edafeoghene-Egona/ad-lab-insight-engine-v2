@@ -8,6 +8,7 @@ import { PageHeader } from "@/components/creativeos/PageHeader";
 import { CreativeOSFilterBar, type StatusFilter } from "@/components/creativeos/CreativeOSFilterBar";
 import { CreativeDrawer } from "@/components/creativeos/CreativeDrawer";
 import { LoadingState, ErrorState, EmptyState } from "@/components/creativeos/states";
+import { ClientOverview } from "@/components/creativeos/tabs/ClientOverview";
 import { CreativeLab } from "@/components/creativeos/tabs/CreativeLab";
 import { HookRetention } from "@/components/creativeos/tabs/HookRetention";
 import { Trendlines } from "@/components/creativeos/tabs/Trendlines";
@@ -16,7 +17,7 @@ import { useMemoizedRangeLabel } from "@/components/creativeos/useRangeLabel";
 import { defaultRange } from "@/lib/creativeos";
 import type { Creative, ClientResponse, DateRange } from "@/lib/creativeos-types";
 
-const SHARE_TABS: TabId[] = ["lab", "hook", "trend", "vault"];
+const SHARE_TABS: TabId[] = ["overview", "lab", "hook", "trend", "vault"];
 
 type InactiveError = Error & { inactive?: boolean };
 
@@ -36,8 +37,8 @@ async function fetchShare(token: string, range: DateRange): Promise<ClientRespon
 
 export default function ClientShareView() {
   const { token = "" } = useParams();
-  const [tab, setTab] = useState<TabId>("lab");
-  const [sub, setSub] = useState<string>(subsFor("lab")[0]);
+  const [tab, setTab] = useState<TabId>("overview");
+  const [sub, setSub] = useState<string>(subsFor("overview")[0] ?? "");
   const [range, setRange] = useState<DateRange>(() => defaultRange());
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [search, setSearch] = useState("");
@@ -64,6 +65,7 @@ export default function ClientShareView() {
     if (q.isError)
       return <ErrorState message={(q.error as Error)?.message ?? "Unknown error"} onRetry={() => q.refetch()} />;
     if (!q.data) return null;
+    if (tab === "overview") return <ClientOverview data={q.data} onOpenCreative={openCreative} />;
     if (tab === "lab")
       return <CreativeLab data={q.data} sub={sub} statusFilter={statusFilter} search={search} onOpenCreative={openCreative} />;
     if (tab === "hook") return <HookRetention data={q.data} sub={sub} onOpenCreative={openCreative} />;
