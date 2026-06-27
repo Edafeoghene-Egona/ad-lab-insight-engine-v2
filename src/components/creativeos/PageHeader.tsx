@@ -82,7 +82,6 @@ export function PageHeader({ tabTitle, window, selectedClient, subs, activeSub, 
     );
   }
 
-  const name = selectedClient.name.replace(/\.com$/, "");
   const meta: [string, string][] = [
     ["Report period", fmtRange(window)],
     ["Window", "Live · Video + Demand Gen"],
@@ -106,10 +105,7 @@ export function PageHeader({ tabTitle, window, selectedClient, subs, activeSub, 
             <div className="text-[9px] tracking-[0.12em] uppercase font-bold text-white/80 mb-2">
               Ad-Lab.io · CreativeOS
             </div>
-            <h1 className="cos-display text-4xl font-bold tracking-tight">
-              {name}
-              <span className="text-white/50 font-light">.com</span>
-            </h1>
+            <h1 className="cos-display text-4xl font-bold tracking-tight">{selectedClient.name}</h1>
             <div className="flex flex-wrap gap-x-6 gap-y-2 mt-4">
               {meta.map(([k, v]) => (
                 <div key={k}>
