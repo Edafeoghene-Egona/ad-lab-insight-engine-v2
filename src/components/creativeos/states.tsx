@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { AlertTriangle, RefreshCw, SatelliteDish } from "lucide-react";
 import { GlassPanel } from "./GlassPanel";
+import { CosButton } from "./CosButton";
 
 /** Skeleton + "pulling live" indicator shown while a live Google Ads pull runs. */
 export function LoadingState({ label = "Pulling live from Google Ads…" }: { label?: string }) {
@@ -41,12 +42,9 @@ export function ErrorState({ message, onRetry }: { message: string; onRetry?: ()
         <p className="text-xs text-slate-400 mt-1 max-w-md">{message}</p>
       </div>
       {onRetry && (
-        <button
-          onClick={onRetry}
-          className="flex items-center gap-2 text-xs font-bold text-indigo-600 bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 px-4 py-2 rounded-xl transition-colors"
-        >
+        <CosButton variant="soft" onClick={onRetry}>
           <RefreshCw className="w-3.5 h-3.5" /> Retry
-        </button>
+        </CosButton>
       )}
     </GlassPanel>
   );

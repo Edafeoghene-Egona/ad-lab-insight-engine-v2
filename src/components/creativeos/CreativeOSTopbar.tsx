@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Calendar, ChevronDown, RefreshCw, Search } from "lucide-react";
 import adLabLogo from "@/assets/ad-lab-logo.png";
 import { ClientAvatar } from "./ClientAvatar";
+import { CosButton } from "./CosButton";
 import type { ClientRollup, DateRange } from "@/lib/creativeos-types";
 import { cn } from "@/lib/utils";
 
@@ -98,8 +99,9 @@ export function CreativeOSTopbar({
       {/* Account switcher */}
       <div className="relative" ref={acctRef}>
         <button
+          type="button"
           aria-haspopup="menu"
-          aria-expanded={acctOpen ? "true" : "false"}
+          aria-expanded={acctOpen}
           onClick={() => {
             setAcctOpen((o) => !o);
             setDateOpen(false);
@@ -129,6 +131,7 @@ export function CreativeOSTopbar({
               />
             </div>
             <button
+              type="button"
               onClick={() => {
                 onSelectClient(null);
                 setAcctOpen(false);
@@ -144,6 +147,7 @@ export function CreativeOSTopbar({
               {filtered.map((c) => (
                 <button
                   key={c.customerId}
+                  type="button"
                   onClick={() => {
                     onSelectClient(c.customerId);
                     setAcctOpen(false);
@@ -168,8 +172,9 @@ export function CreativeOSTopbar({
       {/* Date range */}
       <div className="relative" ref={dateRef}>
         <button
+          type="button"
           aria-haspopup="menu"
-          aria-expanded={dateOpen ? "true" : "false"}
+          aria-expanded={dateOpen}
           onClick={() => {
             setDateOpen((o) => !o);
             setAcctOpen(false);
@@ -185,6 +190,7 @@ export function CreativeOSTopbar({
             {PRESETS.map((p) => (
               <button
                 key={p.label}
+                type="button"
                 onClick={() => {
                   onRange(presetRange(p.days));
                   setDateOpen(false);
@@ -231,15 +237,10 @@ export function CreativeOSTopbar({
       <div className="flex-1" />
 
       {!shareMode && (
-        <button
-          type="button"
-          onClick={onRefresh}
-          disabled={isFetching}
-          className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white rounded-lg px-3.5 py-2 text-xs font-bold transition-colors"
-        >
+        <CosButton variant="brand" onClick={onRefresh} disabled={isFetching}>
           <RefreshCw className={cn("w-3.5 h-3.5", isFetching && "animate-spin")} />
           {isFetching ? "Pulling…" : "Refresh"}
-        </button>
+        </CosButton>
       )}
     </div>
   );
