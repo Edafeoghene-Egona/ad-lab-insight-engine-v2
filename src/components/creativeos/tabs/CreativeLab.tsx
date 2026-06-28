@@ -5,6 +5,7 @@ import { CreativeCard } from "../CreativeCard";
 import { StatusBadge } from "../StatusBadge";
 import { RetentionCurve } from "../charts/RetentionCurve";
 import { matchesStatus, type StatusFilter } from "../CreativeOSFilterBar";
+import { CosButton } from "../CosButton";
 import { statusLabel, fmtCompact, fmtCpv, ratePct } from "@/lib/creativeos";
 import type { ClientResponse, Creative, CreativeStatus } from "@/lib/creativeos-types";
 import { cn } from "@/lib/utils";
@@ -238,13 +239,9 @@ function Compare({ data, onOpenCreative }: { data: ClientResponse; onOpenCreativ
       <div className="flex items-center gap-3 flex-wrap">
         <span className="text-sm text-slate-500">Comparing {chosen.length} creative(s).</span>
         <div className="flex-1" />
-        <button
-          type="button"
-          onClick={() => setPicking((p) => !p)}
-          className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-700 hover:border-slate-300"
-        >
+        <CosButton variant="outline" onClick={() => setPicking((p) => !p)}>
           <Plus className="w-3.5 h-3.5" /> Add / remove
-        </button>
+        </CosButton>
       </div>
 
       {picking && (

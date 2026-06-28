@@ -8,8 +8,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CosButton } from "./CosButton";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   getOrCreateShareLink,
@@ -109,9 +109,9 @@ export function ShareLinkDialog({ open, onOpenChange, customerId, clientName }: 
           <div className="space-y-4">
             <div className="flex items-center gap-2">
               <Input readOnly value={url} className="text-xs" onFocus={(e) => e.currentTarget.select()} />
-              <Button type="button" variant="secondary" size="icon" onClick={copy} aria-label="Copy link">
+              <CosButton variant="outline" size="icon" onClick={copy} aria-label="Copy link">
                 {copied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
-              </Button>
+              </CosButton>
             </div>
 
             {row.revoked && (
@@ -121,14 +121,14 @@ export function ShareLinkDialog({ open, onOpenChange, customerId, clientName }: 
             )}
 
             <div className="flex flex-wrap gap-2">
-              <Button type="button" variant={row.revoked ? "default" : "outline"} size="sm" disabled={busy} onClick={toggleRevoke}>
-                <Ban className="w-3.5 h-3.5 mr-1.5" />
+              <CosButton variant={row.revoked ? "brand" : "outline"} disabled={busy} onClick={toggleRevoke}>
+                <Ban className="w-3.5 h-3.5" />
                 {row.revoked ? "Re-enable link" : "Revoke link"}
-              </Button>
-              <Button type="button" variant="outline" size="sm" disabled={busy} onClick={regenerate}>
-                <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
+              </CosButton>
+              <CosButton variant="outline" disabled={busy} onClick={regenerate}>
+                <RefreshCw className="w-3.5 h-3.5" />
                 Regenerate
-              </Button>
+              </CosButton>
             </div>
           </div>
         ) : null}
