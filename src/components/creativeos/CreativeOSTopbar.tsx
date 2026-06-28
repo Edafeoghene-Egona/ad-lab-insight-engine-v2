@@ -79,8 +79,8 @@ export function CreativeOSTopbar({
       <div className="flex items-center gap-2.5">
         <img src={adLabLogo} alt="Ad-Lab" className="w-8 h-8 rounded-lg object-cover" />
         <div className="leading-none hidden sm:block">
-          <div className="cos-display font-bold text-[15px] text-slate-900">Ad-Lab</div>
-          <div className="text-[8.5px] tracking-[0.12em] text-slate-400 font-semibold">CREATIVEOS</div>
+          <div className="cos-display font-bold text-[16px] text-slate-900">Ad-Lab</div>
+          <div className="text-[10px] tracking-[0.12em] text-slate-400 font-semibold">CREATIVEOS</div>
         </div>
       </div>
       <div className="w-px h-6 bg-slate-200" />
@@ -90,7 +90,7 @@ export function CreativeOSTopbar({
         <div className="flex items-center gap-2.5 px-1 py-1.5">
           <div className="text-left leading-tight">
             <div className="text-xs font-bold text-slate-800">{clientLabel ?? "Client dashboard"}</div>
-            <div className="text-[9.5px] text-slate-400">Shared by Ad-Lab</div>
+            <div className="text-[10px] text-slate-400">Shared by Ad-Lab</div>
           </div>
         </div>
       ) : (
@@ -113,7 +113,7 @@ export function CreativeOSTopbar({
           )}
           <div className="text-left leading-tight">
             <div className="text-xs font-bold text-slate-800">{selected ? selected.name : "All clients"}</div>
-            <div className="text-[9.5px] text-slate-400">{selected ? selected.customerId : "portfolio"}</div>
+            <div className="text-[10px] text-slate-400">{selected ? selected.customerId : "portfolio"}</div>
           </div>
           <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
         </button>

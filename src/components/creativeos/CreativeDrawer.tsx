@@ -10,7 +10,7 @@ const thumbUrl = (id: string) => `https://img.youtube.com/vi/${id}/hqdefault.jpg
 function Cell({ label, value, accent }: { label: string; value: string; accent?: string }) {
   return (
     <div className="bg-slate-50 rounded-lg px-2.5 py-2">
-      <p className="text-[9px] uppercase tracking-wider text-slate-400 font-bold">{label}</p>
+      <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">{label}</p>
       <p className={`cos-display text-base font-bold mt-0.5 tabular-nums ${accent ?? "text-slate-800"}`}>{value}</p>
     </div>
   );

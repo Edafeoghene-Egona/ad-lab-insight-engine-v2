@@ -39,7 +39,7 @@ export function DropoffMap({ creatives, onOpen }: { creatives: Creative[]; onOpe
             <button
               type="button"
               onClick={() => onOpen?.(c)}
-              className="text-left text-[11.5px] font-semibold text-slate-700 truncate hover:text-indigo-600"
+              className="text-left text-[11px] font-semibold text-slate-700 truncate hover:text-indigo-600"
               title={c.title}
             >
               {c.title}
@@ -57,7 +57,7 @@ export function DropoffMap({ creatives, onOpen }: { creatives: Creative[]; onOpe
           </div>
         );
       })}
-      <div className="flex items-center gap-2 mt-2 text-[10.5px] text-slate-400">
+      <div className="flex items-center gap-2 mt-2 text-[11px] text-slate-400">
         Held
         <div className="flex rounded overflow-hidden">
           {["#16C784", "#A7D84B", "#F5A623", "#F47C3C", "#F4476B"].map((c) => (

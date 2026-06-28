@@ -102,14 +102,14 @@ export function PageHeader({ tabTitle, window, selectedClient, subs, activeSub, 
       <div className="relative">
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
           <div>
-            <div className="text-[9px] tracking-[0.12em] uppercase font-bold text-white/80 mb-2">
+            <div className="text-[10px] tracking-[0.12em] uppercase font-bold text-white/80 mb-2">
               Ad-Lab.io · CreativeOS
             </div>
             <h1 className="cos-display text-4xl font-bold tracking-tight">{selectedClient.name}</h1>
             <div className="flex flex-wrap gap-x-6 gap-y-2 mt-4">
               {meta.map(([k, v]) => (
                 <div key={k}>
-                  <p className="text-[9px] uppercase tracking-wider font-bold text-white/80 mb-0.5">{k}</p>
+                  <p className="text-[10px] uppercase tracking-wider font-bold text-white/80 mb-0.5">{k}</p>
                   <p className="text-xs font-semibold">{v}</p>
                 </div>
               ))}
