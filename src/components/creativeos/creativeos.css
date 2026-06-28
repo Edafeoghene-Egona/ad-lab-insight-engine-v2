@@ -12,7 +12,6 @@
   --cos-brand-700: #4338ca;
   --cos-ink: #0f172a;
   --cos-bg: #f8fafc;
-  --cos-magenta: #cb5dec;
 
   font-family: "Plus Jakarta Sans", system-ui, sans-serif;
   color: var(--cos-ink);
@@ -65,9 +64,10 @@
   text-transform: uppercase;
 }
 
-/* The pink client header (only rendered when a client is selected) */
+/* The brand client header (only rendered when a client is selected).
+   Indigo gradient keeps white text well above the 4.5:1 contrast minimum. */
 .cos-root .cos-client-header {
-  background: #cb5dec;
+  background: linear-gradient(120deg, #4f46e5 0%, #4338ca 55%, #3730a3 100%);
 }
 
 /* Live pulse dot */

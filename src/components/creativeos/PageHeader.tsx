@@ -48,7 +48,7 @@ function SubTabs({
               onLight
                 ? on
                   ? "text-white border-white font-bold"
-                  : "text-white/70 border-transparent hover:text-white font-medium"
+                  : "text-white/80 border-transparent hover:text-white font-medium"
                 : on
                   ? "text-slate-900 border-indigo-500 font-bold"
                   : "text-slate-500 border-transparent hover:text-slate-700 font-medium",
@@ -90,7 +90,7 @@ export function PageHeader({ tabTitle, window, selectedClient, subs, activeSub, 
   ];
 
   return (
-    <div className="cos-client-header relative overflow-hidden px-6 lg:px-8 pt-7 pb-2 text-white" data-testid="cos-pink-header">
+    <div className="cos-client-header relative overflow-hidden px-6 lg:px-8 pt-7 pb-2 text-white" data-testid="cos-client-header">
       <div
         className="absolute inset-0 opacity-10 pointer-events-none"
         style={{
@@ -109,7 +109,7 @@ export function PageHeader({ tabTitle, window, selectedClient, subs, activeSub, 
             <div className="flex flex-wrap gap-x-6 gap-y-2 mt-4">
               {meta.map(([k, v]) => (
                 <div key={k}>
-                  <p className="text-[9px] uppercase tracking-wider font-bold text-white/60 mb-0.5">{k}</p>
+                  <p className="text-[9px] uppercase tracking-wider font-bold text-white/80 mb-0.5">{k}</p>
                   <p className="text-xs font-semibold">{v}</p>
                 </div>
               ))}
