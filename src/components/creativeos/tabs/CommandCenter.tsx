@@ -49,7 +49,7 @@ function ClientCard({ client, onSelect }: { client: ClientRollup; onSelect: () =
         <ClientAvatar name={client.name} seed={client.customerId} size={36} />
         <div className="flex-1 min-w-0">
           <div className="font-bold text-sm text-slate-900 truncate">{client.name}</div>
-          <div className="text-[10.5px] text-slate-400">{client.customerId}</div>
+          <div className="text-[11px] text-slate-400">{client.customerId}</div>
         </div>
         <span
           className="w-2.5 h-2.5 rounded-full"
@@ -65,7 +65,7 @@ function ClientCard({ client, onSelect }: { client: ClientRollup; onSelect: () =
           ] as [string, string][]
         ).map(([k, v]) => (
           <div key={k} className="bg-slate-50 rounded-lg px-2.5 py-2">
-            <p className="text-[9px] uppercase tracking-wider text-slate-400 font-bold">{k}</p>
+            <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">{k}</p>
             <p className="cos-display text-base font-bold text-slate-800 mt-0.5 tabular-nums">{v}</p>
           </div>
         ))}
@@ -134,7 +134,7 @@ function AccountHealth({ data, onSelectClient }: { data: PortfolioResponse; onSe
                   className="flex items-center gap-2 text-left min-w-0 hover:text-indigo-600"
                 >
                   <ClientAvatar name={c.name} seed={c.customerId} size={24} />
-                  <span className="text-[12.5px] font-semibold truncate">{c.name}</span>
+                  <span className="text-[13px] font-semibold truncate">{c.name}</span>
                 </button>
                 {cell(fmtRoas(roas), roas == null ? "none" : roas >= 2 ? "good" : roas >= 1 ? "warn" : "bad")}
                 {cell(vr.toFixed(1) + "%", vr >= 25 ? "good" : vr >= 15 ? "warn" : "bad")}

@@ -187,8 +187,8 @@ function TestPipeline({ data, onOpenCreative }: { data: ClientResponse; onOpenCr
                       onClick={() => onOpenCreative(c)}
                       className="block w-full text-left p-3 pr-9"
                     >
-                      <div className="text-[12.5px] font-semibold text-slate-800 leading-tight line-clamp-2">{c.title}</div>
-                      <div className="flex items-center gap-3 mt-2 text-[10.5px] text-slate-400">
+                      <div className="text-[13px] font-semibold text-slate-800 leading-tight line-clamp-2">{c.title}</div>
+                      <div className="flex items-center gap-3 mt-2 text-[11px] text-slate-400">
                         <span>VVR {ratePct(c.viewRate).toFixed(1)}%</span>
                         <span>{fmtCpv(c.avgCpv)}</span>
                         <span>{c.conversions.toFixed(0)} conv</span>
@@ -298,7 +298,7 @@ function Compare({ data, onOpenCreative }: { data: ClientResponse; onOpenCreativ
                   const b = best(r);
                   return (
                     <tr key={r.label}>
-                      <td className="px-4 py-3 text-[12.5px] text-slate-500">{r.label}</td>
+                      <td className="px-4 py-3 text-[13px] text-slate-500">{r.label}</td>
                       {chosen.map((c, i) => {
                         const v = r.get(c);
                         const isBest = b != null && v === b && v >= 0;

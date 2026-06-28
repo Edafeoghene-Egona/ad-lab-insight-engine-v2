@@ -90,3 +90,34 @@
 
 .cos-root .cos-hide-scrollbar::-webkit-scrollbar { display: none; }
 .cos-root .cos-hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* ------------------------------------------------------------------
+   Type scale (snap all dashboard text to these; build hierarchy with
+   weight before size): 10 / 11 / 13 px micro · then Tailwind text-sm
+   (14) / text-base (16) / text-lg+ for headings.
+   ------------------------------------------------------------------ */
+
+/* Keyboard focus: a single visible ring for every interactive element,
+   so keyboard users can always see where they are (WCAG 2.4.7). */
+.cos-root :focus-visible {
+  outline: 2px solid var(--cos-brand);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Honour reduced-motion: drop the reveal/pulse/hover-lift animations
+   for users who ask for less motion (WCAG 2.3.3). */
+@media (prefers-reduced-motion: reduce) {
+  .cos-root .cos-reveal,
+  .cos-root .cos-pulse {
+    animation: none;
+  }
+  .cos-root .cos-stat-card,
+  .cos-root .cos-creative-card {
+    transition: none;
+  }
+  .cos-root .cos-stat-card:hover,
+  .cos-root .cos-creative-card:hover {
+    transform: none;
+  }
+}
