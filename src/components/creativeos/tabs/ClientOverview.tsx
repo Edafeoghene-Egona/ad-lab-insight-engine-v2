@@ -3,14 +3,13 @@ import { GlassPanel } from "../GlassPanel";
 import { StatCard } from "../StatCard";
 import { CreativeCard } from "../CreativeCard";
 import { ViewsSpendTrend } from "../charts/TrendChart";
-import { fmtCompact, fmtMoney, ratePct } from "@/lib/creativeos";
+import { fmtCompact, fmtConv, fmtMoney, fmtRoas, ratePct } from "@/lib/creativeos";
 import type { ClientResponse, Creative, DateRange } from "@/lib/creativeos-types";
 
 const fmtRange = (w: DateRange) => {
   const f = (iso: string) => new Date(iso + "T00:00:00").toLocaleString("en-US", { month: "short", day: "numeric" });
   return `${f(w.start)} – ${f(w.end)}`;
 };
-const fmtRoas = (r: number | null) => (r == null ? "—" : r.toFixed(2) + "×");
 
 /**
  * Single-client summary for the shared deep-dive landing tab.
@@ -60,7 +59,7 @@ export function ClientOverview({
         />
         <StatCard
           label="Conversions"
-          value={Math.round(totalConversions).toLocaleString()}
+          value={fmtConv(totalConversions)}
           foot="selected window"
           icon={Target}
           accentClass="text-emerald-600"

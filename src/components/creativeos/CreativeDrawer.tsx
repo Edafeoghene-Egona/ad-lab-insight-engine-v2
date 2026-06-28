@@ -1,7 +1,7 @@
 import { Play, X, Youtube } from "lucide-react";
 import { StatusBadge } from "./StatusBadge";
 import { RetentionCurve } from "./charts/RetentionCurve";
-import { fmtCompact, fmtCpv, fmtMoney, ratePct } from "@/lib/creativeos";
+import { fmtCompact, fmtConv, fmtCpv, fmtMoney, fmtRoas, ratePct } from "@/lib/creativeos";
 import type { Creative } from "@/lib/creativeos-types";
 
 const watchUrl = (id: string) => `https://www.youtube.com/watch?v=${id}`;
@@ -60,9 +60,9 @@ export function CreativeDrawer({ creative, onClose }: { creative: Creative | nul
             <Cell label="Views" value={fmtCompact(c.views)} />
             <Cell label="Impressions" value={fmtCompact(c.impressions)} />
             <Cell label="CPV" value={fmtCpv(c.avgCpv)} />
-            <Cell label="Conversions" value={c.conversions.toFixed(1)} accent="text-emerald-600" />
+            <Cell label="Conversions" value={fmtConv(c.conversions)} accent="text-emerald-600" />
             <Cell label="Conv. value" value={fmtMoney(c.conversionsValue)} />
-            <Cell label="ROAS" value={c.cost > 0 && c.conversionsValue > 0 ? (c.conversionsValue / c.cost).toFixed(2) + "×" : "—"} accent="text-emerald-600" />
+            <Cell label="ROAS" value={fmtRoas(c.cost > 0 && c.conversionsValue > 0 ? c.conversionsValue / c.cost : null)} accent="text-emerald-600" />
             <Cell label="Spend" value={fmtMoney(c.cost)} />
           </div>
 
