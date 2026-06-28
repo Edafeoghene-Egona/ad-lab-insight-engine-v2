@@ -6,7 +6,7 @@ import { StatusBadge } from "../StatusBadge";
 import { RetentionCurve } from "../charts/RetentionCurve";
 import { matchesStatus, type StatusFilter } from "../CreativeOSFilterBar";
 import { CosButton } from "../CosButton";
-import { statusLabel, fmtCompact, fmtCpv, ratePct } from "@/lib/creativeos";
+import { statusLabel, fmtCompact, fmtConv, fmtCpv, ratePct } from "@/lib/creativeos";
 import type { ClientResponse, Creative, CreativeStatus } from "@/lib/creativeos-types";
 import { cn } from "@/lib/utils";
 
@@ -135,7 +135,7 @@ function Leaderboard({
                     <td className={cn("px-4 py-3 text-right tabular-nums", hook == null ? "text-slate-300" : hook < benchHook ? "text-rose-600 font-bold" : "text-slate-600")}>{hook == null ? "—" : hook.toFixed(1) + "%"}</td>
                     <td className="px-4 py-3 text-right tabular-nums text-slate-500">{compl == null ? "—" : compl.toFixed(1) + "%"}</td>
                     <td className="px-4 py-3 text-right tabular-nums text-slate-500">{fmtCpv(c.avgCpv)}</td>
-                    <td className="px-4 py-3 text-right tabular-nums font-semibold text-slate-700">{c.conversions.toFixed(0)}</td>
+                    <td className="px-4 py-3 text-right tabular-nums font-semibold text-slate-700">{fmtConv(c.conversions)}</td>
                     <td className="px-4 py-3 text-center"><StatusBadge status={c.status} /></td>
                     <td className="px-4 py-3 text-center"><WatchLink creative={c} /></td>
                   </tr>
@@ -192,7 +192,7 @@ function TestPipeline({ data, onOpenCreative }: { data: ClientResponse; onOpenCr
                       <div className="flex items-center gap-3 mt-2 text-[11px] text-slate-400">
                         <span>VVR {ratePct(c.viewRate).toFixed(1)}%</span>
                         <span>{fmtCpv(c.avgCpv)}</span>
-                        <span>{c.conversions.toFixed(0)} conv</span>
+                        <span>{fmtConv(c.conversions)} conv</span>
                       </div>
                     </button>
                     <span className="absolute top-2 right-2">

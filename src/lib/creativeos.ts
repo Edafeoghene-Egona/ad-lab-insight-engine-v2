@@ -48,6 +48,21 @@ export function fmtPct(n: number, frac = false): string {
 }
 
 /**
+ * Conversions: thousands-separated, with one decimal only when it adds info
+ * (Google Ads conversions are often fractional). 5 → "5", 5.3 → "5.3", 1234.5 → "1,234.5".
+ * Single source of truth so every surface formats conversions identically.
+ */
+export function fmtConv(n: number): string {
+  if (!isFinite(n)) return "—";
+  return (Math.round(n * 10) / 10).toLocaleString("en-US", { maximumFractionDigits: 1 });
+}
+
+/** ROAS multiple: 3.62 → "3.62×"; null/non-finite → em dash. */
+export function fmtRoas(r: number | null): string {
+  return r == null || !isFinite(r) ? "—" : r.toFixed(2) + "×";
+}
+
+/**
  * Normalize a rate to a 0..100 number, tolerant of either convention:
  * Google Ads emits view/quartile rates as 0..1 fractions, but some
  * aggregations may already be percentages. Values ≤ 1 are treated as

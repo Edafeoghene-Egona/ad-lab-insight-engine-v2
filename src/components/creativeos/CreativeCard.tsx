@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Play, Youtube } from "lucide-react";
 import { GlassPanel } from "./GlassPanel";
 import { StatusBadge } from "./StatusBadge";
-import { fmtCompact, fmtCpv, ratePct } from "@/lib/creativeos";
+import { fmtCompact, fmtConv, fmtCpv, ratePct } from "@/lib/creativeos";
 import type { Creative } from "@/lib/creativeos-types";
 
 const watchUrl = (id: string) => `https://www.youtube.com/watch?v=${id}`;
@@ -75,7 +75,7 @@ export function CreativeCard({ creative, rank, onOpen }: { creative: Creative; r
           {creative.title}
         </h3>
         <div
-          className={`grid grid-cols-3 gap-3 mb-4 ${onOpen ? "cursor-pointer" : ""}`}
+          className={`grid grid-cols-3 gap-3 ${onOpen ? "cursor-pointer" : ""}`}
           onClick={onOpen}
         >
           <Metric label="VVR" value={ratePct(creative.viewRate).toFixed(1) + "%"} />
@@ -90,18 +90,8 @@ export function CreativeCard({ creative, rank, onOpen }: { creative: Creative; r
           />
           <Metric label="Views" value={fmtCompact(creative.views)} />
           <Metric label="CPV" value={fmtCpv(creative.avgCpv)} />
-          <Metric label="Conv" value={creative.conversions.toFixed(0)} accent="text-emerald-600" />
+          <Metric label="Conv" value={fmtConv(creative.conversions)} accent="text-emerald-600" />
         </div>
-        {videoId && (
-          <a
-            href={watchUrl(videoId)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-auto flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition-colors"
-          >
-            <Youtube className="w-4 h-4" /> Watch on YouTube
-          </a>
-        )}
       </div>
     </GlassPanel>
   );

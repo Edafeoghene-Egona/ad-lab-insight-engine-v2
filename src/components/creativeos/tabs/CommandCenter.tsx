@@ -3,7 +3,7 @@ import { GlassPanel } from "../GlassPanel";
 import { StatCard } from "../StatCard";
 import { ClientAvatar } from "../ClientAvatar";
 import { ViewsSpendTrend } from "../charts/TrendChart";
-import { fmtCompact, fmtMoney, ratePct } from "@/lib/creativeos";
+import { fmtCompact, fmtConv, fmtMoney, fmtRoas, ratePct } from "@/lib/creativeos";
 import type { ClientRollup, DailyPoint, PortfolioResponse } from "@/lib/creativeos-types";
 import { cn } from "@/lib/utils";
 
@@ -15,7 +15,14 @@ const winPctOf = (s: ClientRollup["status"]) => {
 /** ROAS = Google Ads conversion value ÷ spend; null when value is unavailable. */
 const roasOf = (c: ClientRollup): number | null =>
   c.conversionsValue != null && c.spend > 0 ? c.conversionsValue / c.spend : null;
-const fmtRoas = (r: number | null) => (r == null ? "—" : r.toFixed(2) + "×");
+
+/** Win-rate health tier — colour + a text label so the dot isn't colour-only. */
+const healthTier = (winPct: number) =>
+  winPct >= 40
+    ? { color: "#10b981", label: "Healthy win rate" }
+    : winPct >= 20
+      ? { color: "#f59e0b", label: "Win rate needs attention" }
+      : { color: "#f43f5e", label: "Win rate at risk" };
 
 /** Minimal inline sparkline of daily views — no chart lib needed for a thumbnail trend. */
 function Sparkline({ points }: { points: number[] }) {
@@ -42,6 +49,7 @@ function Sparkline({ points }: { points: number[] }) {
 function ClientCard({ client, onSelect }: { client: ClientRollup; onSelect: () => void }) {
   const { status } = client;
   const winPct = winPctOf(status);
+  const tier = healthTier(winPct);
   const sparkPoints = (client.daily ?? []).map((d) => d.views);
   return (
     <button onClick={onSelect} className="cos-stat-card cos-glass rounded-2xl p-5 text-left flex flex-col gap-3">
@@ -52,8 +60,11 @@ function ClientCard({ client, onSelect }: { client: ClientRollup; onSelect: () =
           <div className="text-[11px] text-slate-400">{client.customerId}</div>
         </div>
         <span
+          role="img"
+          aria-label={tier.label}
+          title={tier.label}
           className="w-2.5 h-2.5 rounded-full"
-          style={{ background: winPct >= 40 ? "#10b981" : winPct >= 20 ? "#f59e0b" : "#f43f5e" }}
+          style={{ background: tier.color }}
         />
       </div>
       <div className="grid grid-cols-3 gap-2">
@@ -139,7 +150,7 @@ function AccountHealth({ data, onSelectClient }: { data: PortfolioResponse; onSe
                 {cell(fmtRoas(roas), roas == null ? "none" : roas >= 2 ? "good" : roas >= 1 ? "warn" : "bad")}
                 {cell(vr.toFixed(1) + "%", vr >= 25 ? "good" : vr >= 15 ? "warn" : "bad")}
                 {cell(wr + "%", wr >= 30 ? "good" : wr >= 15 ? "warn" : "bad")}
-                {cell(Math.round(c.conversions).toLocaleString(), "none")}
+                {cell(fmtConv(c.conversions), "none")}
                 {cell(fmtMoney(c.spend), "none")}
               </div>
             );
