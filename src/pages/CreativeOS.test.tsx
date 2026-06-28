@@ -54,8 +54,8 @@ describe("CreativeOS page", () => {
     renderPage();
     expect(await screen.findByText("glowora.com")).toBeInTheDocument();
     expect(screen.getByText("koriderm.com")).toBeInTheDocument();
-    // Portfolio view: no pink client header.
-    expect(screen.queryByTestId("cos-pink-header")).toBeNull();
+    // Portfolio view: no client header.
+    expect(screen.queryByTestId("cos-client-header")).toBeNull();
   });
 
   it("shows an error state with retry when the pull fails", async () => {
