@@ -43,6 +43,29 @@ export type Database = {
           created_at?: string
         }
       }
+      video_transcripts: {
+        Row: {
+          video_id: string
+          lang: string | null
+          segments: Json | null
+          status: string
+          fetched_at: string
+        }
+        Insert: {
+          video_id: string
+          lang?: string | null
+          segments?: Json | null
+          status?: string
+          fetched_at?: string
+        }
+        Update: {
+          video_id?: string
+          lang?: string | null
+          segments?: Json | null
+          status?: string
+          fetched_at?: string
+        }
+      }
       report_jobs: {
         Row: {
           id: string
