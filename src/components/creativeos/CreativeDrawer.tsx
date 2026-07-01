@@ -1,6 +1,9 @@
-import { Play, X, Youtube } from "lucide-react";
+import { useState } from "react";
+import { FileText, Play, X, Youtube } from "lucide-react";
 import { StatusBadge } from "./StatusBadge";
 import { RetentionCurve } from "./charts/RetentionCurve";
+import { CosButton } from "./CosButton";
+import { TranscriptModal } from "./TranscriptModal";
 import { fmtCompact, fmtConv, fmtCpv, fmtMoney, fmtRoas, ratePct } from "@/lib/creativeos";
 import type { Creative } from "@/lib/creativeos-types";
 
@@ -18,6 +21,7 @@ function Cell({ label, value, accent }: { label: string; value: string; accent?:
 
 /** Slide-out detail panel for one creative. Rendered at the page root; null when closed. */
 export function CreativeDrawer({ creative, onClose }: { creative: Creative | null; onClose: () => void }) {
+  const [transcriptOpen, setTranscriptOpen] = useState(false);
   if (!creative) return null;
   const c = creative;
   const dur = c.durationSec != null ? `${Math.floor(c.durationSec / 60)}:${String(c.durationSec % 60).padStart(2, "0")}` : "—";
@@ -74,17 +78,26 @@ export function CreativeDrawer({ creative, onClose }: { creative: Creative | nul
           )}
 
           {c.videoId && (
-            <a
-              href={watchUrl(c.videoId)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-4 flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white text-sm font-bold px-4 py-2.5 rounded-xl transition-colors"
-            >
-              <Youtube className="w-4 h-4" /> Watch on YouTube
-            </a>
+            <div className="mt-4 flex gap-2">
+              <a
+                href={watchUrl(c.videoId)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white text-sm font-bold px-4 py-2.5 rounded-xl transition-colors"
+              >
+                <Youtube className="w-4 h-4" /> Watch on YouTube
+              </a>
+              <CosButton variant="outline" size="md" onClick={() => setTranscriptOpen(true)}>
+                <FileText className="w-4 h-4" /> View transcript
+              </CosButton>
+            </div>
           )}
         </div>
       </div>
+
+      {c.videoId && (
+        <TranscriptModal open={transcriptOpen} onOpenChange={setTranscriptOpen} videoId={c.videoId} title={c.title} />
+      )}
     </div>
   );
 }
