@@ -101,7 +101,10 @@ resolveTranscript({ videoId }, { supabase, getSubtitles })
 ### Component 3 — Express route `GET /api/transcript/:videoId` (in `server.js`)
 
 - Thin wrapper: calls `resolveTranscript({ videoId }, { supabase: supabaseAdmin,
-  getSubtitles })`, maps `{status, body}` to the HTTP response.
+  getSubtitles })`, then maps `{status, body}` to the HTTP response with
+  `res.status(result.status).json(result.body)` — note this **differs from
+  `/api/share`**, which uses `res.sendStatus` with no body. The transcript route
+  always returns a JSON body (including on 400/500) per the error table.
 - Placed before the SPA catch-all, alongside `/api/share/:token`.
 - No secret required (timedtext is unauthenticated). Open endpoint — the `videoId` is
   already visible in the UI and the video is public on YouTube.
@@ -166,8 +169,12 @@ Props: `{ open, onOpenChange, videoId, title }`.
 - New: `src/components/creativeos/TranscriptModal.tsx` (+ test)
 - Edit: `server.js` (route + `getSubtitles` wiring)
 - Edit: `src/components/creativeos/CreativeDrawer.tsx` (button + modal state) (+ test)
-- Edit: `src/integrations/supabase/types.ts` (add `video_transcripts`)
-- Dep: add a caption-scraper library (e.g. `youtube-transcript`)
+- Edit: `src/integrations/supabase/types.ts` (add `video_transcripts` — this is a
+  generated file, but there is no type-gen script wired here, so the manual edit is
+  intentional and must not be clobbered; same as the `client_share_links` addition).
+- Dep: add and **pin** a caption-scraper library. Plan should confirm the exact
+  package + version (candidate: `youtube-transcript`) and wrap it behind
+  `getSubtitles` so it can be swapped when the unofficial endpoint changes.
 
 ## Open questions / assumptions
 
