@@ -3,6 +3,8 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { createClient } from '@supabase/supabase-js';
 import { resolveShareData } from './server/share-proxy.mjs';
+import { resolveTranscript } from './server/transcript.mjs';
+import { getSubtitles } from './server/youtube-captions.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -34,6 +36,21 @@ app.get('/api/share/:token', async (req, res) => {
     } catch (err) {
         console.error('share proxy error', err);
         res.sendStatus(500);
+    }
+});
+
+// Public transcript proxy: scrapes + caches a video's YouTube captions.
+// Returns a JSON body on every status (unlike /api/share, which uses sendStatus).
+app.get('/api/transcript/:videoId', async (req, res) => {
+    try {
+        const result = await resolveTranscript(
+            { videoId: req.params.videoId },
+            { supabase: supabaseAdmin, getSubtitles },
+        );
+        res.status(result.status).json(result.body);
+    } catch (err) {
+        console.error('transcript error', err);
+        res.status(500).json({ error: 'internal error' });
     }
 });
 
